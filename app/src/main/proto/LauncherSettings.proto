@@ -1,0 +1,65 @@
+syntax = "proto3";
+
+option java_package = "com.shishifubing.atbl";
+option java_multiple_files = true;
+
+message LauncherSettings {
+  int32 app_card_padding = 1;
+  bool app_card_label_remove_spaces = 2;
+  bool app_card_label_lowercase = 3;
+  LauncherTextStyle app_card_text_style = 4;
+  LauncherHorizontalArrangement app_layout_horizontal_arrangement = 5;
+  LauncherTextColor app_card_text_color = 6;
+  LauncherFontFamily app_card_font_family = 7;
+}
+
+enum LauncherTextStyle {
+  DisplayLarge = 0;
+  DisplayMedium = 1;
+  DisplaySmall = 2;
+  HeadlineLarge = 3;
+  HeadlineMedium = 4;
+  HeadlineSmall = 5;
+  TitleLarge = 6;
+  TitleMedium = 7;
+  TitleSmall = 8;
+  BodyLarge = 9;
+  BodyMedium = 10;
+  BodySmall = 11;
+  LabelLarge = 12;
+  LabelMedium = 13;
+  LabelSmall = 14;
+}
+
+enum LauncherTextColor {
+  Unspecified = 0;
+  Black = 1;
+  DarkGray = 2;
+  Gray = 3;
+  LightGray = 5;
+  White = 6;
+  Red = 7;
+  Green = 8;
+  Blue = 9;
+  Yellow = 10;
+  Cyan = 11;
+  Magenta = 12;
+  Transparent = 13;
+}
+
+enum LauncherHorizontalArrangement {
+  Start = 0;
+  End = 1;
+  Center = 2;
+  SpaceEvenly = 3;
+  SpaceBetween = 4;
+  SpaceAround = 5;
+}
+
+enum LauncherFontFamily {
+  Default = 0;
+  SansSerif = 1;
+  Serif = 3;
+  Monospace = 4;
+  Cursive = 5;
+}

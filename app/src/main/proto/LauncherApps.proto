@@ -1,0 +1,21 @@
+syntax = "proto3";
+
+option java_package = "com.shishifubing.atbl";
+option java_multiple_files = true;
+
+message LauncherApps {
+  repeated LauncherApp apps = 1;
+}
+
+message LauncherApp {
+  string label = 1;
+  string packageName = 2;
+  repeated LauncherAppShortcut shortcuts = 3;
+  bool isHidden = 4;
+}
+
+message LauncherAppShortcut {
+  string shortcutId = 1;
+  string packageName = 2;
+  string label = 3;
+}
