@@ -43,7 +43,10 @@ object SettingsSerializer : Serializer<LauncherSettings> {
             .setAppCardTextStyle(LauncherTextStyle.HeadlineSmall)
             .setAppCardLabelLowercase(false)
             .setAppLayoutHorizontalArrangement(
-                LauncherHorizontalArrangement.Center
+                LauncherHorizontalArrangement.HorizontalCenter
+            )
+            .setAppLayoutVerticalArrangement(
+                LauncherVerticalArrangement.VerticalTop
             )
             .setAppCardTextColor(LauncherTextColor.Unspecified)
             .setAppCardFontFamily(LauncherFontFamily.Default)
