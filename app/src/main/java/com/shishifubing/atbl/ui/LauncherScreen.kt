@@ -44,6 +44,7 @@ import com.shishifubing.atbl.LauncherHorizontalArrangement
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
+import com.shishifubing.atbl.LauncherVerticalArrangement
 import com.shishifubing.atbl.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
@@ -58,26 +59,25 @@ fun LauncherScreen(
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
 
-    Column(
+    FlowRow(
         modifier = modifier.verticalScroll(rememberScrollState()),
-        verticalArrangement = Arrangement.Top
+        horizontalArrangement = getHorizontalArrangement(
+            settings.appLayoutHorizontalArrangement
+        ),
+        verticalArrangement = getVerticalArrangement(
+            settings.appLayoutVerticalArrangement
+        )
     ) {
-        FlowRow(
-            horizontalArrangement = getHorizontalArrangement(
-                settings.appLayoutHorizontalArrangement
-            ),
-            verticalArrangement = Arrangement.Center
-        ) {
-            apps.appsList.forEach { app ->
-                AppCard(
-                    app = app,
-                    onClick = { vm.launchApp(app.packageName) },
-                    onLongClick = { dialogApp = app },
-                    settings = settings
-                )
-            }
+        apps.appsList.forEach { app ->
+            AppCard(
+                app = app,
+                onClick = { vm.launchApp(app.packageName) },
+                onLongClick = { dialogApp = app },
+                settings = settings
+            )
         }
     }
+
     if (dialogApp != null) {
         val app = dialogApp!!
         AppDialog(
@@ -285,12 +285,27 @@ fun getHorizontalArrangement(
     horizontalArrangement: LauncherHorizontalArrangement
 ): Arrangement.Horizontal {
     return when (horizontalArrangement) {
-        LauncherHorizontalArrangement.Start -> Arrangement.Start
-        LauncherHorizontalArrangement.End -> Arrangement.End
-        LauncherHorizontalArrangement.Center -> Arrangement.Center
-        LauncherHorizontalArrangement.SpaceEvenly -> Arrangement.SpaceEvenly
-        LauncherHorizontalArrangement.SpaceBetween -> Arrangement.SpaceBetween
-        LauncherHorizontalArrangement.SpaceAround -> Arrangement.SpaceAround
+        LauncherHorizontalArrangement.HorizontalStart -> Arrangement.Start
+        LauncherHorizontalArrangement.HorizontalEnd -> Arrangement.End
+        LauncherHorizontalArrangement.HorizontalCenter -> Arrangement.Center
+        LauncherHorizontalArrangement.HorizontalSpaceEvenly -> Arrangement.SpaceEvenly
+        LauncherHorizontalArrangement.HorizontalSpaceBetween -> Arrangement.SpaceBetween
+        LauncherHorizontalArrangement.HorizontalSpaceAround -> Arrangement.SpaceAround
+        else -> Arrangement.Center
+    }
+}
+
+@Composable
+fun getVerticalArrangement(
+    verticalArrangement: LauncherVerticalArrangement
+): Arrangement.Vertical {
+    return when (verticalArrangement) {
+        LauncherVerticalArrangement.VerticalTop -> Arrangement.Top
+        LauncherVerticalArrangement.VerticalBottom -> Arrangement.Bottom
+        LauncherVerticalArrangement.VerticalCenter -> Arrangement.Center
+        LauncherVerticalArrangement.VerticalSpaceEvenly -> Arrangement.SpaceEvenly
+        LauncherVerticalArrangement.VerticalSpaceBetween -> Arrangement.SpaceBetween
+        LauncherVerticalArrangement.VerticalSpaceAround -> Arrangement.SpaceAround
         else -> Arrangement.Center
     }
 }

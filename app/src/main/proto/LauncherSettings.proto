@@ -11,6 +11,7 @@ message LauncherSettings {
   LauncherHorizontalArrangement app_layout_horizontal_arrangement = 5;
   LauncherTextColor app_card_text_color = 6;
   LauncherFontFamily app_card_font_family = 7;
+  LauncherVerticalArrangement app_layout_vertical_arrangement = 8;
 }
 
 enum LauncherTextStyle {
@@ -48,12 +49,21 @@ enum LauncherTextColor {
 }
 
 enum LauncherHorizontalArrangement {
-  Start = 0;
-  End = 1;
-  Center = 2;
-  SpaceEvenly = 3;
-  SpaceBetween = 4;
-  SpaceAround = 5;
+  HorizontalStart = 0;
+  HorizontalEnd = 1;
+  HorizontalCenter = 2;
+  HorizontalSpaceEvenly = 3;
+  HorizontalSpaceBetween = 4;
+  HorizontalSpaceAround = 5;
+}
+
+enum LauncherVerticalArrangement {
+  VerticalTop = 0;
+  VerticalBottom = 1;
+  VerticalCenter = 2;
+  VerticalSpaceEvenly = 3;
+  VerticalSpaceBetween = 4;
+  VerticalSpaceAround = 5;
 }
 
 enum LauncherFontFamily {

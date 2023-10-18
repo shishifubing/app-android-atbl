@@ -42,6 +42,7 @@ import com.shishifubing.atbl.LauncherHorizontalArrangement
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
+import com.shishifubing.atbl.LauncherVerticalArrangement
 import com.shishifubing.atbl.R
 
 private inline fun <reified E : Enum<E>> enumToList(): List<String> {
@@ -53,6 +54,7 @@ private inline fun <reified E : Enum<E>> enumToList(): List<String> {
 private val choiceOptions = object {
     val textStyles = enumToList<LauncherTextStyle>()
     val horizontalArrangement = enumToList<LauncherHorizontalArrangement>()
+    val verticalArrangement = enumToList<LauncherVerticalArrangement>()
     val textColor = enumToList<LauncherTextColor>()
     val appCardPadding = (0..30).map { it.toString() }
     val fontFamilies = enumToList<LauncherFontFamily>()
@@ -72,8 +74,34 @@ fun SettingsScreen(
         AppCardTextColorField(vm, settings)
         AppCardPaddingField(vm, settings)
         HorizontalArrangementField(vm, settings)
+        VerticalArrangementField(vm, settings)
         HiddenAppsField(vm)
     }
+}
+
+@Composable
+fun VerticalArrangementField(
+    vm: SettingsViewModel,
+    settings: LauncherSettings
+) {
+    var curOption by remember {
+        mutableIntStateOf(
+            choiceOptions.verticalArrangement.indexOf(settings.appLayoutVerticalArrangement.name)
+        )
+    }
+    SettingsSingleChoiceField(
+        name = R.string.settings_app_layout_vertical_arrangement,
+        selectedOption = curOption,
+        options = choiceOptions.verticalArrangement,
+        onConfirm = { choice ->
+            curOption = choice
+            vm.updateSettings {
+                it.setAppLayoutVerticalArrangement(
+                    LauncherVerticalArrangement.valueOf(choiceOptions.verticalArrangement[choice])
+                )
+            }
+        }
+    )
 }
 
 @Composable

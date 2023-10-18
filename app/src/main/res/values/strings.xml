@@ -19,6 +19,9 @@
     <string name="settings_app_layout_horizontal_arrangement">
         Horizontal arrangement
     </string>
+    <string name="settings_app_layout_vertical_arrangement">
+        Vertical arrangement
+    </string>
     <string name="settings_hidden_apps">Configure hidden apps</string>
     <string name="settings_choice_dialog_ok">OK</string>
     <string name="settings_choice_dialog_cancel">Cancel</string>
