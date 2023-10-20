@@ -31,27 +31,39 @@ val Context.launcherAppsDataStore: DataStore<LauncherApps> by dataStore(
 )
 
 class LauncherActivity : ComponentActivity() {
+    private lateinit var launcherAppsManager: LauncherAppsManager
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val launcherAppsManager = LauncherAppsManager(this)
+        launcherAppsManager = LauncherAppsManager(this)
         val settingsRepo = LauncherSettingsRepository(settingsDataStore)
         val launcherAppsRepo = LauncherAppsRepository(
             launcherAppsDataStore, this
         )
+        launcherAppsManager.addCallback(
+            onAdded = { packageName ->
+                lifecycleScope.launch { launcherAppsRepo.addApp(packageName) }
+            },
+            onChanged = { packageName ->
+                lifecycleScope.launch { launcherAppsRepo.updateApp(packageName) }
+            },
+            onRemoved = { packageName ->
+                lifecycleScope.launch { launcherAppsRepo.removeApp(packageName) }
+            }
+        )
+
+        lifecycleScope.launch { launcherAppsRepo.fetchInitial() }
+        lifecycleScope.launch { settingsRepo.fetchInitial() }
+
         val vm = ViewModelProvider(
             this,
             LauncherViewModelFactory(
                 settingsRepo, launcherAppsRepo, launcherAppsManager,
                 runBlocking { settingsRepo.fetchInitial() },
-                runBlocking { launcherAppsRepo.reloadApps() }
+                runBlocking { launcherAppsRepo.fetchInitial() }
             )
         )[LauncherViewModel::class.java]
-
-        launcherAppsManager.addCallback {
-            lifecycleScope.launch { launcherAppsRepo.reloadApps() }
-        }
 
         setContent {
             LauncherTheme {
@@ -63,6 +75,11 @@ class LauncherActivity : ComponentActivity() {
                 }
             }
         }
+    }
+
+    override fun onStop() {
+        super.onStop()
+        launcherAppsManager.removeCallbacks()
     }
 }
 

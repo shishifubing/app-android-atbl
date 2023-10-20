@@ -100,17 +100,22 @@ fun AppCard(
     settings: LauncherSettings,
     modifier: Modifier = Modifier,
 ) {
-    if (app.isHidden) {
-        return
-    }
-    val label = when (settings.appCardLabelRemoveSpaces) {
-        true -> app.label.replace(" ", "")
-        else -> app.label
-    }
+    val label = app.label
+        .let {
+            when (settings.appCardLabelRemoveSpaces) {
+                true -> it.replace(" ", "")
+                else -> it
+            }
+        }.let {
+            when (settings.appCardLabelLowercase) {
+                true -> it.lowercase()
+                false -> it
+            }
+        }
     // workaround to use long press on buttons: https://stackoverflow.com/a/76395585
     val interactionSource = remember { MutableInteractionSource() }
     val viewConfiguration = LocalViewConfiguration.current
-    LaunchedEffect(interactionSource) {
+    LaunchedEffect(interactionSource, app) {
         var isLongClick = false
         interactionSource.interactions.collectLatest { interaction ->
             when (interaction) {
@@ -137,7 +142,7 @@ fun AppCard(
     ) {
         Text(
             modifier = Modifier.padding(settings.appCardPadding.dp),
-            text = if (settings.appCardLabelLowercase) label.lowercase() else label,
+            text = label,
             style = getTextStyle(settings.appCardTextStyle),
             fontFamily = getFontFamily(settings.appCardFontFamily),
             color = getTextColor(settings.appCardTextColor)

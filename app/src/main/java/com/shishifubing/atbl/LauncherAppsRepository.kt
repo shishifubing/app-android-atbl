@@ -3,6 +3,7 @@ package com.shishifubing.atbl
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.content.pm.ResolveInfo
 import android.os.Build
 import android.util.Log
 import androidx.datastore.core.CorruptionException
@@ -34,75 +35,118 @@ class LauncherAppsRepository(
         }
     }
 
+    suspend fun hideApp(packageName: String) {
+        update { current ->
+            val index = getAppIndex(current, packageName)
+            current.setApps(
+                index,
+                current.getApps(index).toBuilder().setIsHidden(true).build()
+            )
+        }
+    }
+
+    suspend fun removeApp(packageName: String) {
+        update { current ->
+            current.removeApps(getAppIndex(current, packageName))
+        }
+    }
+
+    suspend fun addApp(packageName: String) {
+        update { current -> current.addApps(fetchApp(packageName)) }
+    }
+
+    suspend fun updateApp(packageName: String) {
+        update { current ->
+            current.setApps(
+                getAppIndex(current, packageName),
+                fetchApp(packageName)
+            )
+        }
+    }
+
+    suspend fun setHiddenApps(packageNames: List<String>) {
+        update { current ->
+            val hiddenApps = packageNames.toSet()
+            val newApps = current.appsList.map { app ->
+                app.toBuilder()
+                    .setIsHidden(hiddenApps.contains(app.packageName))
+                    .build()
+            }
+            current.clearApps().addAllApps(newApps)
+        }
+    }
+
+    suspend fun fetchInitial(): LauncherApps {
+        val apps = dataStore.data.first()
+        return if (apps.appsList.isEmpty()) {
+            reloadApps()
+        } else {
+            apps
+        }
+    }
+
+    private suspend fun reloadApps(): LauncherApps {
+        return update { current ->
+            val hidden = current.appsList
+                .filter { it.isHidden }
+                .map { it.packageName }
+                .toSet()
+            current.clearApps().addAllApps(
+                fetchAllApps().map { app ->
+                    if (hidden.contains(app.packageName)) {
+                        app.toBuilder().setIsHidden(true).build()
+                    } else {
+                        app
+                    }
+                }
+            )
+        }
+    }
+
     private suspend fun update(
         action: (LauncherApps.Builder) -> (LauncherApps.Builder)
     ): LauncherApps {
         return dataStore.updateData { current -> action(current.toBuilder()).build() }
     }
 
-    suspend fun hideApp(packageName: String) {
-        dataStore.updateData { current ->
-            val curIndex =
-                current.appsList.indexOfFirst { it.packageName == packageName }
-            current.toBuilder().setApps(
-                curIndex,
-                current.getApps(curIndex).toBuilder().setIsHidden(true).build()
-            ).build()
+    private fun getAppIndex(
+        current: LauncherApps.Builder, packageName: String
+    ): Int {
+        return current.appsList.indexOfFirst { it.packageName == packageName }
+    }
+
+    private fun fetchAllApps(): List<LauncherApp> {
+        val queryResults = queryPackageManager(
+            Intent(Intent.ACTION_MAIN, null)
+                .addCategory(Intent.CATEGORY_LAUNCHER)
+        )
+        return queryResults.map { info ->
+            val label = info.activityInfo.loadLabel(context.packageManager)
+            LauncherApp.newBuilder()
+                .setLabel(label.toString())
+                .setPackageName(info.activityInfo.packageName)
+                .addAllShortcuts(getShortcuts(info.activityInfo.packageName))
+                .build()
         }
     }
 
-    suspend fun setHiddenApps(packageNames: List<String>) {
-        dataStore.updateData { current ->
-            val builder = current.toBuilder()
-            val appsToShow = current.appsList
-                .filter { it.isHidden }
-                .map { it.packageName }
-                .subtract(packageNames.toSet())
-            appsToShow.forEach { app ->
-                val index =
-                    current.appsList.indexOfFirst { it.packageName == app }
-                builder.setApps(
-                    index,
-                    current.getApps(index).toBuilder().setIsHidden(false)
-                        .build()
-                )
-            }
-            packageNames.forEach { app ->
-                val index =
-                    current.appsList.indexOfFirst { it.packageName == app }
-                builder.setApps(
-                    index,
-                    current.getApps(index).toBuilder().setIsHidden(true)
-                        .build()
-                )
-            }
-            builder.build()
-        }
+    private fun fetchApp(packageName: String): LauncherApp {
+        val queryResults = queryPackageManager(
+            Intent(Intent.ACTION_MAIN, null)
+                .addCategory(Intent.CATEGORY_LAUNCHER)
+                .setPackage(packageName)
+        )
+        val info = queryResults[0].activityInfo
+        val label = info.loadLabel(context.packageManager)
+        return LauncherApp.newBuilder()
+            .setLabel(label.toString())
+            .setPackageName(info.packageName)
+            .addAllShortcuts(getShortcuts(info.packageName))
+            .build()
     }
 
-    suspend fun fetchInitial() = appsFlow.first()
-
-    suspend fun reloadApps(): LauncherApps {
-        return update { current ->
-            val hidden = current.appsList
-                .filter { it.isHidden }
-                .map { it.packageName }
-                .toSet()
-            val apps = getApps().map { app ->
-                if (hidden.contains(app.packageName)) {
-                    app.toBuilder().setIsHidden(true).build()
-                } else {
-                    app
-                }
-            }
-            current.clearApps().addAllApps(apps)
-        }
-    }
-
-    private fun getApps(): List<LauncherApp> {
-        val intent = Intent(Intent.ACTION_MAIN, null)
-            .addCategory(Intent.CATEGORY_LAUNCHER)
-        val apps = when {
+    private fun queryPackageManager(intent: Intent): List<ResolveInfo> {
+        return when {
             Build.VERSION.SDK_INT >= 33 -> context.packageManager
                 .queryIntentActivities(
                     intent,
@@ -113,14 +157,6 @@ class LauncherAppsRepository(
                 intent, 0
             )
         }
-        return apps.map { info ->
-            val label = info.activityInfo.loadLabel(context.packageManager)
-            LauncherApp.newBuilder()
-                .setLabel(label.toString())
-                .setPackageName(info.activityInfo.packageName)
-                .addAllShortcuts(getShortcuts(info.activityInfo.packageName))
-                .build()
-        }.sortedBy { app -> app.label }
     }
 
     private fun getShortcuts(packageName: String): List<LauncherAppShortcut> {

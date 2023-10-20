@@ -265,8 +265,9 @@ fun HiddenAppsField(
 ) {
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     val launcherPackageName = LocalContext.current.packageName
-    val options =
-        apps.appsList.filter { it.packageName != launcherPackageName }
+    val options = apps.appsList
+        .filter { it.packageName != launcherPackageName }
+        .sortedBy { it.label }
     var hiddenApps =
         options.mapIndexedNotNull { i, app -> if (app.isHidden) i else null }
 

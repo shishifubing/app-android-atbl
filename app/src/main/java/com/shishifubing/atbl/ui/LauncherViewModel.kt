@@ -1,5 +1,6 @@
 package com.shishifubing.atbl.ui
 
+
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
@@ -9,6 +10,7 @@ import com.shishifubing.atbl.LauncherAppsManager
 import com.shishifubing.atbl.LauncherAppsRepository
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSettingsRepository
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 
 class LauncherViewModel(
@@ -16,11 +18,20 @@ class LauncherViewModel(
     private val launcherAppsRepository: LauncherAppsRepository,
     private val launcherAppsManager: LauncherAppsManager,
     val initialSettings: LauncherSettings,
-    val initialApps: LauncherApps
+    initialApps: LauncherApps
 ) : ViewModel() {
 
+    val initialApps = transformApps(initialApps)
     val settingsFlow = launcherSettingsRepository.settingsFlow
-    val appsFlow = launcherAppsRepository.appsFlow
+    val appsFlow = launcherAppsRepository.appsFlow.map(this::transformApps)
+
+    private fun transformApps(current: LauncherApps): LauncherApps {
+        return LauncherApps.newBuilder().addAllApps(
+            current.appsList
+                .filterNot { it.isHidden }
+                .sortedBy { it.label }
+        ).build()
+    }
 
     fun hideApp(packageName: String) {
         viewModelScope.launch { launcherAppsRepository.hideApp(packageName) }

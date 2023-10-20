@@ -3,6 +3,7 @@ package com.shishifubing.atbl
 import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
+import android.content.pm.ShortcutInfo
 import android.net.Uri
 import android.os.UserHandle
 import android.provider.Settings
@@ -14,6 +15,7 @@ class LauncherAppsManager(private val context: Context) {
     private val packageManager = context.packageManager
     private val launcherAppsService =
         context.getSystemService(LauncherApps::class.java)
+    private val callbacks: MutableList<LauncherApps.Callback> = mutableListOf()
 
     fun launchApp(packageName: String) {
         context.startActivity(
@@ -37,34 +39,54 @@ class LauncherAppsManager(private val context: Context) {
     }
 
     fun launchAppShortcut(shortcut: LauncherAppShortcut) {
-        context.getSystemService(LauncherApps::class.java).startShortcut(
+        launcherAppsService.startShortcut(
             shortcut.packageName, shortcut.shortcutId, null, null,
             android.os.Process.myUserHandle()
         )
     }
 
-    fun addCallback(action: () -> Unit) {
-        launcherAppsService.registerCallback(getLauncherAppsCallback(action))
+    fun removeCallbacks() {
+        while (callbacks.isNotEmpty()) {
+            launcherAppsService.unregisterCallback(callbacks.removeLast())
+        }
     }
 
-    private fun getLauncherAppsCallback(action: () -> Unit): LauncherApps.Callback {
-        return object : LauncherApps.Callback() {
-            override fun onPackageRemoved(p1: String?, p2: UserHandle?) =
-                action()
+    fun addCallback(
+        onRemoved: (String) -> Unit,
+        onAdded: (String) -> Unit,
+        onChanged: (String) -> Unit
+    ) {
+        val callback = object : LauncherApps.Callback() {
+            override fun onPackageRemoved(
+                packageName: String, user: UserHandle
+            ) = onRemoved(packageName)
 
-            override fun onPackageAdded(p1: String?, p2: UserHandle?) =
-                action()
+            override fun onPackageAdded(
+                packageName: String, user: UserHandle
+            ) = onAdded(packageName)
 
-            override fun onPackageChanged(p1: String?, p2: UserHandle?) =
-                action()
+            override fun onPackageChanged(
+                packageName: String, p2: UserHandle
+            ) = onChanged(packageName)
+
+            override fun onShortcutsChanged(
+                packageName: String,
+                shortcuts: MutableList<ShortcutInfo>,
+                user: UserHandle
+            ) = onChanged(packageName)
 
             override fun onPackagesAvailable(
-                p1: Array<out String>?, p2: UserHandle?, p3: Boolean
+                packageNames: Array<out String>?,
+                user: UserHandle?,
+                replacing: Boolean
             ) = Unit
 
             override fun onPackagesUnavailable(
-                p1: Array<out String>?, p2: UserHandle?, p3: Boolean
+                packageNames: Array<out String>?,
+                user: UserHandle?,
+                replacing: Boolean
             ) = Unit
         }
+        launcherAppsService.registerCallback(callback)
     }
 }
