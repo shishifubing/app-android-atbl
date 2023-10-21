@@ -1,5 +1,7 @@
 package com.shishifubing.atbl.ui
 
+import android.graphics.Bitmap
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -9,6 +11,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -25,8 +28,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -36,9 +41,9 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shishifubing.atbl.LauncherApp
-import com.shishifubing.atbl.LauncherAppShortcut
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
 import com.shishifubing.atbl.LauncherSettings
@@ -60,7 +65,12 @@ fun LauncherScreen(
     var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
 
     FlowRow(
-        modifier = modifier.verticalScroll(rememberScrollState()),
+        modifier = modifier
+            .verticalScroll(rememberScrollState())
+            .padding(
+                settings.appLayoutHorizontalPadding.dp,
+                settings.appLayoutVerticalPadding.dp
+            ),
         horizontalArrangement = getHorizontalArrangement(
             settings.appLayoutHorizontalArrangement
         ),
@@ -82,11 +92,8 @@ fun LauncherScreen(
         val app = dialogApp!!
         AppDialog(
             app = app,
+            vm = vm,
             onDismissRequest = { dialogApp = null },
-            launchAppInfo = { vm.launchAppInfo(app.packageName) },
-            launchAppUninstall = { vm.launchAppUninstall(app.packageName) },
-            launchAppShortcut = vm::launchAppShortcut,
-            hideApp = { vm.hideApp(app.packageName) },
             showHideAppButton = app.packageName != LocalContext.current.packageName
         )
     }
@@ -102,14 +109,17 @@ fun AppCard(
 ) {
     val label = app.label
         .let {
-            when (settings.appCardLabelRemoveSpaces) {
-                true -> it.replace(" ", "")
-                else -> it
+            if (settings.appCardLabelRemoveSpaces) {
+                it.replace(" ", "")
+            } else {
+                it
             }
-        }.let {
-            when (settings.appCardLabelLowercase) {
-                true -> it.lowercase()
-                false -> it
+        }
+        .let {
+            if (settings.appCardLabelLowercase) {
+                it.lowercase()
+            } else {
+                it
             }
         }
     // workaround to use long press on buttons: https://stackoverflow.com/a/76395585
@@ -138,7 +148,7 @@ fun AppCard(
     TextButton(
         modifier = modifier,
         onClick = { },
-        interactionSource = interactionSource
+        interactionSource = interactionSource,
     ) {
         Text(
             modifier = Modifier.padding(settings.appCardPadding.dp),
@@ -154,28 +164,48 @@ fun AppCard(
 @Composable
 fun AppDialog(
     app: LauncherApp,
+    vm: LauncherViewModel,
     onDismissRequest: () -> Unit,
-    launchAppInfo: () -> Unit,
-    launchAppUninstall: () -> Unit,
-    launchAppShortcut: (LauncherAppShortcut) -> Unit,
-    hideApp: () -> Unit,
     showHideAppButton: Boolean,
     modifier: Modifier = Modifier
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         ElevatedCard(modifier = modifier) {
             Column {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(dimensionResource(R.dimen.padding_small)),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center
+                ) {
+                    Image(
+                        modifier = Modifier
+                            .padding(dimensionResource(R.dimen.padding_small))
+                            .size(dimensionResource(R.dimen.image_size)),
+                        bitmap = vm.getAppIcon(app.packageName)
+                            .toBitmap(config = Bitmap.Config.ARGB_8888)
+                            .asImageBitmap(),
+                        contentDescription = "App icon",
+                    )
+                    Text(
+                        text = app.label,
+                        modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
+                        style = MaterialTheme.typography.headlineSmall
+                    )
+                }
+                Divider()
                 AppDialogItem(
                     text = stringResource(R.string.drawer_app_info),
                     onClick = {
-                        launchAppInfo()
+                        vm.launchAppInfo(app.packageName)
                         onDismissRequest()
                     }
                 )
                 AppDialogItem(
                     text = stringResource(R.string.drawer_app_uninstall),
                     onClick = {
-                        launchAppUninstall()
+                        vm.launchAppUninstall(app.packageName)
                         onDismissRequest()
                     }
                 )
@@ -183,7 +213,7 @@ fun AppDialog(
                     AppDialogItem(
                         text = stringResource(R.string.drawer_app_hide),
                         onClick = {
-                            hideApp()
+                            vm.hideApp(app.packageName)
                             onDismissRequest()
                         }
                     )
@@ -200,7 +230,7 @@ fun AppDialog(
                     items(app.shortcutsList.size) { i ->
                         val shortcut = app.shortcutsList[i]
                         AppDialogItem(text = shortcut.label) {
-                            launchAppShortcut(shortcut)
+                            vm.launchAppShortcut(shortcut)
                             onDismissRequest()
                         }
                     }

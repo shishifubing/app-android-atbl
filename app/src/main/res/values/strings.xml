@@ -6,8 +6,8 @@
     <string name="drawer_app_uninstall">Uninstall</string>
     <string name="drawer_app_hide">Hide app</string>
     <string name="shortcut_settings_label">Launcher settings</string>
-    <string name="settings_remove_spaces">Remove spaces</string>
-    <string name="settings_remove_spaces_label">Remove spaces in labels of
+    <string name="settings_app_label_remove_spaces">Remove spaces</string>
+    <string name="settings_app_label_remove_spaces_label">Remove spaces in labels of
         launcher apps</string>
     <string name="settings_lowercase">Lowercase</string>
     <string name="settings_lowercase_label">Make labels of
@@ -16,13 +16,21 @@
     <string name="settings_app_card_text_style">App label text style</string>
     <string name="settings_app_card_text_color">App label text color</string>
     <string name="settings_app_card_font_family">App label font family</string>
-    <string name="settings_app_layout_horizontal_arrangement">
+    <string name="settings_layout_horizontal_arrangement">
         Horizontal arrangement
     </string>
-    <string name="settings_app_layout_vertical_arrangement">
+    <string name="settings_layout_vertical_arrangement">
         Vertical arrangement
     </string>
-    <string name="settings_hidden_apps">Configure hidden apps</string>
+    <string name="settings_layout_sort_by">Sort apps by</string>
+    <string name="settings_layout_reverse_order">Reverse</string>
+    <string name="settings_layout_horizontal_padding">Horizontal
+        screen padding</string>
+    <string name="settings_layout_vertical_padding">Vertical screen
+        padding</string>
+    <string name="settings_layout_reverse_order_label">Reverse order of
+        displayed apps</string>
+    <string name="settings_hidden_apps">Hidden apps</string>
     <string name="settings_choice_dialog_ok">OK</string>
     <string name="settings_choice_dialog_cancel">Cancel</string>
 </resources>

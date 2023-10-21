@@ -12,6 +12,14 @@ message LauncherSettings {
   LauncherTextColor app_card_text_color = 6;
   LauncherFontFamily app_card_font_family = 7;
   LauncherVerticalArrangement app_layout_vertical_arrangement = 8;
+  LauncherSortBy app_layout_sort_by = 9;
+  bool app_layout_reverse_order = 10;
+  int32 app_layout_horizontal_padding = 11;
+  int32 app_layout_vertical_padding = 12;
+}
+
+enum LauncherSortBy {
+  SortByLabel = 0;
 }
 
 enum LauncherTextStyle {

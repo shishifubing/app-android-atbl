@@ -11,6 +11,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -40,6 +42,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
 import com.shishifubing.atbl.LauncherSettings
+import com.shishifubing.atbl.LauncherSortBy
 import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.LauncherVerticalArrangement
@@ -57,7 +60,10 @@ private val choiceOptions = object {
     val verticalArrangement = enumToList<LauncherVerticalArrangement>()
     val textColor = enumToList<LauncherTextColor>()
     val appCardPadding = (0..30).map { it.toString() }
+    val layoutHorizontalPadding = (0..150 step 10).map { it.toString() }
+    val layoutVerticalPadding = (0..150 step 10).map { it.toString() }
     val fontFamilies = enumToList<LauncherFontFamily>()
+    val sortBy = enumToList<LauncherSortBy>()
 }
 
 @Composable
@@ -66,31 +72,123 @@ fun SettingsScreen(
     vm: SettingsViewModel = viewModel(),
 ) {
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
-    Column(modifier = modifier) {
-        AppCardRemoveSpacesField(vm, settings)
-        AppCardLowercaseField(vm, settings)
-        AppCardFontFamilyField(vm, settings)
-        AppCardTextStyleField(vm, settings)
-        AppCardTextColorField(vm, settings)
-        AppCardPaddingField(vm, settings)
-        HorizontalArrangementField(vm, settings)
-        VerticalArrangementField(vm, settings)
-        HiddenAppsField(vm)
+    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+        AppCardRemoveSpaces(vm, settings)
+        AppCardLowercase(vm, settings)
+        AppCardFontFamily(vm, settings)
+        AppCardTextStyle(vm, settings)
+        AppCardTextColor(vm, settings)
+        AppCardPadding(vm, settings)
+        LayoutSortBy(vm, settings)
+        LayoutReverseOrder(vm, settings)
+        LayoutHorizontalPadding(vm, settings)
+        LayoutVerticalPadding(vm, settings)
+        LayoutHorizontalArrangement(vm, settings)
+        LayoutVerticalArrangement(vm, settings)
+        HiddenApps(vm)
     }
 }
 
 @Composable
-fun VerticalArrangementField(
+fun LayoutVerticalPadding(
     vm: SettingsViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
-        mutableIntStateOf(
-            choiceOptions.verticalArrangement.indexOf(settings.appLayoutVerticalArrangement.name)
-        )
+        mutableIntStateOf(choiceOptions.layoutVerticalPadding.indexOf(
+            settings.appLayoutVerticalPadding.toString()
+        ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
-        name = R.string.settings_app_layout_vertical_arrangement,
+        name = R.string.settings_layout_vertical_padding,
+        selectedOption = curOption,
+        options = choiceOptions.layoutVerticalPadding,
+        onConfirm = { choice ->
+            curOption = choice
+            vm.updateSettings {
+                it.setAppLayoutVerticalPadding(choiceOptions.layoutVerticalPadding[choice].toInt())
+            }
+        }
+    )
+}
+
+@Composable
+fun LayoutHorizontalPadding(
+    vm: SettingsViewModel,
+    settings: LauncherSettings
+) {
+    var curOption by remember {
+        mutableIntStateOf(choiceOptions.layoutHorizontalPadding.indexOf(
+            settings.appLayoutHorizontalPadding.toString()
+        ).let { if (it != -1) it else 0 })
+    }
+    SettingsSingleChoiceField(
+        name = R.string.settings_layout_horizontal_padding,
+        selectedOption = curOption,
+        options = choiceOptions.layoutHorizontalPadding,
+        onConfirm = { choice ->
+            curOption = choice
+            vm.updateSettings { it.setAppLayoutHorizontalPadding(choiceOptions.layoutHorizontalPadding[choice].toInt()) }
+        }
+    )
+}
+
+@Composable
+fun LayoutSortBy(
+    vm: SettingsViewModel,
+    settings: LauncherSettings
+) {
+    var curOption by remember {
+        mutableIntStateOf(choiceOptions.sortBy.indexOf(
+            settings.appLayoutSortBy.name
+        ).let { if (it != -1) it else 0 })
+    }
+    SettingsSingleChoiceField(
+        name = R.string.settings_layout_sort_by,
+        selectedOption = curOption,
+        options = choiceOptions.sortBy,
+        onConfirm = { choice ->
+            curOption = choice
+            vm.updateSettings {
+                it.setAppLayoutSortBy(
+                    LauncherSortBy.valueOf(choiceOptions.sortBy[choice])
+                )
+            }
+        }
+    )
+}
+
+@Composable
+fun LayoutReverseOrder(
+    vm: SettingsViewModel,
+    settings: LauncherSettings
+) {
+    SettingsSwitchField(
+        name = R.string.settings_layout_reverse_order,
+        label = R.string.settings_layout_reverse_order_label,
+        isToggled = settings.appLayoutReverseOrder,
+        onClick = {
+            vm.updateSettings {
+                it.setAppLayoutReverseOrder(
+                    settings.appLayoutReverseOrder.not()
+                )
+            }
+        }
+    )
+}
+
+@Composable
+fun LayoutVerticalArrangement(
+    vm: SettingsViewModel,
+    settings: LauncherSettings
+) {
+    var curOption by remember {
+        mutableIntStateOf(choiceOptions.verticalArrangement.indexOf(
+            settings.appLayoutVerticalArrangement.name
+        ).let { if (it != -1) it else 0 })
+    }
+    SettingsSingleChoiceField(
+        name = R.string.settings_layout_vertical_arrangement,
         selectedOption = curOption,
         options = choiceOptions.verticalArrangement,
         onConfirm = { choice ->
@@ -105,12 +203,14 @@ fun VerticalArrangementField(
 }
 
 @Composable
-fun AppCardFontFamilyField(
+fun AppCardFontFamily(
     vm: SettingsViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
-        mutableIntStateOf(choiceOptions.fontFamilies.indexOf(settings.appCardFontFamily.name))
+        mutableIntStateOf(choiceOptions.fontFamilies.indexOf(
+            settings.appCardFontFamily.name
+        ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
         name = R.string.settings_app_card_font_family,
@@ -128,12 +228,14 @@ fun AppCardFontFamilyField(
 }
 
 @Composable
-fun AppCardTextStyleField(
+fun AppCardTextStyle(
     vm: SettingsViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
-        mutableIntStateOf(choiceOptions.textStyles.indexOf(settings.appCardTextStyle.name))
+        mutableIntStateOf(choiceOptions.textStyles.indexOf(
+            settings.appCardTextStyle.name
+        ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
         name = R.string.settings_app_card_text_style,
@@ -151,13 +253,13 @@ fun AppCardTextStyleField(
 }
 
 @Composable
-fun AppCardRemoveSpacesField(
+fun AppCardRemoveSpaces(
     vm: SettingsViewModel,
     settings: LauncherSettings
 ) {
     SettingsSwitchField(
-        name = R.string.settings_remove_spaces,
-        label = R.string.settings_remove_spaces_label,
+        name = R.string.settings_app_label_remove_spaces,
+        label = R.string.settings_app_label_remove_spaces_label,
         isToggled = settings.appCardLabelRemoveSpaces,
         onClick = {
             vm.updateSettings {
@@ -170,7 +272,7 @@ fun AppCardRemoveSpacesField(
 }
 
 @Composable
-fun AppCardLowercaseField(
+fun AppCardLowercase(
     vm: SettingsViewModel,
     settings: LauncherSettings
 ) {
@@ -189,7 +291,7 @@ fun AppCardLowercaseField(
 }
 
 @Composable
-fun AppCardTextColorField(
+fun AppCardTextColor(
     vm: SettingsViewModel,
     settings: LauncherSettings
 ) {
@@ -214,7 +316,7 @@ fun AppCardTextColorField(
 }
 
 @Composable
-fun AppCardPaddingField(
+fun AppCardPadding(
     vm: SettingsViewModel,
     settings: LauncherSettings
 ) {
@@ -227,25 +329,27 @@ fun AppCardPaddingField(
         name = R.string.settings_app_card_padding,
         selectedOption = curOption,
         options = choiceOptions.appCardPadding,
-        onConfirm = { value ->
-            curOption = value
-            vm.updateSettings { it.setAppCardPadding(value) }
+        onConfirm = { choice ->
+            curOption = choice
+            vm.updateSettings {
+                it.setAppCardPadding(choiceOptions.appCardPadding[choice].toInt())
+            }
         }
     )
 }
 
 @Composable
-fun HorizontalArrangementField(
+fun LayoutHorizontalArrangement(
     vm: SettingsViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
-        mutableIntStateOf(
-            choiceOptions.horizontalArrangement.indexOf(settings.appLayoutHorizontalArrangement.name)
-        )
+        mutableIntStateOf(choiceOptions.horizontalArrangement.indexOf(
+            settings.appLayoutHorizontalArrangement.name
+        ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
-        name = R.string.settings_app_layout_horizontal_arrangement,
+        name = R.string.settings_layout_horizontal_arrangement,
         selectedOption = curOption,
         options = choiceOptions.horizontalArrangement,
         onConfirm = { choice ->
@@ -260,7 +364,7 @@ fun HorizontalArrangementField(
 }
 
 @Composable
-fun HiddenAppsField(
+fun HiddenApps(
     vm: SettingsViewModel
 ) {
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
