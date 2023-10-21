@@ -4,6 +4,7 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
+import android.graphics.drawable.Drawable
 import android.os.Build
 import android.util.Log
 import androidx.datastore.core.CorruptionException
@@ -33,6 +34,10 @@ class LauncherAppsRepository(
         } else {
             throw exception
         }
+    }
+
+    fun getAppIcon(packageName: String): Drawable {
+        return context.packageManager.getApplicationIcon(packageName)
     }
 
     suspend fun hideApp(packageName: String) {

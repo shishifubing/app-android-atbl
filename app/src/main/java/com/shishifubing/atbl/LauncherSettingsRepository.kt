@@ -50,6 +50,10 @@ object SettingsSerializer : Serializer<LauncherSettings> {
             )
             .setAppCardTextColor(LauncherTextColor.Unspecified)
             .setAppCardFontFamily(LauncherFontFamily.Default)
+            .setAppLayoutSortBy(LauncherSortBy.SortByLabel)
+            .setAppLayoutReverseOrder(false)
+            .setAppLayoutHorizontalPadding(0)
+            .setAppLayoutVerticalPadding(0)
             .build()
 
     override suspend fun readFrom(input: InputStream): LauncherSettings {

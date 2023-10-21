@@ -10,7 +10,8 @@ import com.shishifubing.atbl.LauncherAppsManager
 import com.shishifubing.atbl.LauncherAppsRepository
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSettingsRepository
-import kotlinx.coroutines.flow.map
+import com.shishifubing.atbl.LauncherSortBy
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class LauncherViewModel(
@@ -21,17 +22,33 @@ class LauncherViewModel(
     initialApps: LauncherApps
 ) : ViewModel() {
 
-    val initialApps = transformApps(initialApps)
-    val settingsFlow = launcherSettingsRepository.settingsFlow
-    val appsFlow = launcherAppsRepository.appsFlow.map(this::transformApps)
+    val initialApps = transformApps(initialApps, initialSettings)
 
-    private fun transformApps(current: LauncherApps): LauncherApps {
+    val settingsFlow = launcherSettingsRepository.settingsFlow
+    val appsFlow = launcherAppsRepository.appsFlow.combine(
+        settingsFlow,
+        this::transformApps
+    )
+
+    private fun transformApps(
+        current: LauncherApps,
+        settings: LauncherSettings
+    ): LauncherApps {
         return LauncherApps.newBuilder().addAllApps(
             current.appsList
                 .filterNot { it.isHidden }
-                .sortedBy { it.label }
+                .let {
+                    when (settings.appLayoutSortBy) {
+                        LauncherSortBy.SortByLabel -> it.sortedBy { app -> app.label }
+                        else -> it.sortedBy { app -> app.label }
+                    }
+                }
+                .let { if (settings.appLayoutReverseOrder) it.reversed() else it }
         ).build()
     }
+
+    fun getAppIcon(packageName: String) =
+        launcherAppsRepository.getAppIcon(packageName)
 
     fun hideApp(packageName: String) {
         viewModelScope.launch { launcherAppsRepository.hideApp(packageName) }
