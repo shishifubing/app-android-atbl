@@ -2,9 +2,9 @@
     <string name="app_name">ATBL</string>
     <string name="not_a_home_app_toast">The launcher is not set as the home
         app, you cannot see shortcuts</string>
-    <string name="drawer_app_info">App info</string>
+    <string name="drawer_app_info">Info</string>
     <string name="drawer_app_uninstall">Uninstall</string>
-    <string name="drawer_app_hide">Hide app</string>
+    <string name="drawer_app_hide">Hide</string>
     <string name="shortcut_settings_label">Launcher settings</string>
     <string name="settings_app_label_remove_spaces">Remove spaces</string>
     <string name="settings_app_label_remove_spaces_label">Remove spaces in labels of
