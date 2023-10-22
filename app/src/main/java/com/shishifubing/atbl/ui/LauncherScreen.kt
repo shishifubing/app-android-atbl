@@ -1,7 +1,6 @@
 package com.shishifubing.atbl.ui
 
-import android.graphics.Bitmap
-import androidx.annotation.StringRes
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
@@ -16,7 +15,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -39,7 +37,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -47,9 +44,9 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherFontFamily
@@ -62,7 +59,7 @@ import com.shishifubing.atbl.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun LauncherScreen(
     modifier: Modifier = Modifier,
@@ -71,7 +68,6 @@ fun LauncherScreen(
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
-
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -184,131 +180,172 @@ fun AppDialog(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-                Image(
-                    modifier = Modifier
-                        .padding(dimensionResource(R.dimen.padding_small))
-                        .size(dimensionResource(R.dimen.image_size)),
-                    bitmap = vm.getAppIcon(app.packageName)
-                        .toBitmap(config = Bitmap.Config.ARGB_8888)
-                        .asImageBitmap(),
-                    contentDescription = "App icon",
+                AppDialogHeader(
+                    app = app,
+                    vm = vm,
+                    onDismissRequest = onDismissRequest,
+                    enabledHide = enabledHide
                 )
-                Text(
-                    text = app.label,
-                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
-                    style = MaterialTheme.typography.headlineSmall
-                )
-
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.Center,
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(
-                            dimensionResource(R.dimen.padding_small),
-                            dimensionResource(R.dimen.padding_medium)
-                        )
-                ) {
-                    AppDialogButton(
-                        modifier = Modifier.weight(1f),
-                        text = R.string.drawer_app_info,
-                        shapeType = 0,
-                        onClick = {
-                            vm.launchAppInfo(app.packageName)
-                            onDismissRequest()
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    AppDialogButton(
-                        modifier = Modifier.weight(1f),
-                        text = R.string.drawer_app_hide,
-                        enabled = enabledHide,
-                        shapeType = 1,
-                        onClick = {
-                            vm.hideApp(app.packageName)
-                            onDismissRequest()
-                        }
-                    )
-                    Spacer(modifier = Modifier.width(2.dp))
-                    AppDialogButton(
-                        modifier = Modifier.weight(1f),
-                        text = R.string.drawer_app_uninstall,
-                        shapeType = 2,
-                        onClick = {
-                            vm.launchAppUninstall(app.packageName)
-                            onDismissRequest()
-                        }
-                    )
-                }
                 if (app.shortcutsList.isNotEmpty()) {
                     Divider()
                 }
-                LazyColumn(
-                    modifier = Modifier.heightIn(
-                        0.dp,
-                        (LocalConfiguration.current.screenHeightDp * 0.6).dp
-                    )
-                ) {
-                    items(app.shortcutsList.size) { i ->
-                        val shortcut = app.shortcutsList[i]
-                        Surface(
-                            modifier = Modifier.fillMaxWidth(),
-                            onClick = {
-                                vm.launchAppShortcut(shortcut)
-                                onDismissRequest()
-                            },
-                        ) {
-                            Text(
-                                modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
-                                text = shortcut.label,
-                                style = MaterialTheme.typography.bodyLarge
-                            )
-                        }
-                    }
-
-                }
+                AppDialogShortcuts(
+                    vm = vm,
+                    app = app,
+                    onDismissRequest = onDismissRequest
+                )
             }
         }
     }
 }
 
 @Composable
+fun AppDialogHeader(
+    app: LauncherApp,
+    vm: LauncherViewModel,
+    onDismissRequest: () -> Unit,
+    enabledHide: Boolean,
+    modifier: Modifier = Modifier
+) {
+    Row(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(dimensionResource(R.dimen.padding_small)),
+        horizontalArrangement = Arrangement.Center,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(dimensionResource(R.dimen.padding_small)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center
+        ) {
+            Image(
+                modifier = Modifier
+                    .padding(dimensionResource(R.dimen.padding_small))
+                    .size(dimensionResource(R.dimen.image_size)),
+                bitmap = vm.getAppIcon(app.packageName),
+                contentDescription = "App icon",
+            )
+            Text(
+                text = app.label,
+                modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
+                style = MaterialTheme.typography.bodyLarge,
+                textAlign = TextAlign.Center
+            )
+        }
+
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(dimensionResource(R.dimen.padding_small)),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+        ) {
+            AppDialogButton(
+                text = stringResource(R.string.drawer_app_info),
+                shapeType = 0,
+                onClick = {
+                    vm.launchAppInfo(app.packageName)
+                    onDismissRequest()
+                }
+            )
+            Spacer(modifier = Modifier.height(1.dp))
+            AppDialogButton(
+                text = stringResource(R.string.drawer_app_hide),
+                enabled = enabledHide,
+                shapeType = 1,
+                onClick = {
+                    vm.hideApp(app.packageName)
+                    onDismissRequest()
+                }
+            )
+            Spacer(modifier = Modifier.height(1.dp))
+            AppDialogButton(
+                text = stringResource(R.string.drawer_app_uninstall),
+                shapeType = 2,
+                onClick = {
+                    vm.launchAppUninstall(app.packageName)
+                    onDismissRequest()
+                }
+            )
+        }
+    }
+}
+
+@Composable
+fun AppDialogShortcuts(
+    vm: LauncherViewModel,
+    app: LauncherApp,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    LazyColumn(
+        modifier = modifier.heightIn(
+            0.dp,
+            (LocalConfiguration.current.screenHeightDp * 0.6).dp
+        )
+    ) {
+        items(app.shortcutsList.size) { i ->
+            val shortcut = app.shortcutsList[i]
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                onClick = {
+                    vm.launchAppShortcut(shortcut)
+                    onDismissRequest()
+                },
+            ) {
+                Text(
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+                    text = shortcut.label,
+                    style = MaterialTheme.typography.bodyLarge
+                )
+            }
+        }
+
+    }
+}
+
+@Composable
 fun AppDialogButton(
-    @StringRes text: Int,
-    shapeType: Int,
+    text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    shapeType: Int = 1,
     enabled: Boolean = true
 ) {
     val shape = when (shapeType) {
         0 -> RoundedCornerShape(
             dimensionResource(R.dimen.padding_medium),
-            0.dp,
-            0.dp,
             dimensionResource(R.dimen.padding_medium),
+            0.dp,
+            0.dp,
         )
 
         2 -> RoundedCornerShape(
             0.dp,
-            dimensionResource(R.dimen.padding_medium),
-            dimensionResource(R.dimen.padding_medium),
             0.dp,
+            dimensionResource(R.dimen.padding_medium),
+            dimensionResource(R.dimen.padding_medium),
         )
 
         else -> RectangleShape
     }
+
     ElevatedButton(
-        modifier = modifier,
+        modifier = modifier.fillMaxWidth(),
         onClick = onClick,
-        shape = shape,
-        enabled = enabled
+        enabled = enabled,
+        shape = shape
     ) {
         Text(
-            text = stringResource(text),
-            style = MaterialTheme.typography.bodySmall
+            text = text,
+            style = MaterialTheme.typography.bodyLarge,
+            textAlign = TextAlign.Center
         )
     }
+
 }
 
 @Composable
