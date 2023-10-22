@@ -4,9 +4,12 @@ import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
-import android.graphics.drawable.Drawable
+import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
+import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.asImageBitmap
+import androidx.core.graphics.drawable.toBitmap
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
@@ -36,8 +39,10 @@ class LauncherAppsRepository(
         }
     }
 
-    fun getAppIcon(packageName: String): Drawable {
+    fun getAppIcon(packageName: String): ImageBitmap {
         return context.packageManager.getApplicationIcon(packageName)
+            .toBitmap(config = Bitmap.Config.ARGB_8888)
+            .asImageBitmap()
     }
 
     suspend fun hideApp(packageName: String) {
@@ -96,15 +101,14 @@ class LauncherAppsRepository(
                 .filter { it.isHidden }
                 .map { it.packageName }
                 .toSet()
-            current.clearApps().addAllApps(
-                fetchAllApps().map { app ->
-                    if (hidden.contains(app.packageName)) {
-                        app.toBuilder().setIsHidden(true).build()
-                    } else {
-                        app
-                    }
+            val newApps = fetchAllApps().map { app ->
+                if (hidden.contains(app.packageName)) {
+                    app.toBuilder().setIsHidden(true).build()
+                } else {
+                    app
                 }
-            )
+            }
+            current.clearApps().addAllApps(newApps)
         }
     }
 
@@ -166,8 +170,7 @@ class LauncherAppsRepository(
 
     private fun getShortcuts(packageName: String): List<LauncherAppShortcut> {
         val launcherAppsService = context.getSystemService(
-            LauncherAppsAndroid::class
-                .java
+            LauncherAppsAndroid::class.java
         )
         val userHandle = android.os.Process.myUserHandle()
         return arrayOf(

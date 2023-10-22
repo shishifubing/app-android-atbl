@@ -73,6 +73,7 @@ fun SettingsScreen(
 ) {
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+        HiddenApps(vm)
         AppCardRemoveSpaces(vm, settings)
         AppCardLowercase(vm, settings)
         AppCardFontFamily(vm, settings)
@@ -85,7 +86,6 @@ fun SettingsScreen(
         LayoutVerticalPadding(vm, settings)
         LayoutHorizontalArrangement(vm, settings)
         LayoutVerticalArrangement(vm, settings)
-        HiddenApps(vm)
     }
 }
 
