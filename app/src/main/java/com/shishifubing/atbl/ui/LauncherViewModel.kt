@@ -58,6 +58,10 @@ class LauncherViewModel(
         launcherAppsManager.launchApp(packageName)
     }
 
+    fun launchSplitScreen(app1: String, app2: String) {
+        launcherAppsManager.launchSplitScreen(app1, app2)
+    }
+
     fun launchAppInfo(packageName: String) {
         launcherAppsManager.launchAppInfo(packageName)
     }
