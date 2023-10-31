@@ -19,6 +19,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
@@ -82,6 +83,14 @@ fun LauncherScreen(
             settings.appLayoutVerticalArrangement
         )
     ) {
+        Button(onClick = {
+            vm.launchSplitScreen(
+                "com.ichi2.anki",
+                "org.schabi.newpipe",
+            )
+        }) {
+            Text("test")
+        }
         apps.appsList.forEach { app ->
             AppCard(
                 app = app,
