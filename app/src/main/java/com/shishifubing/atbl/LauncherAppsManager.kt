@@ -7,11 +7,17 @@ import android.content.pm.ShortcutInfo
 import android.net.Uri
 import android.os.UserHandle
 import android.provider.Settings
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleOwner
 
 
 private val tag = LauncherAppsManager::class.simpleName
 
-class LauncherAppsManager(private val context: Context) {
+class LauncherAppsManager(
+    private val context: Context,
+    private val lifecycle: Lifecycle
+) {
     private val packageManager = context.packageManager
     private val launcherAppsService =
         context.getSystemService(LauncherApps::class.java)
@@ -89,4 +95,22 @@ class LauncherAppsManager(private val context: Context) {
         }
         launcherAppsService.registerCallback(callback)
     }
+
+    fun launchSplitScreen(appPrimary: String, appSecondary: String) {
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
+            override fun onStop(owner: LifecycleOwner) {
+                context.startActivity(
+                    packageManager
+                        .getLaunchIntentForPackage(appSecondary)
+                        ?.setFlags(
+                            Intent.FLAG_ACTIVITY_NEW_TASK
+                                    or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                        )
+                )
+                lifecycle.removeObserver(this)
+            }
+        })
+        launchApp(appPrimary)
+    }
 }
+
