@@ -11,6 +11,7 @@ import com.shishifubing.atbl.LauncherAppsRepository
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSettingsRepository
 import com.shishifubing.atbl.LauncherSortBy
+import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
@@ -19,11 +20,11 @@ class LauncherViewModel(
     private val launcherAppsRepository: LauncherAppsRepository,
     private val launcherAppsManager: LauncherAppsManager,
     val initialSettings: LauncherSettings,
-    initialApps: LauncherApps
 ) : ViewModel() {
 
-    val initialApps = transformApps(initialApps, initialSettings)
-
+    val initialApps: LauncherApps = LauncherApps.getDefaultInstance()
+    val initialSplitScreenShortcuts: LauncherSplitScreenShortcut =
+        LauncherSplitScreenShortcut.getDefaultInstance()
     val settingsFlow = launcherSettingsRepository.settingsFlow
     val appsFlow = launcherAppsRepository.appsFlow.combine(
         settingsFlow,
@@ -58,8 +59,8 @@ class LauncherViewModel(
         launcherAppsManager.launchApp(packageName)
     }
 
-    fun launchSplitScreen(app1: String, app2: String) {
-        launcherAppsManager.launchSplitScreen(app1, app2)
+    fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
+        launcherAppsManager.launchSplitScreen(shortcut)
     }
 
     fun launchAppInfo(packageName: String) {
@@ -79,8 +80,7 @@ class LauncherViewModelFactory(
     private val launcherSettingsRepository: LauncherSettingsRepository,
     private val launcherAppsRepository: LauncherAppsRepository,
     private val launcherAppsManager: LauncherAppsManager,
-    private val initialSettings: LauncherSettings,
-    private val initialApps: LauncherApps
+    private val initialSettings: LauncherSettings
 ) : ViewModelProvider.Factory {
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(LauncherViewModel::class.java)) {
@@ -89,8 +89,7 @@ class LauncherViewModelFactory(
                 launcherSettingsRepository,
                 launcherAppsRepository,
                 launcherAppsManager,
-                initialSettings,
-                initialApps
+                initialSettings
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")

@@ -96,12 +96,12 @@ class LauncherAppsManager(
         launcherAppsService.registerCallback(callback)
     }
 
-    fun launchSplitScreen(appPrimary: String, appSecondary: String) {
+    fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 context.startActivity(
                     packageManager
-                        .getLaunchIntentForPackage(appSecondary)
+                        .getLaunchIntentForPackage(shortcut.appTop.packageName)
                         ?.setFlags(
                             Intent.FLAG_ACTIVITY_NEW_TASK
                                     or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
@@ -110,7 +110,7 @@ class LauncherAppsManager(
                 lifecycle.removeObserver(this)
             }
         })
-        launchApp(appPrimary)
+        launchApp(shortcut.appBottom.packageName)
     }
 }
 

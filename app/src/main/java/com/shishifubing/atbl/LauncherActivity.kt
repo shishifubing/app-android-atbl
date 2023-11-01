@@ -60,8 +60,7 @@ class LauncherActivity : ComponentActivity() {
             this,
             LauncherViewModelFactory(
                 settingsRepo, launcherAppsRepo, launcherAppsManager,
-                runBlocking { settingsRepo.fetchInitial() },
-                runBlocking { launcherAppsRepo.fetchInitial() }
+                runBlocking { settingsRepo.fetchInitial() }
             )
         )[LauncherViewModel::class.java]
 

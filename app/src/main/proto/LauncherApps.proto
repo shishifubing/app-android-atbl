@@ -5,6 +5,7 @@ option java_multiple_files = true;
 
 message LauncherApps {
   repeated LauncherApp apps = 1;
+  repeated LauncherSplitScreenShortcut splitScreenShortcuts = 2;
 }
 
 message LauncherApp {
@@ -18,4 +19,9 @@ message LauncherAppShortcut {
   string shortcutId = 1;
   string packageName = 2;
   string label = 3;
+}
+
+message LauncherSplitScreenShortcut {
+  LauncherApp appBottom = 1;
+  LauncherApp appTop = 2;
 }

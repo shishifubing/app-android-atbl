@@ -6,6 +6,7 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
@@ -19,7 +20,6 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Button
 import androidx.compose.material3.Divider
 import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
@@ -53,6 +53,7 @@ import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
 import com.shishifubing.atbl.LauncherSettings
+import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.LauncherVerticalArrangement
@@ -69,6 +70,11 @@ fun LauncherScreen(
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
+    var dialogShortcut by remember {
+        mutableStateOf<LauncherSplitScreenShortcut?>(
+            null
+        )
+    }
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -83,44 +89,75 @@ fun LauncherScreen(
             settings.appLayoutVerticalArrangement
         )
     ) {
-        Button(onClick = {
-            vm.launchSplitScreen(
-                "com.ichi2.anki",
-                "org.schabi.newpipe",
+        val shortcut = LauncherSplitScreenShortcut.getDefaultInstance()
+            .toBuilder()
+            .setAppBottom(
+                LauncherApp.getDefaultInstance()
+                    .toBuilder()
+                    .setPackageName("com.ichi2.anki")
+                    .setLabel("anki")
+                    .build()
             )
-        }) {
-            Text("test")
+            .setAppTop(
+                LauncherApp.getDefaultInstance()
+                    .toBuilder()
+                    .setPackageName("org.schabi.newpipe")
+                    .setLabel("newpipe")
+                    .build()
+            )
+            .build()
+        AppCard(
+            label = shortcut.appTop.label + "/" + shortcut.appBottom
+                .label,
+            onClick = { vm.launchSplitScreen(shortcut) },
+            onLongClick = { dialogShortcut = shortcut },
+            settings = settings
+        )
+        apps.splitScreenShortcutsList.forEach { shortcut ->
+            AppCard(
+                label = shortcut.appTop.label + " / " + shortcut.appBottom
+                    .label,
+                onClick = { vm.launchSplitScreen(shortcut) },
+                onLongClick = { dialogShortcut = shortcut },
+                settings = settings
+            )
         }
         apps.appsList.forEach { app ->
             AppCard(
-                app = app,
+                label = app.label,
                 onClick = { vm.launchApp(app.packageName) },
                 onLongClick = { dialogApp = app },
                 settings = settings
             )
         }
     }
-
+    if (dialogShortcut != null) {
+        SplitScreenShortcutDialog(
+            shortcut = dialogShortcut!!,
+            vm = vm,
+            onDismissRequest = { dialogShortcut = null },
+        )
+    }
     if (dialogApp != null) {
-        val app = dialogApp!!
         AppDialog(
-            app = app,
+            app = dialogApp!!,
             vm = vm,
             onDismissRequest = { dialogApp = null },
-            enabledHide = app.packageName != LocalContext.current.packageName
+            enabledHide = dialogApp!!.packageName != LocalContext.current
+                .packageName
         )
     }
 }
 
 @Composable
 fun AppCard(
-    app: LauncherApp,
+    label: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
     settings: LauncherSettings,
     modifier: Modifier = Modifier,
 ) {
-    val label = app.label
+    val transformedLabel = label
         .let {
             if (settings.appCardLabelRemoveSpaces) {
                 it.replace(" ", "")
@@ -138,7 +175,7 @@ fun AppCard(
     // workaround to use long press on buttons: https://stackoverflow.com/a/76395585
     val interactionSource = remember { MutableInteractionSource() }
     val viewConfiguration = LocalViewConfiguration.current
-    LaunchedEffect(interactionSource, app) {
+    LaunchedEffect(interactionSource, transformedLabel) {
         var isLongClick = false
         interactionSource.interactions.collectLatest { interaction ->
             when (interaction) {
@@ -165,7 +202,7 @@ fun AppCard(
     ) {
         Text(
             modifier = Modifier.padding(settings.appCardPadding.dp),
-            text = label,
+            text = transformedLabel,
             style = getTextStyle(settings.appCardTextStyle),
             fontFamily = getFontFamily(settings.appCardFontFamily),
             color = getTextColor(settings.appCardTextColor)
@@ -182,29 +219,62 @@ fun AppDialog(
     enabledHide: Boolean,
     modifier: Modifier = Modifier
 ) {
+    LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
+        AppDialogHeader(
+            app = app,
+            vm = vm,
+            onDismissRequest = onDismissRequest,
+            enabledHide = enabledHide
+        )
+        if (app.shortcutsList.isNotEmpty()) {
+            Divider()
+        }
+        AppDialogShortcuts(
+            vm = vm,
+            app = app,
+            onDismissRequest = onDismissRequest
+        )
+    }
+}
+
+@Composable
+fun LauncherDialog(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit,
+) {
     Dialog(onDismissRequest = onDismissRequest) {
         ElevatedCard(modifier = modifier) {
             Column(
                 modifier = Modifier.fillMaxWidth(),
                 horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center
-            ) {
-                AppDialogHeader(
-                    app = app,
-                    vm = vm,
-                    onDismissRequest = onDismissRequest,
-                    enabledHide = enabledHide
-                )
-                if (app.shortcutsList.isNotEmpty()) {
-                    Divider()
-                }
-                AppDialogShortcuts(
-                    vm = vm,
-                    app = app,
-                    onDismissRequest = onDismissRequest
-                )
-            }
+                verticalArrangement = Arrangement.Center,
+                content = content
+            )
         }
+    }
+}
+
+@Composable
+fun SplitScreenShortcutDialog(
+    shortcut: LauncherSplitScreenShortcut,
+    vm: LauncherViewModel,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
+        AppDialogHeader(
+            app = shortcut.appTop,
+            vm = vm,
+            onDismissRequest = onDismissRequest,
+            enabledHide = false
+        )
+        AppDialogHeader(
+            app = shortcut.appBottom,
+            vm = vm,
+            onDismissRequest = onDismissRequest,
+            enabledHide = false
+        )
     }
 }
 
