@@ -29,8 +29,7 @@ class LauncherSettingsActivity : ComponentActivity() {
             this,
             SettingsViewModelFactory(
                 settingsRepo, appsRepo,
-                runBlocking { settingsRepo.fetchInitial() },
-                runBlocking { appsRepo.fetchInitial() }
+                runBlocking { settingsRepo.fetchInitial() }
             )
         )[SettingsViewModel::class.java]
 

@@ -14,7 +14,7 @@ class SettingsViewModel(
     private val launcherSettingsRepository: LauncherSettingsRepository,
     private val appsRepository: LauncherAppsRepository,
     val initialSettings: LauncherSettings,
-    val initialApps: LauncherApps
+    val initialApps: LauncherApps = LauncherApps.getDefaultInstance()
 ) : ViewModel() {
 
     val settingsFlow = launcherSettingsRepository.settingsFlow
@@ -34,14 +34,13 @@ class SettingsViewModelFactory(
     private val repository: LauncherSettingsRepository,
     private val appsRepository: LauncherAppsRepository,
     private val initialSettings: LauncherSettings,
-    private val initialApps: LauncherApps
 ) : ViewModelProvider.Factory {
 
     override fun <T : ViewModel> create(modelClass: Class<T>): T {
         if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
             @Suppress("UNCHECKED_CAST")
             return SettingsViewModel(
-                repository, appsRepository, initialSettings, initialApps
+                repository, appsRepository, initialSettings
             ) as T
         }
         throw IllegalArgumentException("Unknown ViewModel class")
