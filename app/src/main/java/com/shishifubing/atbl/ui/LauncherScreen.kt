@@ -16,12 +16,11 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
-import androidx.compose.material3.Divider
-import androidx.compose.material3.ElevatedButton
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -38,6 +37,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.RectangleShape
+import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -107,7 +107,7 @@ fun LauncherScreen(
             )
             .build()
         AppCard(
-            label = shortcut.appTop.label + "/" + shortcut.appBottom
+            label = shortcut.appTop.label + "∕" + shortcut.appBottom
                 .label,
             onClick = { vm.launchSplitScreen(shortcut) },
             onLongClick = { dialogShortcut = shortcut },
@@ -115,7 +115,7 @@ fun LauncherScreen(
         )
         apps.splitScreenShortcutsList.forEach { shortcut ->
             AppCard(
-                label = shortcut.appTop.label + " / " + shortcut.appBottom
+                label = shortcut.appTop.label + " ∕ " + shortcut.appBottom
                     .label,
                 onClick = { vm.launchSplitScreen(shortcut) },
                 onLongClick = { dialogShortcut = shortcut },
@@ -226,14 +226,16 @@ fun AppDialog(
             onDismissRequest = onDismissRequest,
             enabledHide = enabledHide
         )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         if (app.shortcutsList.isNotEmpty()) {
-            Divider()
+            ElevatedCard {
+                AppDialogShortcuts(
+                    vm = vm,
+                    app = app,
+                    onDismissRequest = onDismissRequest
+                )
+            }
         }
-        AppDialogShortcuts(
-            vm = vm,
-            app = app,
-            onDismissRequest = onDismissRequest
-        )
     }
 }
 
@@ -244,14 +246,12 @@ fun LauncherDialog(
     content: @Composable ColumnScope.() -> Unit,
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
-        ElevatedCard(modifier = modifier) {
-            Column(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.Center,
-                content = content
-            )
-        }
+        Column(
+            modifier = modifier.fillMaxWidth(),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            content = content
+        )
     }
 }
 
@@ -269,6 +269,7 @@ fun SplitScreenShortcutDialog(
             onDismissRequest = onDismissRequest,
             enabledHide = false
         )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         AppDialogHeader(
             app = shortcut.appBottom,
             vm = vm,
@@ -287,70 +288,70 @@ fun AppDialogHeader(
     modifier: Modifier = Modifier
 ) {
     Row(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(dimensionResource(R.dimen.padding_small)),
-        horizontalArrangement = Arrangement.Center,
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
         verticalAlignment = Alignment.CenterVertically
     ) {
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(dimensionResource(R.dimen.padding_small)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center
-        ) {
-            Image(
+        ElevatedCard(modifier = Modifier.weight(1f)) {
+            Column(
                 modifier = Modifier
-                    .padding(dimensionResource(R.dimen.padding_small))
-                    .size(dimensionResource(R.dimen.image_size)),
-                bitmap = vm.getAppIcon(app.packageName),
-                contentDescription = "App icon",
-            )
-            Text(
-                text = app.label,
-                modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
-                style = MaterialTheme.typography.bodyLarge,
-                textAlign = TextAlign.Center
-            )
+                    .fillMaxWidth()
+                    .padding(0.dp, dimensionResource(R.dimen.padding_medium)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    modifier = Modifier
+                        .padding(dimensionResource(R.dimen.padding_small))
+                        .size(dimensionResource(R.dimen.image_size)),
+                    bitmap = vm.getAppIcon(app.packageName),
+                    contentDescription = "App icon",
+                )
+                Text(
+                    text = app.label,
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+            }
         }
-
-        Column(
-            modifier = Modifier
-                .weight(1f)
-                .padding(dimensionResource(R.dimen.padding_small)),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            AppDialogButton(
-                text = stringResource(R.string.drawer_app_info),
-                shapeType = 0,
-                onClick = {
-                    vm.launchAppInfo(app.packageName)
-                    onDismissRequest()
+        Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+        ElevatedCard(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                AppDialogButton(
+                    text = stringResource(R.string.drawer_app_info),
+                    shapeType = ShapeType.TOP,
+                    onClick = {
+                        vm.launchAppInfo(app.packageName)
+                        onDismissRequest()
+                    }
+                )
+                if (enabledHide) {
+                    AppDialogButton(
+                        text = stringResource(R.string.drawer_app_hide),
+                        shapeType = ShapeType.CENTER,
+                        onClick = {
+                            vm.hideApp(app.packageName)
+                            onDismissRequest()
+                        }
+                    )
                 }
-            )
-            Spacer(modifier = Modifier.height(1.dp))
-            AppDialogButton(
-                text = stringResource(R.string.drawer_app_hide),
-                enabled = enabledHide,
-                shapeType = 1,
-                onClick = {
-                    vm.hideApp(app.packageName)
-                    onDismissRequest()
-                }
-            )
-            Spacer(modifier = Modifier.height(1.dp))
-            AppDialogButton(
-                text = stringResource(R.string.drawer_app_uninstall),
-                shapeType = 2,
-                onClick = {
-                    vm.launchAppUninstall(app.packageName)
-                    onDismissRequest()
-                }
-            )
+                AppDialogButton(
+                    text = stringResource(R.string.drawer_app_uninstall),
+                    shapeType = ShapeType.BOTTOM,
+                    onClick = {
+                        vm.launchAppUninstall(app.packageName)
+                        onDismissRequest()
+                    }
+                )
+            }
         }
     }
+
 }
 
 @Composable
@@ -361,26 +362,28 @@ fun AppDialogShortcuts(
     modifier: Modifier = Modifier,
 ) {
     LazyColumn(
-        modifier = modifier.heightIn(
-            0.dp,
-            (LocalConfiguration.current.screenHeightDp * 0.6).dp
-        )
+        modifier = modifier
+            .fillMaxWidth()
+            .heightIn(
+                0.dp,
+                (LocalConfiguration.current.screenHeightDp * 0.6).dp
+            )
     ) {
         items(app.shortcutsList.size) { i ->
             val shortcut = app.shortcutsList[i]
-            Surface(
-                modifier = Modifier.fillMaxWidth(),
+            AppDialogButton(
+                text = shortcut.label,
+                textAlign = TextAlign.Start,
                 onClick = {
                     vm.launchAppShortcut(shortcut)
                     onDismissRequest()
                 },
-            ) {
-                Text(
-                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
-                    text = shortcut.label,
-                    style = MaterialTheme.typography.bodyLarge
-                )
-            }
+                shapeType = if (app.shortcutsList.size == 1) ShapeType.CENTER else when (i) {
+                    0 -> ShapeType.TOP
+                    app.shortcutsList.size - 1 -> ShapeType.BOTTOM
+                    else -> ShapeType.CENTER
+                }
+            )
         }
 
     }
@@ -391,40 +394,47 @@ fun AppDialogButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    shapeType: Int = 1,
-    enabled: Boolean = true
+    shapeType: ShapeType = ShapeType.CENTER,
+    textAlign: TextAlign = TextAlign.Center
 ) {
-    val shape = when (shapeType) {
-        0 -> RoundedCornerShape(
-            dimensionResource(R.dimen.padding_medium),
-            dimensionResource(R.dimen.padding_medium),
-            0.dp,
-            0.dp,
-        )
-
-        2 -> RoundedCornerShape(
-            0.dp,
-            0.dp,
-            dimensionResource(R.dimen.padding_medium),
-            dimensionResource(R.dimen.padding_medium),
-        )
-
-        else -> RectangleShape
-    }
-
-    ElevatedButton(
+    Surface(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick,
-        enabled = enabled,
-        shape = shape
+        shape = getShape(shapeType)
     ) {
         Text(
             text = text,
+            modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
             style = MaterialTheme.typography.bodyLarge,
-            textAlign = TextAlign.Center
+            textAlign = textAlign
         )
     }
 
+}
+
+enum class ShapeType {
+    TOP, BOTTOM, CENTER
+}
+
+@Composable
+fun getShape(shapeType: ShapeType): Shape {
+    return when (shapeType) {
+        ShapeType.TOP -> RoundedCornerShape(
+            dimensionResource(R.dimen.padding_medium),
+            dimensionResource(R.dimen.padding_medium),
+            0.dp,
+            0.dp,
+        )
+
+        ShapeType.BOTTOM -> RoundedCornerShape(
+            0.dp,
+            0.dp,
+            dimensionResource(R.dimen.padding_medium),
+            dimensionResource(R.dimen.padding_medium),
+        )
+
+        ShapeType.CENTER -> RectangleShape
+    }
 }
 
 @Composable
