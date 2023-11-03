@@ -25,9 +25,7 @@ class LauncherAppsManager(
 
     fun launchApp(packageName: String) {
         context.startActivity(
-            packageManager.getLaunchIntentForPackage(packageName)?.setFlags(
-                Intent.FLAG_ACTIVITY_NEW_TASK
-            )
+            packageManager.getLaunchIntentForPackage(packageName)
         )
     }
 
@@ -112,7 +110,10 @@ class LauncherAppsManager(
                 lifecycle.removeObserver(this)
             }
         })
-        launchApp(shortcut.appBottom.packageName)
+        context.startActivity(
+            packageManager.getLaunchIntentForPackage(shortcut.appBottom.packageName)
+                ?.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 }
 
