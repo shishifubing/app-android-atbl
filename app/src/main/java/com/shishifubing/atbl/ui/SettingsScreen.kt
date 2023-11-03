@@ -73,7 +73,12 @@ fun SettingsScreen(
 ) {
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+        SettingsField(
+            name = R.string.settings_action_reload_apps,
+            onClick = { vm.reloadApps() }
+        )
         HiddenApps(vm)
+        SplitScreenShortcuts(vm)
         AppCardRemoveSpaces(vm, settings)
         AppCardLowercase(vm, settings)
         AppCardFontFamily(vm, settings)
@@ -87,6 +92,23 @@ fun SettingsScreen(
         LayoutHorizontalArrangement(vm, settings)
         LayoutVerticalArrangement(vm, settings)
     }
+}
+
+@Composable
+fun SplitScreenShortcuts(
+    vm: SettingsViewModel
+) {
+    val apps by vm.appsFlow.collectAsState(vm.initialApps)
+    val options = apps.splitScreenShortcutsList
+
+    SettingsMultiChoiceField(
+        name = R.string.settings_split_screen_shortcuts,
+        selectedOptions = (0 until options.size).toList(),
+        options = options.map { "${it.appTop.label}/${it.appBottom.label}" },
+        onConfirm = { choices ->
+
+        }
+    )
 }
 
 @Composable
@@ -277,8 +299,8 @@ fun AppCardLowercase(
     settings: LauncherSettings
 ) {
     SettingsSwitchField(
-        name = R.string.settings_lowercase,
-        label = R.string.settings_lowercase_label,
+        name = R.string.settings_app_label_lowercase,
+        label = R.string.settings_app_label_lowercase_label,
         isToggled = settings.appCardLabelLowercase,
         onClick = {
             vm.updateSettings {
@@ -389,9 +411,9 @@ fun HiddenApps(
 @Composable
 fun SettingsField(
     @StringRes name: Int,
-    label: String?,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    label: String? = null,
     content: @Composable RowScope.() -> Unit = {}
 ) {
     Surface(modifier = modifier, onClick = onClick) {

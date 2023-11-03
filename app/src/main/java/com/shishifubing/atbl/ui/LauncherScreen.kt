@@ -19,7 +19,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
@@ -36,8 +35,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
-import androidx.compose.ui.graphics.Shape
 import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
@@ -71,9 +68,7 @@ fun LauncherScreen(
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
     var dialogShortcut by remember {
-        mutableStateOf<LauncherSplitScreenShortcut?>(
-            null
-        )
+        mutableStateOf<LauncherSplitScreenShortcut?>(null)
     }
     FlowRow(
         modifier = modifier
@@ -89,34 +84,9 @@ fun LauncherScreen(
             settings.appLayoutVerticalArrangement
         )
     ) {
-        val shortcut = LauncherSplitScreenShortcut.getDefaultInstance()
-            .toBuilder()
-            .setAppBottom(
-                LauncherApp.getDefaultInstance()
-                    .toBuilder()
-                    .setPackageName("com.ichi2.anki")
-                    .setLabel("anki")
-                    .build()
-            )
-            .setAppTop(
-                LauncherApp.getDefaultInstance()
-                    .toBuilder()
-                    .setPackageName("org.schabi.newpipe")
-                    .setLabel("newpipe")
-                    .build()
-            )
-            .build()
-        AppCard(
-            label = shortcut.appTop.label + "∕" + shortcut.appBottom
-                .label,
-            onClick = { vm.launchSplitScreen(shortcut) },
-            onLongClick = { dialogShortcut = shortcut },
-            settings = settings
-        )
         apps.splitScreenShortcutsList.forEach { shortcut ->
             AppCard(
-                label = shortcut.appTop.label + " ∕ " + shortcut.appBottom
-                    .label,
+                label = "${shortcut.appTop.label}/${shortcut.appBottom.label}",
                 onClick = { vm.launchSplitScreen(shortcut) },
                 onLongClick = { dialogShortcut = shortcut },
                 settings = settings
@@ -209,7 +179,6 @@ fun AppCard(
         )
     }
 }
-
 
 @Composable
 fun AppDialog(
@@ -324,7 +293,6 @@ fun AppDialogHeader(
             ) {
                 AppDialogButton(
                     text = stringResource(R.string.drawer_app_info),
-                    shapeType = ShapeType.TOP,
                     onClick = {
                         vm.launchAppInfo(app.packageName)
                         onDismissRequest()
@@ -333,7 +301,6 @@ fun AppDialogHeader(
                 if (enabledHide) {
                     AppDialogButton(
                         text = stringResource(R.string.drawer_app_hide),
-                        shapeType = ShapeType.CENTER,
                         onClick = {
                             vm.hideApp(app.packageName)
                             onDismissRequest()
@@ -342,7 +309,6 @@ fun AppDialogHeader(
                 }
                 AppDialogButton(
                     text = stringResource(R.string.drawer_app_uninstall),
-                    shapeType = ShapeType.BOTTOM,
                     onClick = {
                         vm.launchAppUninstall(app.packageName)
                         onDismissRequest()
@@ -377,11 +343,6 @@ fun AppDialogShortcuts(
                 onClick = {
                     vm.launchAppShortcut(shortcut)
                     onDismissRequest()
-                },
-                shapeType = if (app.shortcutsList.size == 1) ShapeType.CENTER else when (i) {
-                    0 -> ShapeType.TOP
-                    app.shortcutsList.size - 1 -> ShapeType.BOTTOM
-                    else -> ShapeType.CENTER
                 }
             )
         }
@@ -394,13 +355,11 @@ fun AppDialogButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    shapeType: ShapeType = ShapeType.CENTER,
     textAlign: TextAlign = TextAlign.Center
 ) {
     Surface(
         modifier = modifier.fillMaxWidth(),
         onClick = onClick,
-        shape = getShape(shapeType)
     ) {
         Text(
             text = text,
@@ -410,31 +369,6 @@ fun AppDialogButton(
         )
     }
 
-}
-
-enum class ShapeType {
-    TOP, BOTTOM, CENTER
-}
-
-@Composable
-fun getShape(shapeType: ShapeType): Shape {
-    return when (shapeType) {
-        ShapeType.TOP -> RoundedCornerShape(
-            dimensionResource(R.dimen.padding_medium),
-            dimensionResource(R.dimen.padding_medium),
-            0.dp,
-            0.dp,
-        )
-
-        ShapeType.BOTTOM -> RoundedCornerShape(
-            0.dp,
-            0.dp,
-            dimensionResource(R.dimen.padding_medium),
-            dimensionResource(R.dimen.padding_medium),
-        )
-
-        ShapeType.CENTER -> RectangleShape
-    }
 }
 
 @Composable

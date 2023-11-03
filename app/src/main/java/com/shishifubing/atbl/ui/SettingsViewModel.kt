@@ -7,6 +7,7 @@ import com.shishifubing.atbl.LauncherApps
 import com.shishifubing.atbl.LauncherAppsRepository
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSettingsRepository
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 
@@ -20,12 +21,18 @@ class SettingsViewModel(
     val settingsFlow = launcherSettingsRepository.settingsFlow
     val appsFlow = appsRepository.appsFlow
 
+    private fun launch(action: suspend CoroutineScope.() -> Unit) {
+        viewModelScope.launch { action() }
+    }
+
+    fun reloadApps() = launch { appsRepository.reloadApps() }
+
     fun updateSettings(action: (LauncherSettings.Builder) -> (LauncherSettings.Builder)) {
-        viewModelScope.launch { launcherSettingsRepository.update(action) }
+        launch { launcherSettingsRepository.update(action) }
     }
 
     fun setHiddenApps(hiddenPackages: List<String>) {
-        viewModelScope.launch { appsRepository.setHiddenApps(hiddenPackages) }
+        launch { appsRepository.setHiddenApps(hiddenPackages) }
     }
 
 }

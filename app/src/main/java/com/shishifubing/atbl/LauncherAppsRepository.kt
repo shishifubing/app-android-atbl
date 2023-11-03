@@ -65,6 +65,18 @@ class LauncherAppsRepository(
         update { current -> current.addApps(fetchApp(packageName)) }
     }
 
+    suspend fun addSplitScreenShortcut(appTop: String, appBottom: String) {
+        update { current ->
+            current.addSplitScreenShortcuts(
+                LauncherSplitScreenShortcut.getDefaultInstance()
+                    .toBuilder()
+                    .setAppBottom(getApp(current, appBottom))
+                    .setAppTop(getApp(current, appTop))
+                    .build()
+            )
+        }
+    }
+
     suspend fun updateApp(packageName: String) {
         update { current ->
             current.setApps(
@@ -95,7 +107,7 @@ class LauncherAppsRepository(
         }
     }
 
-    private suspend fun reloadApps(): LauncherApps {
+    suspend fun reloadApps(): LauncherApps {
         return update { current ->
             val hidden = current.appsList
                 .filter { it.isHidden }
@@ -121,7 +133,21 @@ class LauncherAppsRepository(
     private fun getAppIndex(
         current: LauncherApps.Builder, packageName: String
     ): Int {
-        return current.appsList.indexOfFirst { it.packageName == packageName }
+        val index =
+            current.appsList.indexOfFirst { it.packageName == packageName }
+        return if (index != -1) index else throw IllegalArgumentException(
+            "could not get app index of $packageName, it is not in the datastore"
+        )
+    }
+
+    private fun getApp(
+        current: LauncherApps.Builder,
+        packageName: String
+    ): LauncherApp {
+        return current.appsList.firstOrNull { it.packageName == packageName }
+            ?: throw IllegalArgumentException(
+                "could not get app $packageName, it is not in the datastore"
+            )
     }
 
     private fun fetchAllApps(): List<LauncherApp> {
@@ -145,6 +171,11 @@ class LauncherAppsRepository(
                 .addCategory(Intent.CATEGORY_LAUNCHER)
                 .setPackage(packageName)
         )
+        if (queryResults.isEmpty()) {
+            throw IllegalArgumentException(
+                "could not fetch $packageName - empty queryResults"
+            )
+        }
         val info = queryResults[0].activityInfo
         val label = info.loadLabel(context.packageManager)
         return LauncherApp.newBuilder()
@@ -173,31 +204,29 @@ class LauncherAppsRepository(
             LauncherAppsAndroid::class.java
         )
         val userHandle = android.os.Process.myUserHandle()
-        return arrayOf(
-            LauncherAppsAndroid.ShortcutQuery.FLAG_MATCH_MANIFEST,
-            LauncherAppsAndroid.ShortcutQuery.FLAG_MATCH_PINNED,
-            LauncherAppsAndroid.ShortcutQuery.FLAG_MATCH_DYNAMIC
-        ).map { flags ->
-            val shortcuts = try {
-                launcherAppsService.getShortcuts(
-                    LauncherAppsAndroid.ShortcutQuery()
-                        .setPackage(packageName)
-                        .setQueryFlags(flags),
-                    userHandle
-                ) ?: listOf()
-            } catch (e: SecurityException) {
-                Log.d(tag, "got a security exception: $e")
-                listOf()
-            }
-            shortcuts.map { info ->
-                val label = info.longLabel ?: info.shortLabel ?: info.`package`
-                LauncherAppShortcut.newBuilder()
-                    .setShortcutId(info.id)
-                    .setPackageName(info.`package`)
-                    .setLabel(label.toString())
-                    .build()
-            }
-        }.flatten()
+        val shortcuts = try {
+            launcherAppsService.getShortcuts(
+                LauncherAppsAndroid.ShortcutQuery()
+                    .setPackage(packageName)
+                    .setQueryFlags(
+                        android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_DYNAMIC or
+                                android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_PINNED or
+                                android.content.pm.LauncherApps.ShortcutQuery.FLAG_MATCH_MANIFEST
+                    ),
+                userHandle
+            ) ?: listOf()
+        } catch (e: SecurityException) {
+            Log.d(tag, "got a security exception: $e")
+            listOf()
+        }
+        return shortcuts.map { info ->
+            val label = info.longLabel ?: info.shortLabel ?: info.`package`
+            LauncherAppShortcut.newBuilder()
+                .setShortcutId(info.id)
+                .setPackageName(info.`package`)
+                .setLabel(label.toString())
+                .build()
+        }
     }
 }
 
