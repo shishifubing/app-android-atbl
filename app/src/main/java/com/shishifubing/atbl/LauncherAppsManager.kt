@@ -101,7 +101,7 @@ class LauncherAppsManager(
             override fun onStop(owner: LifecycleOwner) {
                 context.startActivity(
                     packageManager
-                        .getLaunchIntentForPackage(shortcut.appBottom.packageName)
+                        .getLaunchIntentForPackage(shortcut.appTop.packageName)
                         ?.setFlags(
                             Intent.FLAG_ACTIVITY_NEW_TASK
                                     or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
@@ -110,7 +110,10 @@ class LauncherAppsManager(
                 lifecycle.removeObserver(this)
             }
         })
-        launchApp(shortcut.appTop.packageName)
+        context.startActivity(
+            packageManager.getLaunchIntentForPackage(shortcut.appBottom.packageName)
+                ?.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+        )
     }
 }
 

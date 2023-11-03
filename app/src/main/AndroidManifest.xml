@@ -21,8 +21,10 @@
         <activity
             android:name="com.shishifubing.atbl.LauncherActivity"
             android:clearTaskOnLaunch="true"
+            android:excludeFromRecents="true"
             android:exported="true"
-            android:launchMode="singleTask">
+            android:launchMode="singleTask"
+            android:windowSoftInputMode="adjustResize">
 
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
