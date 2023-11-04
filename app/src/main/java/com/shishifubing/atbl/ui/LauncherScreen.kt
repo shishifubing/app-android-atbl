@@ -92,25 +92,7 @@ fun LauncherScreen(
         )
     ) {
         if (!isHomeApp) {
-            Card {
-                Row(
-                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
-                    horizontalArrangement = Arrangement.Center,
-                    verticalAlignment = Alignment.CenterVertically
-                ) {
-                    Icon(
-                        Icons.Filled.Warning,
-                        contentDescription = "Favorite",
-                        modifier = Modifier.size(ButtonDefaults.IconSize),
-                        tint = Color.White
-                    )
-                    Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
-                    Column {
-                        Text("This launcher is not set as a home app, you will not be able to see shortcuts")
-                        Text("Current home app: ${homeApp.label}")
-                    }
-                }
-            }
+            NotAHomeAppBanner(homeApp.label)
         }
         apps.splitScreenShortcutsList.forEach { shortcut ->
             AppCard(
@@ -148,6 +130,28 @@ fun LauncherScreen(
             enabledHide = dialogApp!!.packageName != LocalContext.current
                 .packageName
         )
+    }
+}
+
+@Composable
+fun NotAHomeAppBanner(homeAppLabel: String) {
+    Card {
+        Row(
+            modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            Icon(
+                Icons.Filled.Warning,
+                contentDescription = "Warning icon",
+                modifier = Modifier.size(ButtonDefaults.IconSize * 2),
+            )
+            Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+            Column {
+                Text("This launcher is not set as a home app, you will not be able to see shortcuts")
+                Text("Current home app: $homeAppLabel")
+            }
+        }
     }
 }
 

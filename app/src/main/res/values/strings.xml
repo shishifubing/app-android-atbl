@@ -43,6 +43,9 @@
     <string name="settings_split_screen_shortcuts">
         Split screen shortcuts
     </string>
+    <string name="settings_split_screen_shortcut_separator">
+        Split screen shortcut separator
+    </string>
 
     <string name="settings_choice_dialog_ok">OK</string>
     <string name="settings_choice_dialog_cancel">Cancel</string>
