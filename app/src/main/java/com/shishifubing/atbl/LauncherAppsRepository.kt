@@ -177,11 +177,22 @@ class LauncherAppsRepository(
             )
         }
         val info = queryResults[0].activityInfo
-        val label = info.loadLabel(context.packageManager)
         return LauncherApp.newBuilder()
-            .setLabel(label.toString())
+            .setLabel(info.loadLabel(context.packageManager).toString())
             .setPackageName(info.packageName)
             .addAllShortcuts(getShortcuts(info.packageName))
+            .build()
+    }
+
+    fun fetchHomeApp(): LauncherApp {
+        val info = context.packageManager.queryIntentActivities(
+            Intent(Intent.ACTION_MAIN).addCategory(
+                Intent.CATEGORY_HOME
+            ), PackageManager.MATCH_DEFAULT_ONLY
+        )[0].activityInfo
+        return LauncherApp.newBuilder()
+            .setLabel(info.loadLabel(context.packageManager).toString())
+            .setPackageName(info.packageName)
             .build()
     }
 

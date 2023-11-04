@@ -35,6 +35,8 @@ class LauncherViewModel(
         viewModelScope.launch { action() }
     }
 
+    fun getHomeApp(): LauncherApp = launcherAppsRepository.fetchHomeApp()
+
     private fun transformApps(
         current: LauncherApps,
         settings: LauncherSettings

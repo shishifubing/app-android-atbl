@@ -3,6 +3,7 @@ package com.shishifubing.atbl
 import android.content.Context
 import android.content.Intent
 import android.content.pm.LauncherApps
+import android.content.pm.PackageManager
 import android.content.pm.ShortcutInfo
 import android.net.Uri
 import android.os.UserHandle
@@ -39,7 +40,7 @@ class LauncherAppsManager(
             )
         )
     }
-
+    
     fun launchAppUninstall(packageName: String) {
         context.startActivity(
             Intent(Intent.ACTION_DELETE, Uri.parse("package:${packageName}"))
@@ -99,8 +100,6 @@ class LauncherAppsManager(
     }
 
     fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
-        context.startActivity(Intent(Intent.ACTION_MAIN))
-        launchApp(shortcut.appBottom.packageName)
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 lifecycle.removeObserver(this)
@@ -111,6 +110,8 @@ class LauncherAppsManager(
                 )
             }
         })
+        context.startActivity(Intent(Intent.ACTION_MAIN))
+        launchApp(shortcut.appBottom.packageName)
     }
 }
 

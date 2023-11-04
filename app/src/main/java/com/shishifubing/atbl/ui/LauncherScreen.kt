@@ -20,7 +20,12 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.ButtonDefaults
+import androidx.compose.material3.Card
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -70,6 +75,8 @@ fun LauncherScreen(
     var dialogShortcut by remember {
         mutableStateOf<LauncherSplitScreenShortcut?>(null)
     }
+    val homeApp = vm.getHomeApp()
+    val isHomeApp = homeApp.packageName == LocalContext.current.packageName
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -84,9 +91,33 @@ fun LauncherScreen(
             settings.appLayoutVerticalArrangement
         )
     ) {
+        if (!isHomeApp) {
+            Card {
+                Row(
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+                    horizontalArrangement = Arrangement.Center,
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        Icons.Filled.Warning,
+                        contentDescription = "Favorite",
+                        modifier = Modifier.size(ButtonDefaults.IconSize),
+                        tint = Color.White
+                    )
+                    Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+                    Column {
+                        Text("This launcher is not set as a home app, you will not be able to see shortcuts")
+                        Text("Current home app: ${homeApp.label}")
+                    }
+                }
+            }
+        }
         apps.splitScreenShortcutsList.forEach { shortcut ->
             AppCard(
-                label = "${shortcut.appTop.label}/${shortcut.appBottom.label}",
+                label = listOf(
+                    shortcut.appTop.label,
+                    shortcut.appBottom.label
+                ).joinToString(settings.appCardSplitScreenSeparator),
                 onClick = { vm.launchSplitScreen(shortcut) },
                 onLongClick = { dialogShortcut = shortcut },
                 settings = settings
@@ -113,6 +144,7 @@ fun LauncherScreen(
             app = dialogApp!!,
             vm = vm,
             onDismissRequest = { dialogApp = null },
+            showShortcuts = isHomeApp,
             enabledHide = dialogApp!!.packageName != LocalContext.current
                 .packageName
         )
@@ -185,8 +217,9 @@ fun AppDialog(
     app: LauncherApp,
     vm: LauncherViewModel,
     onDismissRequest: () -> Unit,
+    showShortcuts: Boolean,
     enabledHide: Boolean,
-    modifier: Modifier = Modifier
+    modifier: Modifier = Modifier,
 ) {
     LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
         AppDialogHeader(
@@ -196,7 +229,7 @@ fun AppDialog(
             enabledHide = enabledHide
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-        if (app.shortcutsList.isNotEmpty()) {
+        if (app.shortcutsList.isNotEmpty() && showShortcuts) {
             ElevatedCard {
                 AppDialogShortcuts(
                     vm = vm,

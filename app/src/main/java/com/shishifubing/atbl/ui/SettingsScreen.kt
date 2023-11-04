@@ -78,7 +78,7 @@ fun SettingsScreen(
             onClick = { vm.reloadApps() }
         )
         HiddenApps(vm)
-        SplitScreenShortcuts(vm)
+        SplitScreenShortcuts(vm, settings)
         AppCardRemoveSpaces(vm, settings)
         AppCardLowercase(vm, settings)
         AppCardFontFamily(vm, settings)
@@ -96,7 +96,8 @@ fun SettingsScreen(
 
 @Composable
 fun SplitScreenShortcuts(
-    vm: SettingsViewModel
+    vm: SettingsViewModel,
+    settings: LauncherSettings
 ) {
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     val options = apps.splitScreenShortcutsList
@@ -104,7 +105,12 @@ fun SplitScreenShortcuts(
     SettingsMultiChoiceField(
         name = R.string.settings_split_screen_shortcuts,
         selectedOptions = (0 until options.size).toList(),
-        options = options.map { "${it.appTop.label}/${it.appBottom.label}" },
+        options = options.map {
+            listOf(
+                it.appTop.label,
+                it.appBottom.label
+            ).joinToString(settings.appCardSplitScreenSeparator)
+        },
         onConfirm = { choices ->
 
         }
