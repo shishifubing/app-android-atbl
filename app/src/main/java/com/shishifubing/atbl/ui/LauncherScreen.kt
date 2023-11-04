@@ -75,8 +75,7 @@ fun LauncherScreen(
     var dialogShortcut by remember {
         mutableStateOf<LauncherSplitScreenShortcut?>(null)
     }
-    val homeApp = vm.getHomeApp()
-    val isHomeApp = homeApp.packageName == LocalContext.current.packageName
+    val isHomeApp = vm.isHomeApp()
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -92,7 +91,7 @@ fun LauncherScreen(
         )
     ) {
         if (!isHomeApp) {
-            NotAHomeAppBanner(homeApp.label)
+            NotAHomeAppBanner()
         }
         apps.splitScreenShortcutsList.forEach { shortcut ->
             AppCard(
@@ -134,7 +133,7 @@ fun LauncherScreen(
 }
 
 @Composable
-fun NotAHomeAppBanner(homeAppLabel: String) {
+fun NotAHomeAppBanner() {
     Card {
         Row(
             modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
@@ -147,10 +146,7 @@ fun NotAHomeAppBanner(homeAppLabel: String) {
                 modifier = Modifier.size(ButtonDefaults.IconSize * 2),
             )
             Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
-            Column {
-                Text("This launcher is not set as a home app, you will not be able to see shortcuts")
-                Text("Current home app: $homeAppLabel")
-            }
+            Text("This launcher is not set as a home app, you will not be able to see shortcuts")
         }
     }
 }

@@ -31,11 +31,11 @@ class LauncherViewModel(
         this::transformApps
     )
 
+    fun isHomeApp(): Boolean = launcherAppsManager.isHomeApp()
+
     private fun launch(action: suspend CoroutineScope.() -> Unit) {
         viewModelScope.launch { action() }
     }
-
-    fun getHomeApp(): LauncherApp = launcherAppsRepository.fetchHomeApp()
 
     private fun transformApps(
         current: LauncherApps,

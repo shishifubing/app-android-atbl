@@ -184,18 +184,6 @@ class LauncherAppsRepository(
             .build()
     }
 
-    fun fetchHomeApp(): LauncherApp {
-        val info = context.packageManager.queryIntentActivities(
-            Intent(Intent.ACTION_MAIN).addCategory(
-                Intent.CATEGORY_HOME
-            ), PackageManager.MATCH_DEFAULT_ONLY
-        )[0].activityInfo
-        return LauncherApp.newBuilder()
-            .setLabel(info.loadLabel(context.packageManager).toString())
-            .setPackageName(info.packageName)
-            .build()
-    }
-
     private fun queryPackageManager(intent: Intent): List<ResolveInfo> {
         return when {
             Build.VERSION.SDK_INT >= 33 -> context.packageManager

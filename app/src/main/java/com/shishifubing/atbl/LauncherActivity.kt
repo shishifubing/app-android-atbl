@@ -37,7 +37,9 @@ class LauncherActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        launcherAppsManager = LauncherAppsManager(this, lifecycle)
+        launcherAppsManager = LauncherAppsManager(
+            this, componentName, lifecycle
+        )
         val settingsRepo = LauncherSettingsRepository(settingsDataStore)
         val launcherAppsRepo = LauncherAppsRepository(
             launcherAppsDataStore, this
