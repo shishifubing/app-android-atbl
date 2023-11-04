@@ -16,6 +16,7 @@ message LauncherSettings {
   bool app_layout_reverse_order = 10;
   int32 app_layout_horizontal_padding = 11;
   int32 app_layout_vertical_padding = 12;
+  string app_card_split_screen_separator = 13;
 }
 
 enum LauncherSortBy {

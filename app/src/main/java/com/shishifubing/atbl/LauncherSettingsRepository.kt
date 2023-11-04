@@ -54,6 +54,7 @@ object SettingsSerializer : Serializer<LauncherSettings> {
             .setAppLayoutReverseOrder(false)
             .setAppLayoutHorizontalPadding(0)
             .setAppLayoutVerticalPadding(0)
+            .setAppCardSplitScreenSeparator("/")
             .build()
 
     override suspend fun readFrom(input: InputStream): LauncherSettings {

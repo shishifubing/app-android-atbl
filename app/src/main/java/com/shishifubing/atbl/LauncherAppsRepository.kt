@@ -177,9 +177,8 @@ class LauncherAppsRepository(
             )
         }
         val info = queryResults[0].activityInfo
-        val label = info.loadLabel(context.packageManager)
         return LauncherApp.newBuilder()
-            .setLabel(label.toString())
+            .setLabel(info.loadLabel(context.packageManager).toString())
             .setPackageName(info.packageName)
             .addAllShortcuts(getShortcuts(info.packageName))
             .build()

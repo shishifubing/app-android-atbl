@@ -1,10 +1,16 @@
 package com.shishifubing.atbl
 
+import android.app.role.RoleManager
+import android.content.ComponentName
 import android.content.Context
 import android.content.Intent
+import android.content.Intent.ACTION_MAIN
+import android.content.Intent.CATEGORY_HOME
+import android.content.IntentFilter
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutInfo
 import android.net.Uri
+import android.os.Build
 import android.os.UserHandle
 import android.provider.Settings
 import androidx.lifecycle.DefaultLifecycleObserver
@@ -16,12 +22,34 @@ private val tag = LauncherAppsManager::class.simpleName
 
 class LauncherAppsManager(
     private val context: Context,
+    private val componentName: ComponentName,
     private val lifecycle: Lifecycle
 ) {
     private val packageManager = context.packageManager
     private val launcherAppsService =
         context.getSystemService(LauncherApps::class.java)
     private val callbacks: MutableList<LauncherApps.Callback> = mutableListOf()
+
+    fun isHomeApp(): Boolean {
+        return when {
+            Build.VERSION.SDK_INT >= 29 -> context
+                .getSystemService(RoleManager::class.java)
+                .isRoleHeld(RoleManager.ROLE_HOME)
+
+            else -> listOf<ComponentName>().apply {
+                packageManager
+                    .getPreferredActivities(
+                        listOf(
+                            IntentFilter(ACTION_MAIN).apply {
+                                addCategory(CATEGORY_HOME)
+                            }
+                        ),
+                        this,
+                        context.packageName
+                    )
+            }.isNotEmpty()
+        }
+    }
 
     fun launchApp(packageName: String, flags: Int? = null) {
         context.startActivity(
@@ -54,8 +82,8 @@ class LauncherAppsManager(
     }
 
     fun removeCallbacks() {
-        while (callbacks.isNotEmpty()) {
-            launcherAppsService.unregisterCallback(callbacks.removeLast())
+        for (callback in callbacks) {
+            launcherAppsService.unregisterCallback(callback)
         }
     }
 
@@ -99,8 +127,6 @@ class LauncherAppsManager(
     }
 
     fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
-        context.startActivity(Intent(Intent.ACTION_MAIN))
-        launchApp(shortcut.appBottom.packageName)
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 lifecycle.removeObserver(this)
@@ -111,6 +137,8 @@ class LauncherAppsManager(
                 )
             }
         })
+        context.startActivity(Intent(ACTION_MAIN))
+        launchApp(shortcut.appBottom.packageName)
     }
 }
 
