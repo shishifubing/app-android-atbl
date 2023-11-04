@@ -23,9 +23,11 @@ class LauncherAppsManager(
         context.getSystemService(LauncherApps::class.java)
     private val callbacks: MutableList<LauncherApps.Callback> = mutableListOf()
 
-    fun launchApp(packageName: String) {
+    fun launchApp(packageName: String, flags: Int? = null) {
         context.startActivity(
-            packageManager.getLaunchIntentForPackage(packageName)
+            packageManager
+                .getLaunchIntentForPackage(packageName)
+                .let { if (flags == null) it else it?.setFlags(flags) }
         )
     }
 
@@ -97,23 +99,18 @@ class LauncherAppsManager(
     }
 
     fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
+        context.startActivity(Intent(Intent.ACTION_MAIN))
+        launchApp(shortcut.appBottom.packageName)
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
-                context.startActivity(
-                    packageManager
-                        .getLaunchIntentForPackage(shortcut.appTop.packageName)
-                        ?.setFlags(
-                            Intent.FLAG_ACTIVITY_NEW_TASK
-                                    or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
-                        )
-                )
                 lifecycle.removeObserver(this)
+                launchApp(
+                    shortcut.appTop.packageName,
+                    Intent.FLAG_ACTIVITY_NEW_TASK or
+                            Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                )
             }
         })
-        context.startActivity(
-            packageManager.getLaunchIntentForPackage(shortcut.appBottom.packageName)
-                ?.setFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-        )
     }
 }
 
