@@ -10,9 +10,17 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.foundation.lazy.itemsIndexed
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Check
+import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExposedDropdownMenuBox
+import androidx.compose.material3.ExposedDropdownMenuDefaults
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -20,6 +28,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
+import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
@@ -35,6 +44,7 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.R
 
 @Composable
@@ -102,23 +112,142 @@ fun SettingsTextInputField(
         label = initialValue,
         onClick = { showDialog = true }
     )
-    if (showDialog) {
-        var input by remember { mutableStateOf(initialValue) }
-        SettingsDialog(
-            name = name,
-            onConfirm = { onConfirm(input) },
-            options = listOf("placeholder"),
-            onDismissRequest = { showDialog = false },
-            modifier = modifier
-        ) { _, _ ->
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.Center
-            ) {
-                OutlinedTextField(
-                    value = input,
-                    singleLine = true,
-                    onValueChange = { input = it }
+    if (!showDialog) {
+        return
+    }
+    var input by remember { mutableStateOf(initialValue) }
+    SettingsDialog(
+        modifier = modifier,
+        name = name,
+        onConfirm = { onConfirm(input); showDialog = false },
+        onDismissRequest = { showDialog = false },
+        itemsCount = 1,
+        itemsKey = { 1 },
+    ) { _ ->
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center
+        ) {
+            OutlinedTextField(
+                value = input,
+                singleLine = true,
+                onValueChange = { input = it }
+            )
+        }
+    }
+}
+
+@Composable
+fun SettingsCustomItemWithAddField(
+    @StringRes name: Int,
+    itemsCount: Int,
+    itemsKey: (Int) -> Any,
+    modifier: Modifier = Modifier,
+    addItemContent: @Composable RowScope.() -> Unit,
+    onAddItemConfirm: () -> Unit,
+    onAddItemDismiss: () -> Unit,
+    itemContent: @Composable RowScope.(Int) -> Unit
+) {
+    var showDialog by remember { mutableStateOf(false) }
+    SettingsField(
+        name = name,
+        modifier = modifier,
+        label = itemsCount.toString(),
+        onClick = { showDialog = true }
+    )
+    if (!showDialog) {
+        return
+    }
+    var showAddItem by remember { mutableStateOf(false) }
+    SettingsDialog(
+        modifier = modifier,
+        name = name,
+        onConfirm = { showDialog = false },
+        onDismissRequest = { showDialog = false; onAddItemDismiss() },
+        showCancel = false,
+        itemsCount = itemsCount + 1,
+        itemsKey = { i -> if (i == itemsCount) "" else itemsKey(i) },
+    ) { i ->
+        Row(
+            modifier = Modifier
+                .padding(
+                    dimensionResource(R.dimen.padding_medium),
+                    dimensionResource(R.dimen.padding_small)
+                )
+                .fillMaxWidth(),
+            horizontalArrangement = Arrangement.Center,
+            verticalAlignment = Alignment.CenterVertically
+        ) {
+            when {
+                i == itemsCount && showAddItem -> {
+                    addItemContent()
+                    TextButton(onClick = {
+                        onAddItemDismiss()
+                        showAddItem = false
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Clear,
+                            contentDescription = "Cancel addition",
+                        )
+                    }
+                    TextButton(onClick = {
+                        onAddItemConfirm()
+                        showAddItem = false
+                    }) {
+                        Icon(
+                            imageVector = Icons.Filled.Check,
+                            contentDescription = "Confirm addition",
+                        )
+                    }
+                }
+
+                i == itemsCount && !showAddItem ->
+                    TextButton(onClick = { showAddItem = true }) {
+                        Icon(
+                            imageVector = Icons.Filled.Add,
+                            contentDescription = "Add entry",
+                        )
+                    }
+
+                else -> itemContent(i)
+            }
+        }
+    }
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun SettingsDropDownSelectApp(
+    apps: List<LauncherApp>,
+    onValueChange: (LauncherApp) -> Unit
+) {
+    var expanded by remember { mutableStateOf(false) }
+    var selected by remember { mutableStateOf<LauncherApp?>(null) }
+    ExposedDropdownMenuBox(
+        expanded = expanded,
+        onExpandedChange = { expanded = !expanded }
+    ) {
+        TextField(
+            value = selected?.label ?: "",
+            onValueChange = {},
+            readOnly = true,
+            trailingIcon = {
+                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
+            },
+            modifier = Modifier.menuAnchor()
+        )
+        ExposedDropdownMenu(
+            expanded = expanded,
+            onDismissRequest = { expanded = false }
+        ) {
+            apps.forEach { app ->
+                DropdownMenuItem(
+                    text = { Text(text = app.label) },
+                    onClick = {
+                        selected = app
+                        expanded = false
+                        onValueChange(app)
+                    }
                 )
             }
         }
@@ -140,17 +269,23 @@ fun SettingsSingleChoiceField(
         label = options[selectedOption],
         onClick = { showDialog = true }
     )
-    if (showDialog) {
-        SettingsSingleChoiceDialog(
-            name = name,
-            options = options,
-            selectedOption = selectedOption,
-            onConfirm = { choice ->
-                showDialog = false
-                onConfirm(choice)
-            },
-            onDismissRequest = { showDialog = false }
-        )
+    if (!showDialog) {
+        return
+    }
+    var curChoice by remember { mutableIntStateOf(selectedOption) }
+    SettingsDialog(
+        modifier = modifier,
+        name = name,
+        onConfirm = { onConfirm(curChoice); showDialog = false },
+        onDismissRequest = { showDialog = false },
+        itemsCount = options.size,
+        itemsKey = { i -> options[i] }
+    ) { i ->
+        SettingsButton(
+            text = options[i], isSelected = i == curChoice, isRadio = true
+        ) {
+            curChoice = i
+        }
     }
 }
 
@@ -169,87 +304,44 @@ fun SettingsMultiChoiceField(
         label = selectedOptions.size.toString(),
         onClick = { showDialog = true }
     )
-    if (showDialog) {
-        SettingsMultiChoiceDialog(
-            name = name,
-            options = options,
-            selectedOptions = selectedOptions,
-            onConfirm = { choices ->
-                showDialog = false
-                onConfirm(choices)
-            },
-            onDismissRequest = { showDialog = false }
-        )
+    if (!showDialog) {
+        return
     }
-}
-
-@Composable
-fun SettingsSingleChoiceDialog(
-    @StringRes name: Int,
-    options: List<String>,
-    selectedOption: Int,
-    onConfirm: (Int) -> Unit,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var curOption by remember { mutableIntStateOf(selectedOption) }
+    val curChoices = remember { selectedOptions.toMutableStateList() }
     SettingsDialog(
+        modifier = modifier,
         name = name,
-        options = options,
-        onConfirm = { onConfirm(curOption) },
-        onDismissRequest = onDismissRequest,
-        modifier = modifier
-    ) { i, text ->
+        onConfirm = { onConfirm(curChoices); showDialog = false },
+        onDismissRequest = { showDialog = false },
+        itemsCount = options.size,
+        itemsKey = { i -> options[i] }
+    ) { i ->
+        var isSelected = curChoices.contains(i)
         SettingsButton(
-            text = text, isSelected = i == curOption, isRadio = true
-        ) {
-            curOption = i
-        }
-    }
-}
-
-@Composable
-fun SettingsMultiChoiceDialog(
-    @StringRes name: Int,
-    options: List<String>,
-    selectedOptions: List<Int>,
-    onConfirm: (List<Int>) -> Unit,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    val curOptions = remember { selectedOptions.toMutableStateList() }
-    SettingsDialog(
-        name = name,
-        options = options,
-        onConfirm = { onConfirm(curOptions) },
-        onDismissRequest = onDismissRequest,
-        modifier = modifier
-    ) { i, option ->
-        var isSelected = curOptions.contains(i)
-        SettingsButton(
-            text = option, isSelected = isSelected,
+            text = options[i], isSelected = isSelected,
             isRadio = false
         ) {
             isSelected = if (isSelected) {
-                curOptions.remove(i)
+                curChoices.remove(i)
                 false
             } else {
-                curOptions.add(i)
+                curChoices.add(i)
                 true
             }
         }
     }
 }
 
-
 @Composable
 fun SettingsDialog(
     @StringRes name: Int,
-    options: List<String>,
-    onConfirm: () -> Unit,
     onDismissRequest: () -> Unit,
+    onConfirm: () -> Unit,
+    itemsCount: Int,
+    itemsKey: (Int) -> Any,
     modifier: Modifier = Modifier,
-    itemContent: @Composable LazyItemScope.(Int, String) -> Unit
+    showCancel: Boolean = true,
+    itemContent: @Composable LazyItemScope.(Int) -> Unit
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         ElevatedCard(modifier = modifier) {
@@ -266,25 +358,27 @@ fun SettingsDialog(
                             (LocalConfiguration.current.screenHeightDp * 0.6).dp
                         )
                 ) {
-                    itemsIndexed(options, itemContent = itemContent)
+                    items(
+                        count = itemsCount,
+                        key = itemsKey,
+                        itemContent = itemContent
+                    )
                 }
-
                 Row(
                     modifier = Modifier.fillMaxWidth(),
                     horizontalArrangement = Arrangement.End
                 ) {
-                    TextButton(
-                        modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
-                        onClick = onDismissRequest
-                    ) {
-                        Text(text = stringResource(R.string.settings_choice_dialog_cancel))
+                    if (showCancel) {
+                        TextButton(
+                            modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
+                            onClick = onDismissRequest
+                        ) {
+                            Text(text = stringResource(R.string.settings_choice_dialog_cancel))
+                        }
                     }
                     TextButton(
                         modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
-                        onClick = {
-                            onConfirm()
-                            onDismissRequest()
-                        }
+                        onClick = onConfirm
                     ) {
                         Text(text = stringResource(R.string.settings_choice_dialog_ok))
                     }

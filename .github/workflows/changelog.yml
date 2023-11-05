@@ -1,0 +1,11 @@
+name: changelog
+
+on:
+  release:
+    types: [released]
+
+jobs:
+  update:
+    name: reuse-changelog
+    uses: ./.github/workflows/reuse-changelog.yml
+    secrets: inherit

@@ -77,6 +77,14 @@ class LauncherAppsRepository(
         }
     }
 
+    suspend fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
+        update { current ->
+            current.removeSplitScreenShortcuts(
+                current.splitScreenShortcutsList.indexOf(shortcut)
+            )
+        }
+    }
+
     suspend fun updateApp(packageName: String) {
         update { current ->
             current.setApps(
