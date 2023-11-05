@@ -4,7 +4,6 @@ package com.shishifubing.atbl.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherAppShortcut
 import com.shishifubing.atbl.LauncherApps
 import com.shishifubing.atbl.LauncherAppsManager
@@ -41,8 +40,7 @@ class LauncherViewModel(
         current: LauncherApps,
         settings: LauncherSettings
     ): LauncherApps {
-        val builder = current.toBuilder()
-        builder.clearApps().addAllApps(current.appsList
+        return current.toBuilder().clearApps().addAllApps(current.appsList
             .filterNot { it.isHidden }
             .let {
                 when (settings.appLayoutSortBy) {
@@ -50,29 +48,10 @@ class LauncherViewModel(
                     else -> it.sortedBy { app -> app.label }
                 }
             }
-            .let { if (settings.appLayoutReverseOrder) it.reversed() else it })
-        if (current.splitScreenShortcutsList.isEmpty()) {
-            builder.addSplitScreenShortcuts(
-                LauncherSplitScreenShortcut.getDefaultInstance()
-                    .toBuilder()
-                    .setAppBottom(
-                        LauncherApp.getDefaultInstance()
-                            .toBuilder()
-                            .setPackageName("com.ichi2.anki")
-                            .setLabel("anki")
-                            .build()
-                    )
-                    .setAppTop(
-                        LauncherApp.getDefaultInstance()
-                            .toBuilder()
-                            .setPackageName("org.schabi.newpipe")
-                            .setLabel("newpipe")
-                            .build()
-                    )
-                    .build()
-            )
-        }
-        return builder.build()
+            .let {
+                if (settings.appLayoutReverseOrder) it.reversed() else it
+            }
+        ).build()
     }
 
     fun getAppIcon(packageName: String) =
@@ -96,6 +75,10 @@ class LauncherViewModel(
 
     fun launchAppUninstall(packageName: String) {
         launcherAppsManager.launchAppUninstall(packageName)
+    }
+
+    fun deleteSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
+        launch { launcherAppsRepository.removeSplitScreenShortcut(shortcut) }
     }
 
     fun launchAppShortcut(shortcut: LauncherAppShortcut) {

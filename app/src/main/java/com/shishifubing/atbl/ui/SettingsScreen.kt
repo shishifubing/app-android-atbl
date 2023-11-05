@@ -1,17 +1,25 @@
 package com.shishifubing.atbl.ui
 
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
+import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherApps
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
@@ -48,25 +56,21 @@ fun SettingsScreen(
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     Column(modifier = modifier.verticalScroll(rememberScrollState())) {
-        SettingsField(
-            name = R.string.settings_action_reload_apps,
-            onClick = { vm.reloadApps() }
-        )
         HiddenApps(vm)
         SplitScreenShortcuts(vm, apps, settings)
         SplitScreenShortcutSeparator(vm, settings)
+        LayoutReverseOrder(vm, settings)
+        LayoutHorizontalPadding(vm, settings)
+        LayoutVerticalPadding(vm, settings)
+        LayoutHorizontalArrangement(vm, settings)
+        LayoutVerticalArrangement(vm, settings)
+        LayoutSortBy(vm, settings)
         AppCardRemoveSpaces(vm, settings)
         AppCardLowercase(vm, settings)
         AppCardFontFamily(vm, settings)
         AppCardTextStyle(vm, settings)
         AppCardTextColor(vm, settings)
         AppCardPadding(vm, settings)
-        LayoutSortBy(vm, settings)
-        LayoutReverseOrder(vm, settings)
-        LayoutHorizontalPadding(vm, settings)
-        LayoutVerticalPadding(vm, settings)
-        LayoutHorizontalArrangement(vm, settings)
-        LayoutVerticalArrangement(vm, settings)
     }
 }
 
@@ -76,20 +80,50 @@ fun SplitScreenShortcuts(
     apps: LauncherApps,
     settings: LauncherSettings
 ) {
-    val options = apps.splitScreenShortcutsList
-    SettingsMultiChoiceField(
+    var selectedTop by remember { mutableStateOf<LauncherApp?>(null) }
+    var selectedBottom by remember { mutableStateOf<LauncherApp?>(null) }
+    val shortcuts = apps.splitScreenShortcutsList
+    val sortedApps = apps.appsList.sortedBy { it.label }
+    SettingsCustomItemWithAddField(
         name = R.string.settings_split_screen_shortcuts,
-        selectedOptions = (0 until options.size).toList(),
-        options = options.map {
-            listOf(
-                it.appTop.label,
-                it.appBottom.label
-            ).joinToString(settings.appCardSplitScreenSeparator)
+        itemsCount = shortcuts.size,
+        itemsKey = { i -> shortcuts[i].toByteArray() },
+        addItemContent = {
+            Column(modifier = Modifier.weight(1f)) {
+                SettingsDropDownSelectApp(
+                    apps = sortedApps,
+                    onValueChange = { selectedTop = it }
+                )
+                SettingsDropDownSelectApp(
+                    apps = sortedApps,
+                    onValueChange = { selectedBottom = it }
+                )
+            }
         },
-        onConfirm = { choices ->
-
+        onAddItemConfirm = {
+            if (selectedTop != null && selectedBottom != null) {
+                vm.addSplitScreenShortcut(
+                    selectedTop!!, selectedBottom!!
+                )
+            }
+        },
+        onAddItemDismiss = { selectedTop = null; selectedBottom = null }
+    ) { i ->
+        val shortcut = shortcuts[i]
+        Text(
+            listOf(
+                shortcut.appTop.label,
+                shortcut.appBottom.label
+            ).joinToString(settings.appCardSplitScreenSeparator)
+        )
+        Spacer(modifier = Modifier.weight(1f))
+        IconButton(onClick = { vm.removeSplitScreenShortcut(shortcut) }) {
+            Icon(
+                imageVector = Icons.Filled.Delete,
+                contentDescription = "Delete entry",
+            )
         }
-    )
+    }
 }
 
 @Composable

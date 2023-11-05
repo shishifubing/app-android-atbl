@@ -18,6 +18,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -141,7 +142,7 @@ fun NotAHomeAppBanner() {
             verticalAlignment = Alignment.CenterVertically
         ) {
             Icon(
-                Icons.Filled.Warning,
+                imageVector = Icons.Filled.Warning,
                 contentDescription = "Warning icon",
                 modifier = Modifier.size(ButtonDefaults.IconSize * 2),
             )
@@ -230,13 +231,11 @@ fun AppDialog(
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         if (app.shortcutsList.isNotEmpty() && showShortcuts) {
-            ElevatedCard {
-                AppDialogShortcuts(
-                    vm = vm,
-                    app = app,
-                    onDismissRequest = onDismissRequest
-                )
-            }
+            AppDialogShortcuts(
+                vm = vm,
+                app = app,
+                onDismissRequest = onDismissRequest
+            )
         }
     }
 }
@@ -278,6 +277,17 @@ fun SplitScreenShortcutDialog(
             onDismissRequest = onDismissRequest,
             enabledHide = false
         )
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+        AppDialogItems(itemsCount = 1, itemKey = { shortcut.hashCode() }) {
+            AppDialogButton(
+                text = stringResource(R.string.drawer_app_delete_split_screen_shortcut),
+                onClick = {
+                    vm.deleteSplitScreenShortcut(shortcut)
+                    onDismissRequest()
+                },
+                textAlign = TextAlign.Start
+            )
+        }
     }
 }
 
@@ -360,26 +370,40 @@ fun AppDialogShortcuts(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    LazyColumn(
-        modifier = modifier
-            .fillMaxWidth()
-            .heightIn(
-                0.dp,
-                (LocalConfiguration.current.screenHeightDp * 0.6).dp
-            )
-    ) {
-        items(app.shortcutsList.size) { i ->
-            val shortcut = app.shortcutsList[i]
-            AppDialogButton(
-                text = shortcut.label,
-                textAlign = TextAlign.Start,
-                onClick = {
-                    vm.launchAppShortcut(shortcut)
-                    onDismissRequest()
-                }
-            )
-        }
+    AppDialogItems(
+        modifier = modifier,
+        itemsCount = app.shortcutsList.size,
+        itemKey = { i -> app.shortcutsList[i].hashCode() }) { i ->
+        val shortcut = app.shortcutsList[i]
+        AppDialogButton(
+            text = shortcut.label,
+            textAlign = TextAlign.Start,
+            onClick = {
+                vm.launchAppShortcut(shortcut)
+                onDismissRequest()
+            }
+        )
+    }
+}
 
+@Composable
+fun AppDialogItems(
+    itemsCount: Int,
+    itemKey: (Int) -> Any,
+    modifier: Modifier = Modifier,
+    itemContent: @Composable LazyItemScope.(Int) -> Unit,
+) {
+    ElevatedCard(modifier = modifier) {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(
+                    0.dp,
+                    (LocalConfiguration.current.screenHeightDp * 0.6).dp
+                )
+        ) {
+            items(count = itemsCount, key = itemKey, itemContent = itemContent)
+        }
     }
 }
 

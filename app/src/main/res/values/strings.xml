@@ -7,6 +7,9 @@
     <string name="drawer_app_info">Info</string>
     <string name="drawer_app_uninstall">Uninstall</string>
     <string name="drawer_app_hide">Hide</string>
+    <string name="drawer_app_delete_split_screen_shortcut">
+        Delete split screen shortcut
+    </string>
 
     <string name="shortcut_settings_label">Launcher settings</string>
 
