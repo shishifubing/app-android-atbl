@@ -1,0 +1,11 @@
+name: tag
+
+on:
+  push:
+    branches: main
+    
+jobs:
+  tag:
+    name: reuse-tag
+    uses: ./.github/workflows/reuse-tag.yml
+    secrets: inherit
