@@ -6,6 +6,7 @@ option java_multiple_files = true;
 message LauncherApps {
   repeated LauncherApp apps = 1;
   repeated LauncherSplitScreenShortcut splitScreenShortcuts = 2;
+  bool isHomeApp = 3;
 }
 
 message LauncherApp {

@@ -45,6 +45,10 @@ class LauncherAppsRepository(
             .asImageBitmap()
     }
 
+    suspend fun updateIsHomeApp(isHomeApp: Boolean) {
+        update { current -> current.setIsHomeApp(isHomeApp) }
+    }
+
     suspend fun hideApp(packageName: String) {
         update { current ->
             val index = getAppIndex(current, packageName)

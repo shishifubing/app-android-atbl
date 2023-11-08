@@ -33,6 +33,8 @@ val Context.launcherAppsDataStore: DataStore<LauncherApps> by dataStore(
 
 class LauncherActivity : ComponentActivity() {
     private lateinit var launcherAppsManager: LauncherAppsManager
+    private lateinit var launcherAppsRepo: LauncherAppsRepository
+    private lateinit var launcherSettingsRepo: LauncherSettingsRepository
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,10 +42,11 @@ class LauncherActivity : ComponentActivity() {
         launcherAppsManager = LauncherAppsManager(
             this, componentName, lifecycle
         )
-        val settingsRepo = LauncherSettingsRepository(settingsDataStore)
-        val launcherAppsRepo = LauncherAppsRepository(
+        launcherAppsRepo = LauncherAppsRepository(
             launcherAppsDataStore, this
         )
+        launcherSettingsRepo = LauncherSettingsRepository(settingsDataStore)
+
         launcherAppsManager.addCallback(
             onAdded = { packageName ->
                 lifecycleScope.launch { launcherAppsRepo.addApp(packageName) }
@@ -57,13 +60,13 @@ class LauncherActivity : ComponentActivity() {
         )
 
         lifecycleScope.launch { launcherAppsRepo.fetchInitial() }
-        lifecycleScope.launch { settingsRepo.fetchInitial() }
+        lifecycleScope.launch { launcherSettingsRepo.fetchInitial() }
 
         val vm = ViewModelProvider(
             this,
             LauncherViewModelFactory(
-                settingsRepo, launcherAppsRepo, launcherAppsManager,
-                runBlocking { settingsRepo.fetchInitial() }
+                launcherSettingsRepo, launcherAppsRepo, launcherAppsManager,
+                runBlocking { launcherSettingsRepo.fetchInitial() }
             )
         )[LauncherViewModel::class.java]
 
@@ -78,6 +81,13 @@ class LauncherActivity : ComponentActivity() {
                     )
                 }
             }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        lifecycleScope.launch {
+            launcherAppsRepo.updateIsHomeApp(launcherAppsManager.isHomeApp())
         }
     }
 

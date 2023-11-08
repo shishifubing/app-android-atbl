@@ -1,8 +1,9 @@
 <resources>
     <string name="app_name">ATBL</string>
 
-    <string name="not_a_home_app_toast">The launcher is not set as the home
-        app, you cannot see shortcuts</string>
+    <string name="not_a_home_app_banner">
+        This launcher is not set as a home app, you will not be able to see shortcuts
+    </string>
 
     <string name="drawer_app_info">Info</string>
     <string name="drawer_app_uninstall">Uninstall</string>
