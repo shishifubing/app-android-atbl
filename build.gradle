@@ -17,3 +17,8 @@ ext {
     activityVersion = '1.8.0'
     coreVersion = '1.12.0'
 }
+
+tasks.withType(AbstractArchiveTask).configureEach {
+    preserveFileTimestamps = false
+    reproducibleFileOrder = true
+}
