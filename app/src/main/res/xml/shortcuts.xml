@@ -6,7 +6,7 @@
         android:shortcutShortLabel="@string/shortcut_settings_label">
         <intent
             android:action="android.intent.action.MAIN"
-            android:targetClass="com.shishifubing.atbl.LauncherSettingsActivity"
+            android:targetClass="com.shishifubing.atbl.SettingsActivity"
             android:targetPackage="com.shishifubing.atbl" />
     </shortcut>
 </shortcuts>

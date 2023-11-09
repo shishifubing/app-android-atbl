@@ -9,6 +9,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.shishifubing.atbl.domain.LauncherAppsRepository
+import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import com.shishifubing.atbl.ui.LauncherTheme
 import com.shishifubing.atbl.ui.SettingsScreen
 import com.shishifubing.atbl.ui.SettingsViewModel
@@ -17,7 +19,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 
-class LauncherSettingsActivity : ComponentActivity() {
+class SettingsActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)

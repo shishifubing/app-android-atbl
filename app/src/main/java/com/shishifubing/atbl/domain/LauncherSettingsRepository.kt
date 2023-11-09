@@ -1,10 +1,17 @@
-package com.shishifubing.atbl
+package com.shishifubing.atbl.domain
 
 import android.util.Log
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import com.google.protobuf.InvalidProtocolBufferException
+import com.shishifubing.atbl.LauncherFontFamily
+import com.shishifubing.atbl.LauncherHorizontalArrangement
+import com.shishifubing.atbl.LauncherSettings
+import com.shishifubing.atbl.LauncherSortBy
+import com.shishifubing.atbl.LauncherTextColor
+import com.shishifubing.atbl.LauncherTextStyle
+import com.shishifubing.atbl.LauncherVerticalArrangement
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
