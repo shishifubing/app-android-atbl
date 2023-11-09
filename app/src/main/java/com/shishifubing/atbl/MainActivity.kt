@@ -12,6 +12,11 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
+import com.shishifubing.atbl.domain.LauncherAppsManager
+import com.shishifubing.atbl.domain.LauncherAppsRepository
+import com.shishifubing.atbl.domain.LauncherAppsSerializer
+import com.shishifubing.atbl.domain.LauncherSettingsRepository
+import com.shishifubing.atbl.domain.SettingsSerializer
 import com.shishifubing.atbl.ui.LauncherScreen
 import com.shishifubing.atbl.ui.LauncherTheme
 import com.shishifubing.atbl.ui.LauncherViewModel
@@ -40,7 +45,7 @@ class LauncherActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
 
         launcherAppsManager = LauncherAppsManager(
-            this, componentName, lifecycle
+            this, lifecycle
         )
         launcherAppsRepo = LauncherAppsRepository(
             launcherAppsDataStore, this
@@ -85,10 +90,10 @@ class LauncherActivity : ComponentActivity() {
     }
 
     override fun onResume() {
-        super.onResume()
         lifecycleScope.launch {
             launcherAppsRepo.updateIsHomeApp(launcherAppsManager.isHomeApp())
         }
+        super.onResume()
     }
 
     override fun onStop() {

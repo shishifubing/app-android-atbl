@@ -1,5 +1,6 @@
-package com.shishifubing.atbl
+package com.shishifubing.atbl.domain
 
+import android.app.ActivityOptions
 import android.app.role.RoleManager
 import android.content.ComponentName
 import android.content.Context
@@ -9,20 +10,24 @@ import android.content.Intent.CATEGORY_HOME
 import android.content.IntentFilter
 import android.content.pm.LauncherApps
 import android.content.pm.ShortcutInfo
+import android.content.res.Resources
+import android.graphics.Rect
 import android.net.Uri
 import android.os.Build
+import android.os.Bundle
 import android.os.UserHandle
 import android.provider.Settings
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import com.shishifubing.atbl.LauncherAppShortcut
+import com.shishifubing.atbl.LauncherSplitScreenShortcut
 
 
 private val tag = LauncherAppsManager::class.simpleName
 
 class LauncherAppsManager(
     private val context: Context,
-    private val componentName: ComponentName,
     private val lifecycle: Lifecycle
 ) {
     private val packageManager = context.packageManager
@@ -51,11 +56,16 @@ class LauncherAppsManager(
         }
     }
 
-    fun launchApp(packageName: String, flags: Int? = null) {
+    fun launchApp(
+        packageName: String,
+        flags: Int? = null,
+        bundle: Bundle? = null
+    ) {
         context.startActivity(
             packageManager
                 .getLaunchIntentForPackage(packageName)
-                .let { if (flags == null) it else it?.setFlags(flags) }
+                .let { if (flags == null) it else it?.setFlags(flags) },
+            bundle
         )
     }
 
@@ -130,14 +140,22 @@ class LauncherAppsManager(
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 lifecycle.removeObserver(this)
+                val metrics = Resources.getSystem().displayMetrics
+                val options = ActivityOptions.makeBasic()
+                    .setLaunchBounds(
+                        Rect(
+                            0, 0,
+                            metrics.widthPixels, metrics.heightPixels / 2
+                        )
+                    )
                 launchApp(
                     shortcut.appTop.packageName,
-                    Intent.FLAG_ACTIVITY_NEW_TASK or
-                            Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent
+                        .FLAG_ACTIVITY_LAUNCH_ADJACENT,
+                    options.toBundle()
                 )
             }
         })
-        context.startActivity(Intent(ACTION_MAIN))
         launchApp(shortcut.appBottom.packageName)
     }
 }

@@ -6,12 +6,12 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherAppShortcut
 import com.shishifubing.atbl.LauncherApps
-import com.shishifubing.atbl.LauncherAppsManager
-import com.shishifubing.atbl.LauncherAppsRepository
 import com.shishifubing.atbl.LauncherSettings
-import com.shishifubing.atbl.LauncherSettingsRepository
 import com.shishifubing.atbl.LauncherSortBy
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
+import com.shishifubing.atbl.domain.LauncherAppsManager
+import com.shishifubing.atbl.domain.LauncherAppsRepository
+import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch

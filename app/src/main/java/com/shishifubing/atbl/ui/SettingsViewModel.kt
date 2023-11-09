@@ -5,10 +5,10 @@ import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherApps
-import com.shishifubing.atbl.LauncherAppsRepository
 import com.shishifubing.atbl.LauncherSettings
-import com.shishifubing.atbl.LauncherSettingsRepository
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
+import com.shishifubing.atbl.domain.LauncherAppsRepository
+import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 

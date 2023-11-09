@@ -1,4 +1,4 @@
-package com.shishifubing.atbl
+package com.shishifubing.atbl.domain
 
 import android.content.Context
 import android.content.Intent
@@ -14,6 +14,10 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import com.google.protobuf.InvalidProtocolBufferException
+import com.shishifubing.atbl.LauncherApp
+import com.shishifubing.atbl.LauncherAppShortcut
+import com.shishifubing.atbl.LauncherApps
+import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
