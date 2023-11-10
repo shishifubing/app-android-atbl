@@ -1,14 +1,25 @@
 package com.shishifubing.atbl.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -18,6 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.res.dimensionResource
+import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherApps
@@ -48,6 +61,7 @@ private val choiceOptions = object {
     val sortBy = enumToList<LauncherSortBy>()
 }
 
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
@@ -55,22 +69,70 @@ fun SettingsScreen(
 ) {
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
-    Column(modifier = modifier.verticalScroll(rememberScrollState())) {
-        HiddenApps(vm)
-        SplitScreenShortcuts(vm, apps, settings)
-        SplitScreenShortcutSeparator(vm, settings)
-        LayoutReverseOrder(vm, settings)
-        LayoutHorizontalPadding(vm, settings)
-        LayoutVerticalPadding(vm, settings)
-        LayoutHorizontalArrangement(vm, settings)
-        LayoutVerticalArrangement(vm, settings)
-        LayoutSortBy(vm, settings)
-        AppCardRemoveSpaces(vm, settings)
-        AppCardLowercase(vm, settings)
-        AppCardFontFamily(vm, settings)
-        AppCardTextStyle(vm, settings)
-        AppCardTextColor(vm, settings)
-        AppCardPadding(vm, settings)
+    Scaffold(
+        modifier = modifier,
+        topBar = {
+            TopAppBar(
+                title = {
+                    Text(
+                        text = stringResource(id = R.string.title_settings),
+                        style = MaterialTheme.typography.headlineLarge
+                    )
+                },
+                navigationIcon = {
+                    IconButton(onClick = { vm.closeSettings() }) {
+                        Icon(
+                            imageVector = Icons.Filled.ArrowBack,
+                            contentDescription = "Arrow back"
+                        )
+                    }
+                }
+            )
+        }
+    ) { paddingValues ->
+        Column(
+            modifier = Modifier
+                .verticalScroll(rememberScrollState())
+                .padding(paddingValues)
+        ) {
+            SettingsGroup(R.string.settings_group_hidden_apps) {
+                HiddenApps(vm)
+            }
+            SettingsGroup(R.string.settings_group_split_screen) {
+                SplitScreenShortcuts(vm, apps, settings)
+                SplitScreenShortcutSeparator(vm, settings)
+            }
+            SettingsGroup(R.string.settings_group_layout) {
+                LayoutReverseOrder(vm, settings)
+                LayoutHorizontalPadding(vm, settings)
+                LayoutVerticalPadding(vm, settings)
+                LayoutHorizontalArrangement(vm, settings)
+                LayoutVerticalArrangement(vm, settings)
+                LayoutSortBy(vm, settings)
+            }
+            SettingsGroup(R.string.settings_group_app_card) {
+                AppCardRemoveSpaces(vm, settings)
+                AppCardLowercase(vm, settings)
+                AppCardFontFamily(vm, settings)
+                AppCardTextStyle(vm, settings)
+                AppCardTextColor(vm, settings)
+                AppCardPadding(vm, settings)
+            }
+        }
+    }
+}
+
+@Composable
+fun SettingsGroup(
+    @StringRes name: Int,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))) {
+        Text(stringResource(name))
+        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+        Surface(modifier = Modifier.fillMaxWidth()) {
+            Column(content = content)
+        }
     }
 }
 

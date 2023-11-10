@@ -32,7 +32,8 @@ class SettingsActivity : ComponentActivity() {
             this,
             SettingsViewModelFactory(
                 settingsRepo, appsRepo,
-                runBlocking { settingsRepo.fetchInitial() }
+                runBlocking { settingsRepo.fetchInitial() },
+                this::finish
             )
         )[SettingsViewModel::class.java]
 
