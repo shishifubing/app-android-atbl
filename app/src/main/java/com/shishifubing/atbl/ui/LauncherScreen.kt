@@ -76,6 +76,7 @@ fun LauncherScreen(
     var dialogShortcut by remember {
         mutableStateOf<LauncherSplitScreenShortcut?>(null)
     }
+    val packageName = LocalContext.current.packageName
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -113,21 +114,19 @@ fun LauncherScreen(
             )
         }
     }
-    if (dialogShortcut != null) {
-        SplitScreenShortcutDialog(
+    when {
+        dialogShortcut != null -> SplitScreenShortcutDialog(
             shortcut = dialogShortcut!!,
             vm = vm,
             onDismissRequest = { dialogShortcut = null },
         )
-    }
-    if (dialogApp != null) {
-        AppDialog(
+
+        dialogApp != null -> AppDialog(
             app = dialogApp!!,
             vm = vm,
             onDismissRequest = { dialogApp = null },
             showShortcuts = apps.isHomeApp,
-            enabledHide = dialogApp!!.packageName != LocalContext.current
-                .packageName
+            enabledHide = dialogApp!!.packageName != packageName
         )
     }
 }

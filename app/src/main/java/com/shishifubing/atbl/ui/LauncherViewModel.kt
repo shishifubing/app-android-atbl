@@ -23,7 +23,9 @@ class LauncherViewModel(
     val initialSettings: LauncherSettings,
 ) : ViewModel() {
 
-    val initialApps: LauncherApps = LauncherApps.getDefaultInstance()
+    val initialApps: LauncherApps = LauncherApps
+        .getDefaultInstance()
+        .toBuilder().setIsHomeApp(true).build()
     val settingsFlow = launcherSettingsRepository.settingsFlow
     val appsFlow = launcherAppsRepository.appsFlow.combine(
         settingsFlow,
