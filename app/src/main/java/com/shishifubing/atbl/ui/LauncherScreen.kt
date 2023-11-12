@@ -135,7 +135,9 @@ fun LauncherScreen(
 fun NotAHomeAppBanner() {
     Card {
         Row(
-            modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
+            modifier = Modifier
+                .padding(dimensionResource(R.dimen.padding_medium))
+                .fillMaxWidth(),
             horizontalArrangement = Arrangement.Center,
             verticalAlignment = Alignment.CenterVertically
         ) {
