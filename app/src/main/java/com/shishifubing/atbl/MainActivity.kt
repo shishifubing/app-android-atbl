@@ -5,7 +5,6 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.datastore.core.DataStore
@@ -17,7 +16,7 @@ import com.shishifubing.atbl.domain.LauncherAppsRepository
 import com.shishifubing.atbl.domain.LauncherAppsSerializer
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import com.shishifubing.atbl.domain.SettingsSerializer
-import com.shishifubing.atbl.ui.LauncherScreen
+import com.shishifubing.atbl.ui.App
 import com.shishifubing.atbl.ui.LauncherTheme
 import com.shishifubing.atbl.ui.LauncherViewModel
 import com.shishifubing.atbl.ui.LauncherViewModelFactory
@@ -77,13 +76,8 @@ class LauncherActivity : ComponentActivity() {
 
         setContent {
             LauncherTheme {
-                Surface {
-                    LauncherScreen(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .safeDrawingPadding(),
-                        vm = vm
-                    )
+                Surface(modifier = Modifier.fillMaxSize()) {
+                    App(vm)
                 }
             }
         }

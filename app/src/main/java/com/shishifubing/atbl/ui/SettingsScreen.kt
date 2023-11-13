@@ -10,16 +10,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
@@ -61,63 +56,38 @@ private val choiceOptions = object {
     val sortBy = enumToList<LauncherSortBy>()
 }
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsScreen(
     modifier: Modifier = Modifier,
-    vm: SettingsViewModel = viewModel(),
+    vm: LauncherViewModel = viewModel()
 ) {
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
-    Scaffold(
-        modifier = modifier,
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = stringResource(id = R.string.title_settings),
-                        style = MaterialTheme.typography.headlineLarge
-                    )
-                },
-                navigationIcon = {
-                    IconButton(onClick = { vm.closeSettings() }) {
-                        Icon(
-                            imageVector = Icons.Filled.ArrowBack,
-                            contentDescription = "Arrow back"
-                        )
-                    }
-                }
-            )
+    Column(
+        modifier = modifier.verticalScroll(rememberScrollState())
+    ) {
+        SettingsGroup(R.string.settings_group_hidden_apps) {
+            HiddenApps(vm)
         }
-    ) { paddingValues ->
-        Column(
-            modifier = Modifier
-                .verticalScroll(rememberScrollState())
-                .padding(paddingValues)
-        ) {
-            SettingsGroup(R.string.settings_group_hidden_apps) {
-                HiddenApps(vm)
-            }
-            SettingsGroup(R.string.settings_group_split_screen) {
-                SplitScreenShortcuts(vm, apps, settings)
-                SplitScreenShortcutSeparator(vm, settings)
-            }
-            SettingsGroup(R.string.settings_group_layout) {
-                LayoutReverseOrder(vm, settings)
-                LayoutHorizontalPadding(vm, settings)
-                LayoutVerticalPadding(vm, settings)
-                LayoutHorizontalArrangement(vm, settings)
-                LayoutVerticalArrangement(vm, settings)
-                LayoutSortBy(vm, settings)
-            }
-            SettingsGroup(R.string.settings_group_app_card) {
-                AppCardRemoveSpaces(vm, settings)
-                AppCardLowercase(vm, settings)
-                AppCardFontFamily(vm, settings)
-                AppCardTextStyle(vm, settings)
-                AppCardTextColor(vm, settings)
-                AppCardPadding(vm, settings)
-            }
+        SettingsGroup(R.string.settings_group_split_screen) {
+            SplitScreenShortcuts(vm, apps, settings)
+            SplitScreenShortcutSeparator(vm, settings)
+        }
+        SettingsGroup(R.string.settings_group_layout) {
+            LayoutReverseOrder(vm, settings)
+            LayoutHorizontalPadding(vm, settings)
+            LayoutVerticalPadding(vm, settings)
+            LayoutHorizontalArrangement(vm, settings)
+            LayoutVerticalArrangement(vm, settings)
+            LayoutSortBy(vm, settings)
+        }
+        SettingsGroup(R.string.settings_group_app_card) {
+            AppCardRemoveSpaces(vm, settings)
+            AppCardLowercase(vm, settings)
+            AppCardFontFamily(vm, settings)
+            AppCardTextStyle(vm, settings)
+            AppCardTextColor(vm, settings)
+            AppCardPadding(vm, settings)
         }
     }
 }
@@ -138,7 +108,7 @@ fun SettingsGroup(
 
 @Composable
 fun SplitScreenShortcuts(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     apps: LauncherApps,
     settings: LauncherSettings
 ) {
@@ -190,7 +160,7 @@ fun SplitScreenShortcuts(
 
 @Composable
 fun SplitScreenShortcutSeparator(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     SettingsTextInputField(
@@ -204,7 +174,7 @@ fun SplitScreenShortcutSeparator(
 
 @Composable
 fun LayoutVerticalPadding(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -227,7 +197,7 @@ fun LayoutVerticalPadding(
 
 @Composable
 fun LayoutHorizontalPadding(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -248,7 +218,7 @@ fun LayoutHorizontalPadding(
 
 @Composable
 fun LayoutSortBy(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -273,7 +243,7 @@ fun LayoutSortBy(
 
 @Composable
 fun LayoutReverseOrder(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     SettingsSwitchField(
@@ -292,7 +262,7 @@ fun LayoutReverseOrder(
 
 @Composable
 fun LayoutVerticalArrangement(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -317,7 +287,7 @@ fun LayoutVerticalArrangement(
 
 @Composable
 fun AppCardFontFamily(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -342,7 +312,7 @@ fun AppCardFontFamily(
 
 @Composable
 fun AppCardTextStyle(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -367,7 +337,7 @@ fun AppCardTextStyle(
 
 @Composable
 fun AppCardRemoveSpaces(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     SettingsSwitchField(
@@ -386,7 +356,7 @@ fun AppCardRemoveSpaces(
 
 @Composable
 fun AppCardLowercase(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     SettingsSwitchField(
@@ -405,7 +375,7 @@ fun AppCardLowercase(
 
 @Composable
 fun AppCardTextColor(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -430,7 +400,7 @@ fun AppCardTextColor(
 
 @Composable
 fun AppCardPadding(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -453,7 +423,7 @@ fun AppCardPadding(
 
 @Composable
 fun LayoutHorizontalArrangement(
-    vm: SettingsViewModel,
+    vm: LauncherViewModel,
     settings: LauncherSettings
 ) {
     var curOption by remember {
@@ -478,7 +448,7 @@ fun LayoutHorizontalArrangement(
 
 @Composable
 fun HiddenApps(
-    vm: SettingsViewModel
+    vm: LauncherViewModel
 ) {
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     val launcherPackageName = LocalContext.current.packageName

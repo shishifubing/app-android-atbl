@@ -68,7 +68,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun LauncherScreen(
     modifier: Modifier = Modifier,
-    vm: LauncherViewModel = viewModel(),
+    vm: LauncherViewModel = viewModel()
 ) {
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     val apps by vm.appsFlow.collectAsState(vm.initialApps)

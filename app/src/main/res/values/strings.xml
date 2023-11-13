@@ -7,6 +7,9 @@
         This launcher is not set as a home app, you will not be able to see shortcuts
     </string>
 
+    <string name="route_home_label">Home</string>
+    <string name="route_settings_label">Settings</string>
+
     <string name="drawer_app_info">Info</string>
     <string name="drawer_app_uninstall">Uninstall</string>
     <string name="drawer_app_hide">Hide</string>
