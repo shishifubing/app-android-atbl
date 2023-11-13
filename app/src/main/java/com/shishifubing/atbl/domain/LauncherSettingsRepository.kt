@@ -48,15 +48,15 @@ object SettingsSerializer : Serializer<LauncherSettings> {
             .setAppCardPadding(0)
             .setAppCardLabelRemoveSpaces(true)
             .setAppCardTextStyle(LauncherTextStyle.HeadlineSmall)
-            .setAppCardLabelLowercase(false)
+            .setAppCardLabelLowercase(true)
             .setAppLayoutHorizontalArrangement(
-                LauncherHorizontalArrangement.HorizontalCenter
+                LauncherHorizontalArrangement.HorizontalStart
             )
             .setAppLayoutVerticalArrangement(
                 LauncherVerticalArrangement.VerticalTop
             )
             .setAppCardTextColor(LauncherTextColor.Unspecified)
-            .setAppCardFontFamily(LauncherFontFamily.Default)
+            .setAppCardFontFamily(LauncherFontFamily.Monospace)
             .setAppLayoutSortBy(LauncherSortBy.SortByLabel)
             .setAppLayoutReverseOrder(false)
             .setAppLayoutHorizontalPadding(0)
