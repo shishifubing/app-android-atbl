@@ -70,7 +70,7 @@ import kotlinx.coroutines.flow.collectLatest
 fun LauncherScreen(
     goToSettings: () -> Unit,
     modifier: Modifier = Modifier,
-    vm: LauncherViewModel = viewModel()
+    vm: LauncherViewModel = viewModel(factory = LauncherViewModel.Factory)
 ) {
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     val apps by vm.appsFlow.collectAsState(vm.initialApps)

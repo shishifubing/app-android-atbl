@@ -66,7 +66,7 @@ private val choiceOptions = object {
 fun SettingsScreen(
     goBack: () -> Unit,
     modifier: Modifier = Modifier,
-    vm: SettingsViewModel = viewModel()
+    vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
 ) {
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)

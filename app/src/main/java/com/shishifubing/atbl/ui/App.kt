@@ -14,8 +14,6 @@ enum class LauncherNav {
 
 @Composable
 fun App(
-    vmLauncher: LauncherViewModel,
-    vmSettings: SettingsViewModel,
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
@@ -26,13 +24,11 @@ fun App(
     ) {
         composable(route = LauncherNav.Home.name) {
             LauncherScreen(
-                vm = vmLauncher,
                 goToSettings = { navController.navigate(LauncherNav.Settings.name) }
             )
         }
         composable(route = LauncherNav.Settings.name) {
             SettingsScreen(
-                vm = vmSettings,
                 goBack = { navController.popBackStack() }
             )
         }

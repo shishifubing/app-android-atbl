@@ -10,7 +10,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import com.shishifubing.atbl.domain.LauncherAppsManager
 import com.shishifubing.atbl.domain.LauncherAppsRepository
@@ -19,12 +18,7 @@ import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import com.shishifubing.atbl.domain.SettingsSerializer
 import com.shishifubing.atbl.ui.App
 import com.shishifubing.atbl.ui.LauncherTheme
-import com.shishifubing.atbl.ui.LauncherViewModel
-import com.shishifubing.atbl.ui.LauncherViewModelFactory
-import com.shishifubing.atbl.ui.SettingsViewModel
-import com.shishifubing.atbl.ui.SettingsViewModelFactory
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 private val tag = MainActivity::class.simpleName
 
@@ -39,57 +33,37 @@ val Context.launcherAppsDataStore: DataStore<LauncherApps> by dataStore(
 )
 
 class MainActivity : ComponentActivity() {
-    private lateinit var launcherAppsManager: LauncherAppsManager
-    private lateinit var launcherAppsRepo: LauncherAppsRepository
-    private lateinit var launcherSettingsRepo: LauncherSettingsRepository
 
+    private lateinit var app: LauncherApplication
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-
-        launcherAppsManager = LauncherAppsManager(
-            this, lifecycle
+        app = application as LauncherApplication
+        app.launcherSettingsRepo =
+            LauncherSettingsRepository(settingsDataStore)
+        app.launcherAppsRepo = LauncherAppsRepository(
+            launcherAppsDataStore,
+            this
         )
-        launcherAppsRepo = LauncherAppsRepository(
-            launcherAppsDataStore, this
-        )
-        launcherSettingsRepo = LauncherSettingsRepository(settingsDataStore)
+        app.launcherAppsManager = LauncherAppsManager(this)
+        val manager = app.launcherAppsManager!!
+        val appsRepo = app.launcherAppsRepo!!
 
-        launcherAppsManager.addCallback(
+        manager.addCallback(
             onAdded = { packageName ->
-                lifecycleScope.launch { launcherAppsRepo.addApp(packageName) }
+                lifecycleScope.launch { appsRepo.addApp(packageName) }
             },
             onChanged = { packageName ->
-                lifecycleScope.launch { launcherAppsRepo.updateApp(packageName) }
+                lifecycleScope.launch { appsRepo.updateApp(packageName) }
             },
             onRemoved = { packageName ->
-                lifecycleScope.launch { launcherAppsRepo.removeApp(packageName) }
+                lifecycleScope.launch { appsRepo.removeApp(packageName) }
             }
         )
-
-        lifecycleScope.launch { launcherAppsRepo.fetchInitial() }
-        val initialSettings = runBlocking {
-            launcherSettingsRepo.fetchInitial()
-        }
-
-        val vmLauncher = ViewModelProvider(
-            this,
-            LauncherViewModelFactory(
-                launcherSettingsRepo, launcherAppsRepo, launcherAppsManager,
-                initialSettings
-            )
-        )[LauncherViewModel::class.java]
-        val vmSettings = ViewModelProvider(
-            this,
-            SettingsViewModelFactory(
-                launcherSettingsRepo, launcherAppsRepo,
-                initialSettings
-            )
-        )[SettingsViewModel::class.java]
-
+        lifecycleScope.launch { appsRepo.fetchInitial() }
         setContent {
             LauncherTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    App(vmLauncher, vmSettings, Modifier.safeDrawingPadding())
+                    App(modifier = Modifier.safeDrawingPadding())
                 }
             }
         }
@@ -97,14 +71,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         lifecycleScope.launch {
-            launcherAppsRepo.updateIsHomeApp(launcherAppsManager.isHomeApp())
+            app.launcherAppsRepo!!.updateIsHomeApp(app.launcherAppsManager!!.isHomeApp())
         }
         super.onResume()
     }
 
     override fun onStop() {
         super.onStop()
-        launcherAppsManager.removeCallbacks()
+        app.launcherAppsManager!!.removeCallbacks()
     }
 }
 

@@ -1,12 +1,12 @@
 package com.shishifubing.atbl.domain
 
-import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.graphics.Bitmap
 import android.os.Build
 import android.util.Log
+import androidx.activity.ComponentActivity
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
@@ -28,7 +28,7 @@ import android.content.pm.LauncherApps as LauncherAppsAndroid
 
 class LauncherAppsRepository(
     private val dataStore: DataStore<LauncherApps>,
-    private val context: Context
+    private val parent: ComponentActivity
 ) {
 
     private val tag = LauncherAppsRepository::class.simpleName
@@ -44,7 +44,7 @@ class LauncherAppsRepository(
     }
 
     fun getAppIcon(packageName: String): ImageBitmap {
-        return context.packageManager.getApplicationIcon(packageName)
+        return parent.packageManager.getApplicationIcon(packageName)
             .toBitmap(config = Bitmap.Config.ARGB_8888)
             .asImageBitmap()
     }
@@ -172,7 +172,7 @@ class LauncherAppsRepository(
                 .addCategory(Intent.CATEGORY_LAUNCHER)
         )
         return queryResults.map { info ->
-            val label = info.activityInfo.loadLabel(context.packageManager)
+            val label = info.activityInfo.loadLabel(parent.packageManager)
             LauncherApp.newBuilder()
                 .setLabel(label.toString())
                 .setPackageName(info.activityInfo.packageName)
@@ -194,7 +194,7 @@ class LauncherAppsRepository(
         }
         val info = queryResults[0].activityInfo
         return LauncherApp.newBuilder()
-            .setLabel(info.loadLabel(context.packageManager).toString())
+            .setLabel(info.loadLabel(parent.packageManager).toString())
             .setPackageName(info.packageName)
             .addAllShortcuts(getShortcuts(info.packageName))
             .build()
@@ -202,20 +202,20 @@ class LauncherAppsRepository(
 
     private fun queryPackageManager(intent: Intent): List<ResolveInfo> {
         return when {
-            Build.VERSION.SDK_INT >= 33 -> context.packageManager
+            Build.VERSION.SDK_INT >= 33 -> parent.packageManager
                 .queryIntentActivities(
                     intent,
                     PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_ALL.toLong())
                 )
 
-            else -> context.packageManager.queryIntentActivities(
+            else -> parent.packageManager.queryIntentActivities(
                 intent, 0
             )
         }
     }
 
     private fun getShortcuts(packageName: String): List<LauncherAppShortcut> {
-        val launcherAppsService = context.getSystemService(
+        val launcherAppsService = parent.getSystemService(
             LauncherAppsAndroid::class.java
         )
         val userHandle = android.os.Process.myUserHandle()
