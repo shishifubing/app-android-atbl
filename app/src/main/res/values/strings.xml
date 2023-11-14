@@ -7,9 +7,6 @@
         This launcher is not set as a home app, you will not be able to see shortcuts
     </string>
 
-    <string name="route_home_label">Home</string>
-    <string name="route_settings_label">Settings</string>
-
     <string name="drawer_app_info">Info</string>
     <string name="drawer_app_uninstall">Uninstall</string>
     <string name="drawer_app_hide">Hide</string>
@@ -17,7 +14,7 @@
         Delete split screen shortcut
     </string>
 
-    <string name="shortcut_settings_label">Launcher settings</string>
+    <string name="launcher_dialog_settings">Launcher settings</string>
 
     <string name="settings_group_split_screen">Split screen</string>
     <string name="settings_group_hidden_apps">Hidden apps</string>

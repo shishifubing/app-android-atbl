@@ -2,6 +2,7 @@ package com.shishifubing.atbl.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.Image
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.Arrangement
@@ -67,6 +68,7 @@ import kotlinx.coroutines.flow.collectLatest
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 fun LauncherScreen(
+    goToSettings: () -> Unit,
     modifier: Modifier = Modifier,
     vm: LauncherViewModel = viewModel()
 ) {
@@ -76,6 +78,7 @@ fun LauncherScreen(
     var dialogShortcut by remember {
         mutableStateOf<LauncherSplitScreenShortcut?>(null)
     }
+    var showLauncherDialog by remember { mutableStateOf(false) }
     val packageName = LocalContext.current.packageName
     FlowRow(
         modifier = modifier
@@ -83,6 +86,10 @@ fun LauncherScreen(
             .padding(
                 settings.appLayoutHorizontalPadding.dp,
                 settings.appLayoutVerticalPadding.dp
+            )
+            .combinedClickable(
+                onLongClick = { showLauncherDialog = true },
+                onClick = {}
             ),
         horizontalArrangement = getHorizontalArrangement(
             settings.appLayoutHorizontalArrangement
@@ -115,6 +122,11 @@ fun LauncherScreen(
         }
     }
     when {
+        showLauncherDialog -> LauncherDialog(
+            goToSettings = goToSettings,
+            onDismissRequest = { showLauncherDialog = false }
+        )
+
         dialogShortcut != null -> SplitScreenShortcutDialog(
             shortcut = dialogShortcut!!,
             vm = vm,
@@ -128,6 +140,27 @@ fun LauncherScreen(
             showShortcuts = apps.isHomeApp,
             enabledHide = dialogApp!!.packageName != packageName
         )
+    }
+}
+
+@Composable
+fun LauncherDialog(
+    goToSettings: () -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
+        AppDialogItems(
+            modifier = modifier,
+            itemsCount = 1,
+            itemKey = { 0 }
+        ) {
+            AppDialogButton(
+                text = stringResource(R.string.launcher_dialog_settings),
+                textAlign = TextAlign.Start,
+                onClick = goToSettings
+            )
+        }
     }
 }
 

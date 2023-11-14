@@ -5,6 +5,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.datastore.core.DataStore
@@ -20,10 +21,12 @@ import com.shishifubing.atbl.ui.App
 import com.shishifubing.atbl.ui.LauncherTheme
 import com.shishifubing.atbl.ui.LauncherViewModel
 import com.shishifubing.atbl.ui.LauncherViewModelFactory
+import com.shishifubing.atbl.ui.SettingsViewModel
+import com.shishifubing.atbl.ui.SettingsViewModelFactory
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
-private val tag = LauncherActivity::class.simpleName
+private val tag = MainActivity::class.simpleName
 
 val Context.settingsDataStore: DataStore<LauncherSettings> by dataStore(
     fileName = "settings.pb",
@@ -35,7 +38,7 @@ val Context.launcherAppsDataStore: DataStore<LauncherApps> by dataStore(
     serializer = LauncherAppsSerializer
 )
 
-class LauncherActivity : ComponentActivity() {
+class MainActivity : ComponentActivity() {
     private lateinit var launcherAppsManager: LauncherAppsManager
     private lateinit var launcherAppsRepo: LauncherAppsRepository
     private lateinit var launcherSettingsRepo: LauncherSettingsRepository
@@ -64,20 +67,29 @@ class LauncherActivity : ComponentActivity() {
         )
 
         lifecycleScope.launch { launcherAppsRepo.fetchInitial() }
-        lifecycleScope.launch { launcherSettingsRepo.fetchInitial() }
+        val initialSettings = runBlocking {
+            launcherSettingsRepo.fetchInitial()
+        }
 
-        val vm = ViewModelProvider(
+        val vmLauncher = ViewModelProvider(
             this,
             LauncherViewModelFactory(
                 launcherSettingsRepo, launcherAppsRepo, launcherAppsManager,
-                runBlocking { launcherSettingsRepo.fetchInitial() }
+                initialSettings
             )
         )[LauncherViewModel::class.java]
+        val vmSettings = ViewModelProvider(
+            this,
+            SettingsViewModelFactory(
+                launcherSettingsRepo, launcherAppsRepo,
+                initialSettings
+            )
+        )[SettingsViewModel::class.java]
 
         setContent {
             LauncherTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    App(vm)
+                    App(vmLauncher, vmSettings, Modifier.safeDrawingPadding())
                 }
             }
         }
