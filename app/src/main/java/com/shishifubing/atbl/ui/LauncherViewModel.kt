@@ -4,7 +4,6 @@ package com.shishifubing.atbl.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.viewModelScope
-import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherAppShortcut
 import com.shishifubing.atbl.LauncherApps
 import com.shishifubing.atbl.LauncherSettings
@@ -18,7 +17,7 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 
 class LauncherViewModel(
-    private val launcherSettingsRepository: LauncherSettingsRepository,
+    launcherSettingsRepository: LauncherSettingsRepository,
     private val launcherAppsRepository: LauncherAppsRepository,
     private val launcherAppsManager: LauncherAppsManager,
     val initialSettings: LauncherSettings
@@ -32,6 +31,7 @@ class LauncherViewModel(
         settingsFlow,
         this::transformApps
     )
+
 
     private fun launch(action: suspend CoroutineScope.() -> Unit) {
         viewModelScope.launch { action() }
@@ -53,29 +53,6 @@ class LauncherViewModel(
                 if (settings.appLayoutReverseOrder) it.reversed() else it
             }
         ).build()
-    }
-
-    fun updateSettings(action: (LauncherSettings.Builder) -> (LauncherSettings.Builder)) {
-        launch { launcherSettingsRepository.update(action) }
-    }
-
-    fun setHiddenApps(hiddenPackages: List<String>) {
-        launch { launcherAppsRepository.setHiddenApps(hiddenPackages) }
-    }
-
-    fun addSplitScreenShortcut(appTop: LauncherApp, appBottom: LauncherApp) {
-        launch {
-            launcherAppsRepository.addSplitScreenShortcut(
-                appTop.packageName,
-                appBottom.packageName
-            )
-        }
-    }
-
-    fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
-        launch {
-            launcherAppsRepository.removeSplitScreenShortcut(shortcut)
-        }
     }
 
     fun getAppIcon(packageName: String) =

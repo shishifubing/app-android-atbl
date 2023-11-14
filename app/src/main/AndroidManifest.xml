@@ -19,7 +19,7 @@
         android:theme="@style/Theme.ATBL"
         tools:targetApi="31">
         <activity
-            android:name="com.shishifubing.atbl.LauncherActivity"
+            android:name="com.shishifubing.atbl.MainActivity"
             android:clearTaskOnLaunch="true"
             android:excludeFromRecents="true"
             android:exported="true"

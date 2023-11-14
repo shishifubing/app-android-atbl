@@ -1,15 +1,11 @@
-<div align="center" markdown="1">
-
-# [`app-android-abtl`][url-repo]
+# [`app-android-atbl`][url-repo]
 
 [![License][badge-license]][url-license]
 [![Status][badge-status-finished]][url-repo]
 [![Version][badge-version]][url-version]
 [![Release][badge-workflow-release]][url-workflow-release]
 
-Another text-based android launcher
-
-</div>
+Android launcher
 
 ## About The Project
 
@@ -32,8 +28,6 @@ This is an android launcher, it allows you to launch apps and shortcuts
 - Made with Jetpack Compose
 
 <!-- relative links -->
-
-[bpmn diagram]: docs/diagram.svg
 
 <!-- project links -->
 
