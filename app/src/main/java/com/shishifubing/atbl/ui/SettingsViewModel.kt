@@ -3,8 +3,12 @@ package com.shishifubing.atbl.ui
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
+import androidx.lifecycle.viewmodel.initializer
+import androidx.lifecycle.viewmodel.viewModelFactory
 import com.shishifubing.atbl.LauncherApp
+import com.shishifubing.atbl.LauncherApplication
 import com.shishifubing.atbl.LauncherApps
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
@@ -12,6 +16,7 @@ import com.shishifubing.atbl.domain.LauncherAppsRepository
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.runBlocking
 
 class SettingsViewModel(
     private val launcherSettingsRepository: LauncherSettingsRepository,
@@ -22,6 +27,19 @@ class SettingsViewModel(
     val initialApps: LauncherApps = LauncherApps.getDefaultInstance()
     val settingsFlow = launcherSettingsRepository.settingsFlow
     val appsFlow = launcherAppsRepository.appsFlow
+
+    companion object {
+        val Factory: ViewModelProvider.Factory = viewModelFactory {
+            initializer {
+                val app = (this[APPLICATION_KEY] as LauncherApplication)
+                SettingsViewModel(
+                    launcherSettingsRepository = app.launcherSettingsRepo!!,
+                    launcherAppsRepository = app.launcherAppsRepo!!,
+                    initialSettings = runBlocking { app.launcherSettingsRepo!!.fetchInitial() }
+                )
+            }
+        }
+    }
 
     private fun launch(action: suspend CoroutineScope.() -> Unit) {
         viewModelScope.launch { action() }
@@ -48,23 +66,5 @@ class SettingsViewModel(
         launch {
             launcherAppsRepository.removeSplitScreenShortcut(shortcut)
         }
-    }
-}
-
-class SettingsViewModelFactory(
-    private val launcherSettingsRepository: LauncherSettingsRepository,
-    private val launcherAppsRepository: LauncherAppsRepository,
-    private val initialSettings: LauncherSettings
-) : ViewModelProvider.Factory {
-    override fun <T : ViewModel> create(modelClass: Class<T>): T {
-        if (modelClass.isAssignableFrom(SettingsViewModel::class.java)) {
-            @Suppress("UNCHECKED_CAST")
-            return SettingsViewModel(
-                launcherSettingsRepository,
-                launcherAppsRepository,
-                initialSettings
-            ) as T
-        }
-        throw IllegalArgumentException("Unknown ViewModel class")
     }
 }
