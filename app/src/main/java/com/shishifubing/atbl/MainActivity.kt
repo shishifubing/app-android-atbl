@@ -16,8 +16,8 @@ import com.shishifubing.atbl.domain.LauncherAppsRepository
 import com.shishifubing.atbl.domain.LauncherAppsSerializer
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import com.shishifubing.atbl.domain.SettingsSerializer
-import com.shishifubing.atbl.ui.App
 import com.shishifubing.atbl.ui.LauncherTheme
+import com.shishifubing.atbl.ui.UI
 import kotlinx.coroutines.launch
 
 private val tag = MainActivity::class.simpleName
@@ -63,7 +63,7 @@ class MainActivity : ComponentActivity() {
         setContent {
             LauncherTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
-                    App(modifier = Modifier.safeDrawingPadding())
+                    UI(modifier = Modifier.safeDrawingPadding())
                 }
             }
         }

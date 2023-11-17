@@ -69,6 +69,7 @@ import kotlinx.coroutines.flow.collectLatest
 @Composable
 fun LauncherScreen(
     goToSettings: () -> Unit,
+    goToAddWidget: () -> Unit,
     modifier: Modifier = Modifier,
     vm: LauncherViewModel = viewModel(factory = LauncherViewModel.Factory)
 ) {
@@ -124,6 +125,7 @@ fun LauncherScreen(
     when {
         showLauncherDialog -> LauncherDialog(
             goToSettings = goToSettings,
+            goToAddWidget = goToAddWidget,
             onDismissRequest = { showLauncherDialog = false }
         )
 
@@ -146,20 +148,33 @@ fun LauncherScreen(
 @Composable
 fun LauncherDialog(
     goToSettings: () -> Unit,
+    goToAddWidget: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
-        AppDialogItems(
-            modifier = modifier,
-            itemsCount = 1,
-            itemKey = { 0 }
-        ) {
+    val items: List<@Composable () -> Unit> = listOf(
+        {
             AppDialogButton(
                 text = stringResource(R.string.launcher_dialog_settings),
                 textAlign = TextAlign.Start,
                 onClick = goToSettings
             )
+        },
+        {
+            AppDialogButton(
+                text = stringResource(R.string.launcher_dialog_add_widget),
+                textAlign = TextAlign.Start,
+                onClick = goToAddWidget
+            )
+        }
+    )
+    LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
+        AppDialogItems(
+            modifier = modifier,
+            itemsCount = items.size,
+            itemKey = { i -> items[i].hashCode() }
+        ) { i ->
+            items[i]()
         }
     }
 }
