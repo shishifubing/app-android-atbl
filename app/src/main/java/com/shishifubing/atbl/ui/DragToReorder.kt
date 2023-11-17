@@ -113,12 +113,13 @@ fun Modifier.dragToReorder(
                     )
                 }
             }
-            if (isDraggedAfterLongPress)
+            if (isDraggedAfterLongPress) {
                 detectDragGesturesAfterLongPress(
                     onDragStart = { onDragStart() },
                     onDrag = { change, _ -> onDrag(change) },
                     onDragEnd = { onDragEnd() }
-                ) else
+                )
+            } else {
                 while (true) {
                     awaitPointerEventScope {
                         drag(awaitFirstDown().id) { change ->
@@ -128,6 +129,7 @@ fun Modifier.dragToReorder(
                     }
                     onDragEnd()
                 }
+            }
         }
     }
         .offset {

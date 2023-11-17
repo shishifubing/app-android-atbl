@@ -9,14 +9,16 @@ import androidx.navigation.compose.rememberNavController
 
 enum class LauncherNav {
     Home,
-    Settings
+    Settings,
+    AddWidget
 }
 
 @Composable
-fun App(
+fun UI(
     modifier: Modifier = Modifier,
     navController: NavHostController = rememberNavController(),
 ) {
+    val goBack: () -> Unit = { navController.popBackStack() }
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -24,13 +26,19 @@ fun App(
     ) {
         composable(route = LauncherNav.Home.name) {
             LauncherScreen(
-                goToSettings = { navController.navigate(LauncherNav.Settings.name) }
+                goToSettings = { navController.navigate(LauncherNav.Settings.name) },
+                goToAddWidget = { navController.navigate(LauncherNav.AddWidget.name) }
             )
         }
         composable(route = LauncherNav.Settings.name) {
-            SettingsScreen(
-                goBack = { navController.popBackStack() }
-            )
+            LauncherScaffold(screen = LauncherNav.Settings, goBack = goBack) {
+                SettingsScreen()
+            }
+        }
+        composable(route = LauncherNav.AddWidget.name) {
+            LauncherScaffold(screen = LauncherNav.AddWidget, goBack = goBack) {
+                AddWidgetScreen()
+            }
         }
     }
 }
