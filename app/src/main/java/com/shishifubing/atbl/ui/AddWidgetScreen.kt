@@ -18,13 +18,11 @@ fun AddWidgetScreen(
     val manager = AppWidgetManager.getInstance(LocalContext.current)
     manager.installedProviders.forEach {
         Row {
-
             Icon(
-                it.loadPreviewImage(
+                it.loadIcon(
                     LocalContext.current,
                     LocalContext.current.resources.displayMetrics.densityDpi
-                ).toBitmap(config = Bitmap.Config.ARGB_8888)
-                    .asImageBitmap(),
+                ).toBitmap(config = Bitmap.Config.ARGB_8888).asImageBitmap(),
                 contentDescription = "icon"
             )
             Text(it.loadLabel(LocalContext.current.packageManager))

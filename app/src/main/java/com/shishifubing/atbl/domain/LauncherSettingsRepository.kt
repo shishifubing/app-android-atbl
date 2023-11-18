@@ -41,7 +41,7 @@ class LauncherSettingsRepository(private val dataStore: DataStore<LauncherSettin
     suspend fun fetchInitial() = dataStore.data.first()
 }
 
-object SettingsSerializer : Serializer<LauncherSettings> {
+object LauncherSettingsSerializer : Serializer<LauncherSettings> {
     override val defaultValue: LauncherSettings =
         LauncherSettings.getDefaultInstance()
             .toBuilder()
@@ -53,7 +53,7 @@ object SettingsSerializer : Serializer<LauncherSettings> {
                 LauncherHorizontalArrangement.HorizontalStart
             )
             .setAppLayoutVerticalArrangement(
-                LauncherVerticalArrangement.VerticalTop
+                LauncherVerticalArrangement.VerticalSpaceBetween
             )
             .setAppCardTextColor(LauncherTextColor.Unspecified)
             .setAppCardFontFamily(LauncherFontFamily.Monospace)

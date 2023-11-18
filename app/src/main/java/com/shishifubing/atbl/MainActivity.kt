@@ -15,7 +15,7 @@ import com.shishifubing.atbl.domain.LauncherAppsManager
 import com.shishifubing.atbl.domain.LauncherAppsRepository
 import com.shishifubing.atbl.domain.LauncherAppsSerializer
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
-import com.shishifubing.atbl.domain.SettingsSerializer
+import com.shishifubing.atbl.domain.LauncherSettingsSerializer
 import com.shishifubing.atbl.ui.LauncherTheme
 import com.shishifubing.atbl.ui.UI
 import kotlinx.coroutines.launch
@@ -24,7 +24,7 @@ private val tag = MainActivity::class.simpleName
 
 val Context.settingsDataStore: DataStore<LauncherSettings> by dataStore(
     fileName = "settings.pb",
-    serializer = SettingsSerializer
+    serializer = LauncherSettingsSerializer
 )
 
 val Context.launcherAppsDataStore: DataStore<LauncherApps> by dataStore(

@@ -35,6 +35,7 @@ import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.LauncherVerticalArrangement
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.domain.LauncherSettingsSerializer
 
 private inline fun <reified E : Enum<E>> enumToList(): List<String> {
     return enumValues<E>()
@@ -62,6 +63,11 @@ fun SettingsScreen(
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     Column(modifier = modifier) {
+        SettingsGroup(R.string.settings_group_general) {
+            BackupExport(vm, settings)
+            BackupImport(vm, settings)
+            BackupReset(vm)
+        }
         SettingsGroup(R.string.settings_group_hidden_apps) {
             HiddenApps(vm)
         }
@@ -86,6 +92,39 @@ fun SettingsScreen(
             AppCardPadding(vm, settings)
         }
     }
+}
+
+@Composable
+fun BackupReset(vm: SettingsViewModel) {
+    SettingsField(
+        name = R.string.settings_backup_reset,
+        label = stringResource(R.string.settings_backup_reset_label),
+        onClick = { vm.updateSettings { LauncherSettingsSerializer.defaultValue.toBuilder() } }
+    )
+}
+
+@Composable
+fun BackupImport(
+    vm: SettingsViewModel,
+    settings: LauncherSettings
+) {
+    SettingsField(
+        name = R.string.settings_backup_import,
+        label = stringResource(R.string.settings_backup_import_label),
+        onClick = { }
+    )
+}
+
+@Composable
+fun BackupExport(
+    vm: SettingsViewModel,
+    settings: LauncherSettings
+) {
+    SettingsField(
+        name = R.string.settings_backup_export,
+        label = stringResource(R.string.settings_backup_export_label),
+        onClick = { }
+    )
 }
 
 @Composable
