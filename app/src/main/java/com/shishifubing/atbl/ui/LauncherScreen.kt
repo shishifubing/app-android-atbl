@@ -343,8 +343,6 @@ fun AppDialogHeader(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-
-    val showHiddenApps by vm.showHiddenAppsFlow.collectAsState()
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -389,7 +387,7 @@ fun AppDialogHeader(
                 )
                 AppDialogButton(
                     text = stringResource(
-                        if (showHiddenApps) R.string.drawer_app_hide else R.string.drawer_app_hide
+                        if (app.isHidden) R.string.drawer_app_show else R.string.drawer_app_hide
                     ),
                     onClick = {
                         vm.toggleIsHidden(app.packageName)
