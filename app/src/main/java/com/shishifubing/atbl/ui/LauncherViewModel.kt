@@ -17,6 +17,8 @@ import com.shishifubing.atbl.domain.LauncherAppsManager
 import com.shishifubing.atbl.domain.LauncherAppsRepository
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
@@ -32,10 +34,30 @@ class LauncherViewModel(
         .getDefaultInstance()
         .toBuilder().setIsHomeApp(true).build()
     val settingsFlow = launcherSettingsRepository.settingsFlow
-    val appsFlow = launcherAppsRepository.appsFlow.combine(
-        settingsFlow,
-        this::transformApps
-    )
+    private val _showHiddenApps = MutableStateFlow(false)
+    val showHiddenAppsFlow = _showHiddenApps.asStateFlow()
+    val appsFlow = launcherAppsRepository.appsFlow
+        .combine(settingsFlow) { apps, settings ->
+            apps.toBuilder().clearApps().addAllApps(apps.appsList
+                .let {
+                    when (settings.appLayoutSortBy) {
+                        LauncherSortBy.SortByLabel -> it.sortedBy { app -> app.label }
+                        else -> it.sortedBy { app -> app.label }
+                    }
+                }
+                .let {
+                    if (settings.appLayoutReverseOrder) it.reversed() else it
+                }
+            ).build()
+        }.combine(showHiddenAppsFlow) { apps, doShow ->
+            if (doShow) {
+                apps
+            } else {
+                apps.toBuilder().clearApps()
+                    .addAllApps(apps.appsList.filterNot { it.isHidden })
+                    .build()
+            }
+        }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -51,33 +73,19 @@ class LauncherViewModel(
         }
     }
 
-    private fun launch(action: suspend CoroutineScope.() -> Unit) {
-        viewModelScope.launch { action() }
+    fun showHiddenAppsToggle() {
+        _showHiddenApps.value = _showHiddenApps.value.not()
     }
 
-    private fun transformApps(
-        current: LauncherApps,
-        settings: LauncherSettings
-    ): LauncherApps {
-        return current.toBuilder().clearApps().addAllApps(current.appsList
-            .filterNot { it.isHidden }
-            .let {
-                when (settings.appLayoutSortBy) {
-                    LauncherSortBy.SortByLabel -> it.sortedBy { app -> app.label }
-                    else -> it.sortedBy { app -> app.label }
-                }
-            }
-            .let {
-                if (settings.appLayoutReverseOrder) it.reversed() else it
-            }
-        ).build()
+    private fun launch(action: suspend CoroutineScope.() -> Unit) {
+        viewModelScope.launch { action() }
     }
 
     fun getAppIcon(packageName: String) =
         launcherAppsRepository.getAppIcon(packageName)
 
-    fun hideApp(packageName: String) {
-        launch { launcherAppsRepository.hideApp(packageName) }
+    fun toggleIsHidden(packageName: String) {
+        launch { launcherAppsRepository.toggleIsHidden(packageName) }
     }
 
     fun launchApp(packageName: String) {

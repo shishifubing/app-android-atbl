@@ -53,12 +53,13 @@ class LauncherAppsRepository(
         update { current -> current.setIsHomeApp(isHomeApp) }
     }
 
-    suspend fun hideApp(packageName: String) {
+    suspend fun toggleIsHidden(packageName: String) {
         update { current ->
             val index = getAppIndex(current, packageName)
+            val app = current.getApps(index)
             current.setApps(
                 index,
-                current.getApps(index).toBuilder().setIsHidden(true).build()
+                app.toBuilder().setIsHidden(!app.isHidden).build()
             )
         }
     }

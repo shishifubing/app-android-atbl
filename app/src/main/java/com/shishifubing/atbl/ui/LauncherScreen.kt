@@ -43,7 +43,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalViewConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
@@ -75,12 +74,12 @@ fun LauncherScreen(
 ) {
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
     val apps by vm.appsFlow.collectAsState(vm.initialApps)
+    val showHiddenApps by vm.showHiddenAppsFlow.collectAsState()
     var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
     var dialogShortcut by remember {
         mutableStateOf<LauncherSplitScreenShortcut?>(null)
     }
     var showLauncherDialog by remember { mutableStateOf(false) }
-    val packageName = LocalContext.current.packageName
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -123,9 +122,11 @@ fun LauncherScreen(
         }
     }
     when {
-        showLauncherDialog -> LauncherDialog(
+        showLauncherDialog -> LauncherActionsDialog(
             goToSettings = goToSettings,
             goToAddWidget = goToAddWidget,
+            showHiddenApps = showHiddenApps,
+            showHiddenAppsToggle = vm::showHiddenAppsToggle,
             onDismissRequest = { showLauncherDialog = false }
         )
 
@@ -139,42 +140,42 @@ fun LauncherScreen(
             app = dialogApp!!,
             vm = vm,
             onDismissRequest = { dialogApp = null },
-            showShortcuts = apps.isHomeApp,
-            enabledHide = dialogApp!!.packageName != packageName
+            showShortcuts = apps.isHomeApp
         )
     }
 }
 
 @Composable
-fun LauncherDialog(
+fun LauncherActionsDialog(
     goToSettings: () -> Unit,
     goToAddWidget: () -> Unit,
+    showHiddenApps: Boolean,
+    showHiddenAppsToggle: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val items: List<@Composable () -> Unit> = listOf(
-        {
-            AppDialogButton(
-                text = stringResource(R.string.launcher_dialog_settings),
-                textAlign = TextAlign.Start,
-                onClick = goToSettings
-            )
-        },
-        {
-            AppDialogButton(
-                text = stringResource(R.string.launcher_dialog_add_widget),
-                textAlign = TextAlign.Start,
-                onClick = goToAddWidget
-            )
-        }
+    val items = listOf(
+        R.string.launcher_dialog_settings to goToSettings,
+        R.string.launcher_dialog_add_widget to goToAddWidget,
+        if (showHiddenApps) {
+            R.string.launcher_dialog_hide_hidden_apps
+        } else {
+            R.string.launcher_dialog_show_hidden_apps
+        } to showHiddenAppsToggle
     )
+
     LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
         AppDialogItems(
             modifier = modifier,
             itemsCount = items.size,
             itemKey = { i -> items[i].hashCode() }
         ) { i ->
-            items[i]()
+            val item = items[i]
+            AppDialogButton(
+                text = stringResource(item.first),
+                textAlign = TextAlign.Start,
+                onClick = { item.second(); onDismissRequest() }
+            )
         }
     }
 }
@@ -267,15 +268,13 @@ fun AppDialog(
     vm: LauncherViewModel,
     onDismissRequest: () -> Unit,
     showShortcuts: Boolean,
-    enabledHide: Boolean,
     modifier: Modifier = Modifier,
 ) {
     LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
         AppDialogHeader(
             app = app,
             vm = vm,
-            onDismissRequest = onDismissRequest,
-            enabledHide = enabledHide
+            onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         if (app.shortcutsList.isNotEmpty() && showShortcuts) {
@@ -315,15 +314,13 @@ fun SplitScreenShortcutDialog(
         AppDialogHeader(
             app = shortcut.appTop,
             vm = vm,
-            onDismissRequest = onDismissRequest,
-            enabledHide = false
+            onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         AppDialogHeader(
             app = shortcut.appBottom,
             vm = vm,
-            onDismissRequest = onDismissRequest,
-            enabledHide = false
+            onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         AppDialogItems(itemsCount = 1, itemKey = { shortcut.hashCode() }) {
@@ -344,9 +341,10 @@ fun AppDialogHeader(
     app: LauncherApp,
     vm: LauncherViewModel,
     onDismissRequest: () -> Unit,
-    enabledHide: Boolean,
     modifier: Modifier = Modifier
 ) {
+
+    val showHiddenApps by vm.showHiddenAppsFlow.collectAsState()
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -389,15 +387,15 @@ fun AppDialogHeader(
                         onDismissRequest()
                     }
                 )
-                if (enabledHide) {
-                    AppDialogButton(
-                        text = stringResource(R.string.drawer_app_hide),
-                        onClick = {
-                            vm.hideApp(app.packageName)
-                            onDismissRequest()
-                        }
-                    )
-                }
+                AppDialogButton(
+                    text = stringResource(
+                        if (showHiddenApps) R.string.drawer_app_hide else R.string.drawer_app_hide
+                    ),
+                    onClick = {
+                        vm.toggleIsHidden(app.packageName)
+                        onDismissRequest()
+                    }
+                )
                 AppDialogButton(
                     text = stringResource(R.string.drawer_app_uninstall),
                     onClick = {
