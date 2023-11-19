@@ -1,26 +1,5 @@
 package com.shishifubing.atbl.ui
 
-import android.util.Log
-import androidx.compose.animation.core.Animatable
-import androidx.compose.foundation.gestures.awaitFirstDown
-import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
-import androidx.compose.foundation.gestures.drag
-import androidx.compose.foundation.layout.offset
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.composed
-import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.input.pointer.PointerInputChange
-import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.input.pointer.positionChange
-import androidx.compose.ui.unit.IntOffset
-import com.shishifubing.atbl.LauncherApp
-import com.shishifubing.atbl.LauncherApps
-import kotlinx.coroutines.coroutineScope
-import kotlinx.coroutines.launch
-import kotlin.math.roundToInt
-import kotlin.math.sign
-
 enum class SlideState {
     NONE,
     UP,
@@ -30,6 +9,7 @@ enum class SlideState {
 /*
  * https://developersbreach.com/drag-to-reorder-compose/
  **/
+/*
 fun Modifier.dragToReorder(
     launcherApp: LauncherApp,
     launcherApps: LauncherApps,
@@ -44,7 +24,8 @@ fun Modifier.dragToReorder(
     pointerInput(Unit) {
         // Wrap in a coroutine scope to use suspend functions for touch events and animation.
         coroutineScope {
-            val shoesArticleIndex = launcherApps.appsList.indexOf(launcherApp)
+            val shoesArticleIndex =
+                launcherApps.appsMap.values.indexOf(launcherApp)
             val offsetToSlide = itemHeight / 4
             var numberOfItems = 0
             var previousNumberOfItems: Int
@@ -79,13 +60,14 @@ fun Modifier.dragToReorder(
 
                     if (previousNumberOfItems > numberOfItems) {
                         updateSlideState(
-                            launcherApps.appsList[shoesArticleIndex + previousNumberOfItems * offsetSign],
+                            launcherApps.appsMap.values[shoesArticleIndex + previousNumberOfItems * offsetSign],
                             SlideState.NONE
                         )
                     } else if (numberOfItems != 0) {
                         try {
                             updateSlideState(
-                                launcherApps.appsList[shoesArticleIndex + numberOfItems * offsetSign],
+                                launcherApps.appsMap.values[shoesArticleIndex +
+                                        numberOfItems * offsetSign],
                                 if (offsetSign == 1) SlideState.UP else SlideState.DOWN
                             )
                         } catch (e: IndexOutOfBoundsException) {
@@ -137,6 +119,8 @@ fun Modifier.dragToReorder(
             IntOffset(offsetX.value.roundToInt(), offsetY.value.roundToInt())
         }
 }
+
+ */
 
 private fun calculateNumberOfSlidItems(
     offsetY: Float,

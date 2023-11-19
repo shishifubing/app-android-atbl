@@ -1,5 +1,6 @@
 package com.shishifubing.atbl
 
+import android.appwidget.AppWidgetHost
 import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
@@ -38,22 +39,20 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         app = application as LauncherApplication
-        app.launcherSettingsRepo =
+        app.appWidgetHost = AppWidgetHost(this, 0)
+        app.settingsRepo =
             LauncherSettingsRepository(settingsDataStore)
-        app.launcherAppsRepo = LauncherAppsRepository(
+        app.appsRepo = LauncherAppsRepository(
             launcherAppsDataStore,
             this
         )
-        app.launcherAppsManager = LauncherAppsManager(this)
-        val manager = app.launcherAppsManager!!
-        val appsRepo = app.launcherAppsRepo!!
+        app.appsManager = LauncherAppsManager(this)
+        val manager = app.appsManager!!
+        val appsRepo = app.appsRepo!!
 
         manager.addCallback(
-            onAdded = { packageName ->
-                lifecycleScope.launch { appsRepo.addApp(packageName) }
-            },
             onChanged = { packageName ->
-                lifecycleScope.launch { appsRepo.updateApp(packageName) }
+                lifecycleScope.launch { appsRepo.reloadApp(packageName) }
             },
             onRemoved = { packageName ->
                 lifecycleScope.launch { appsRepo.removeApp(packageName) }
@@ -71,14 +70,14 @@ class MainActivity : ComponentActivity() {
 
     override fun onResume() {
         lifecycleScope.launch {
-            app.launcherAppsRepo!!.updateIsHomeApp(app.launcherAppsManager!!.isHomeApp())
+            app.appsRepo!!.updateIsHomeApp(app.appsManager!!.isHomeApp())
         }
         super.onResume()
     }
 
     override fun onStop() {
         super.onStop()
-        app.launcherAppsManager!!.removeCallbacks()
+        app.appsManager!!.removeCallbacks()
     }
 }
 

@@ -9,7 +9,6 @@ import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
 import com.shishifubing.atbl.LauncherAppShortcut
 import com.shishifubing.atbl.LauncherApplication
-import com.shishifubing.atbl.LauncherApps
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSortBy
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
@@ -20,25 +19,24 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 
 class LauncherViewModel(
     launcherSettingsRepository: LauncherSettingsRepository,
-    private val launcherAppsRepository: LauncherAppsRepository,
-    private val launcherAppsManager: LauncherAppsManager,
+    private val appsRepo: LauncherAppsRepository,
+    private val appsManager: LauncherAppsManager,
     val initialSettings: LauncherSettings
 ) : ViewModel() {
-
-    val initialApps: LauncherApps = LauncherApps
-        .getDefaultInstance()
-        .toBuilder().setIsHomeApp(true).build()
     val settingsFlow = launcherSettingsRepository.settingsFlow
     private val _showHiddenApps = MutableStateFlow(false)
     val showHiddenAppsFlow = _showHiddenApps.asStateFlow()
-    val appsFlow = launcherAppsRepository.appsFlow
+    val isHomeAppFlow = appsRepo.appsFlow.map { it.isHomeApp }
+    val shortcutsFlow = appsRepo.appsFlow.map { it.splitScreenShortcutsList }
+    val appsFlow = appsRepo.appsFlow
         .combine(settingsFlow) { apps, settings ->
-            apps.toBuilder().clearApps().addAllApps(apps.appsList
+            apps.appsMap.values
                 .let {
                     when (settings.appLayoutSortBy) {
                         LauncherSortBy.SortByLabel -> it.sortedBy { app -> app.label }
@@ -48,26 +46,23 @@ class LauncherViewModel(
                 .let {
                     if (settings.appLayoutReverseOrder) it.reversed() else it
                 }
-            ).build()
         }.combine(showHiddenAppsFlow) { apps, doShow ->
             if (doShow) {
                 apps
             } else {
-                apps.toBuilder().clearApps()
-                    .addAllApps(apps.appsList.filterNot { it.isHidden })
-                    .build()
+                apps.filterNot { it.isHidden }
             }
         }
 
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
             initializer {
-                val app = (this[APPLICATION_KEY] as LauncherApplication)
+                val app = this[APPLICATION_KEY] as LauncherApplication
                 LauncherViewModel(
-                    launcherSettingsRepository = app.launcherSettingsRepo!!,
-                    launcherAppsManager = app.launcherAppsManager!!,
-                    launcherAppsRepository = app.launcherAppsRepo!!,
-                    initialSettings = runBlocking { app.launcherSettingsRepo!!.fetchInitial() }
+                    launcherSettingsRepository = app.settingsRepo!!,
+                    appsManager = app.appsManager!!,
+                    appsRepo = app.appsRepo!!,
+                    initialSettings = runBlocking { app.settingsRepo!!.fetchInitial() }
                 )
             }
         }
@@ -82,33 +77,33 @@ class LauncherViewModel(
     }
 
     fun getAppIcon(packageName: String) =
-        launcherAppsRepository.getAppIcon(packageName)
+        appsRepo.getAppIcon(packageName)
 
     fun toggleIsHidden(packageName: String) {
-        launch { launcherAppsRepository.toggleIsHidden(packageName) }
+        launch { appsRepo.toggleIsHidden(packageName) }
     }
 
     fun launchApp(packageName: String) {
-        launcherAppsManager.launchApp(packageName)
+        appsManager.launchApp(packageName)
     }
 
     fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
-        launcherAppsManager.launchSplitScreen(shortcut)
+        appsManager.launchSplitScreen(shortcut)
     }
 
     fun launchAppInfo(packageName: String) {
-        launcherAppsManager.launchAppInfo(packageName)
+        appsManager.launchAppInfo(packageName)
     }
 
     fun launchAppUninstall(packageName: String) {
-        launcherAppsManager.launchAppUninstall(packageName)
+        appsManager.launchAppUninstall(packageName)
     }
 
     fun deleteSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
-        launch { launcherAppsRepository.removeSplitScreenShortcut(shortcut) }
+        launch { appsRepo.removeSplitScreenShortcut(shortcut) }
     }
 
     fun launchAppShortcut(shortcut: LauncherAppShortcut) {
-        launcherAppsManager.launchAppShortcut(shortcut)
+        appsManager.launchAppShortcut(shortcut)
     }
 }

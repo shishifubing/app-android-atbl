@@ -38,6 +38,10 @@ class LauncherSettingsRepository(private val dataStore: DataStore<LauncherSettin
         dataStore.updateData { current -> action(current.toBuilder()).build() }
     }
 
+    suspend fun updateFromBytes(bytes: ByteArray) {
+        dataStore.updateData { LauncherSettings.parseFrom(bytes) }
+    }
+
     suspend fun fetchInitial() = dataStore.data.first()
 }
 

@@ -39,6 +39,9 @@
     <string name="settings_backup_reset_label">
         Reset launcher settings
     </string>
+    <string name="settings_backup_reset_confirmation">
+        Do you want to reset launcher settings?
+    </string>
 
     <string name="settings_app_label_remove_spaces">Remove spaces</string>
     <string name="settings_app_label_remove_spaces_label">Remove spaces in labels of
