@@ -73,8 +73,10 @@ fun LauncherScreen(
     vm: LauncherViewModel = viewModel(factory = LauncherViewModel.Factory)
 ) {
     val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
-    val apps by vm.appsFlow.collectAsState(vm.initialApps)
+    val apps by vm.appsFlow.collectAsState(listOf())
+    val shortcuts by vm.shortcutsFlow.collectAsState(listOf())
     val showHiddenApps by vm.showHiddenAppsFlow.collectAsState()
+    val isHomeApp by vm.isHomeAppFlow.collectAsState(true)
     var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
     var dialogShortcut by remember {
         mutableStateOf<LauncherSplitScreenShortcut?>(null)
@@ -98,10 +100,10 @@ fun LauncherScreen(
             settings.appLayoutVerticalArrangement
         )
     ) {
-        if (!apps.isHomeApp) {
+        if (!isHomeApp) {
             NotAHomeAppBanner()
         }
-        apps.splitScreenShortcutsList.forEach { shortcut ->
+        shortcuts.forEach { shortcut ->
             AppCard(
                 label = listOf(
                     shortcut.appTop.label,
@@ -112,7 +114,7 @@ fun LauncherScreen(
                 settings = settings
             )
         }
-        apps.appsList.forEach { app ->
+        apps.forEach { app ->
             AppCard(
                 label = app.label,
                 onClick = { vm.launchApp(app.packageName) },
@@ -140,7 +142,7 @@ fun LauncherScreen(
             app = dialogApp!!,
             vm = vm,
             onDismissRequest = { dialogApp = null },
-            showShortcuts = apps.isHomeApp
+            showShortcuts = isHomeApp
         )
     }
 }

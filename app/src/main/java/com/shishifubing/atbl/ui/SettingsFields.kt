@@ -391,8 +391,10 @@ fun SettingsDialog(
 
 @Composable
 fun SettingsButton(
-    text: String, isSelected: Boolean, isRadio: Boolean,
-    modifier: Modifier = Modifier, onClick: () -> Unit
+    text: String,
+    modifier: Modifier = Modifier,
+    isSelected: Boolean = false, isRadio: Boolean = false,
+    addButton: Boolean = true, onClick: () -> Unit = { }
 ) {
     Surface(modifier = modifier, onClick = onClick) {
         Row(
@@ -404,9 +406,9 @@ fun SettingsButton(
                 .fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically
         ) {
-            if (isRadio) {
+            if (addButton && isRadio) {
                 RadioButton(selected = isSelected, onClick = null)
-            } else {
+            } else if (addButton) {
                 Checkbox(checked = isSelected, onCheckedChange = null)
             }
             Text(

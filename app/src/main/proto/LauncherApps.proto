@@ -4,7 +4,8 @@ option java_package = "com.shishifubing.atbl";
 option java_multiple_files = true;
 
 message LauncherApps {
-  repeated LauncherApp apps = 1;
+  reserved 1;
+  map<string, LauncherApp> apps = 4;
   repeated LauncherSplitScreenShortcut splitScreenShortcuts = 2;
   bool isHomeApp = 3;
 }

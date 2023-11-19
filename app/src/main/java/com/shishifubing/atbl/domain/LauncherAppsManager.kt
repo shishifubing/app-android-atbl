@@ -89,42 +89,38 @@ class LauncherAppsManager(
 
     fun addCallback(
         onRemoved: (String) -> Unit,
-        onAdded: (String) -> Unit,
         onChanged: (String) -> Unit
-    ) {
-        val callback = object : LauncherApps.Callback() {
-            override fun onPackageRemoved(
-                packageName: String, user: UserHandle
-            ) = onRemoved(packageName)
+    ) = launcherAppsService.registerCallback(object : LauncherApps.Callback() {
+        override fun onPackageRemoved(
+            packageName: String, user: UserHandle
+        ) = onRemoved(packageName)
 
-            override fun onPackageAdded(
-                packageName: String, user: UserHandle
-            ) = onAdded(packageName)
+        override fun onPackageAdded(
+            packageName: String, user: UserHandle
+        ) = onChanged(packageName)
 
-            override fun onPackageChanged(
-                packageName: String, p2: UserHandle
-            ) = onChanged(packageName)
+        override fun onPackageChanged(
+            packageName: String, p2: UserHandle
+        ) = onChanged(packageName)
 
-            override fun onShortcutsChanged(
-                packageName: String,
-                shortcuts: MutableList<ShortcutInfo>,
-                user: UserHandle
-            ) = onChanged(packageName)
+        override fun onShortcutsChanged(
+            packageName: String,
+            shortcuts: MutableList<ShortcutInfo>,
+            user: UserHandle
+        ) = onChanged(packageName)
 
-            override fun onPackagesAvailable(
-                packageNames: Array<out String>?,
-                user: UserHandle?,
-                replacing: Boolean
-            ) = Unit
+        override fun onPackagesAvailable(
+            packageNames: Array<out String>?,
+            user: UserHandle?,
+            replacing: Boolean
+        ) = Unit
 
-            override fun onPackagesUnavailable(
-                packageNames: Array<out String>?,
-                user: UserHandle?,
-                replacing: Boolean
-            ) = Unit
-        }
-        launcherAppsService.registerCallback(callback)
-    }
+        override fun onPackagesUnavailable(
+            packageNames: Array<out String>?,
+            user: UserHandle?,
+            replacing: Boolean
+        ) = Unit
+    })
 
     fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
         parent.lifecycle.addObserver(object : DefaultLifecycleObserver {
@@ -132,13 +128,14 @@ class LauncherAppsManager(
                 parent.lifecycle.removeObserver(this)
                 launchApp(
                     shortcut.appTop.packageName,
-                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent
-                        .FLAG_ACTIVITY_LAUNCH_ADJACENT
+                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
                 )
             }
         })
-        parent.startActivity(Intent(ACTION_MAIN).setFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP))
-        launchApp(shortcut.appBottom.packageName)
+        launchApp(
+            shortcut.appBottom.packageName,
+            Intent.FLAG_ACTIVITY_NEW_TASK
+        )
     }
 }
 
