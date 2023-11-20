@@ -4,18 +4,12 @@ import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.activity.result.contract.ActivityResultContracts.CreateDocument
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.State
@@ -27,7 +21,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shishifubing.atbl.LauncherApp
@@ -65,63 +58,88 @@ fun SettingsScreen(
     modifier: Modifier = Modifier,
     vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
 ) {
-    val apps by vm.appsFlow.collectAsState(listOf())
-    val shortcuts by vm.shortcutsFlow.collectAsState(listOf())
-    val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
+    ErrorToast(errorFlow = vm.error)
     Column(modifier = modifier) {
         SettingsGroup(R.string.settings_group_general) {
-            BackupExport(vm.settings.collectAsState())
-            BackupImport(vm::updateSettingsFromBytes)
-            BackupReset(vm::backupReset)
+            BackupExport(
+                settings = vm.settings.collectAsState()
+            )
+            BackupImport(
+                updateFromBytes = vm::updateSettingsFromBytes
+            )
+            BackupReset(
+                resetSettings = vm::backupReset
+            )
         }
         SettingsGroup(R.string.settings_group_hidden_apps) {
             HiddenApps(
-                apps = apps,
+                apps = vm.appsFlow.collectAsState(listOf()),
                 setHiddenApps = vm::setHiddenApps
             )
         }
         SettingsGroup(R.string.settings_group_split_screen) {
             SplitScreenShortcuts(
-                apps = apps,
-                shortcuts = shortcuts,
+                apps = vm.appsFlow.collectAsState(listOf()),
+                shortcuts = vm.shortcutsFlow.collectAsState(listOf()),
                 addShortcut = vm::addSplitScreenShortcut,
                 removeShortcut = vm::removeSplitScreenShortcut,
-                settings = settings
+                shortcutSeparator = vm.splitScreenSeparator.collectAsState()
             )
             SplitScreenShortcutSeparator(
                 separator = vm.splitScreenSeparator.collectAsState(),
-                setSeparator = vm.splitScreenSeparator.setter
+                setSeparator = vm.splitScreenSeparator::set
             )
         }
         SettingsGroup(R.string.settings_group_layout) {
-            LayoutReverseOrder(vm, settings)
-            LayoutHorizontalPadding(vm, settings)
-            LayoutVerticalPadding(vm, settings)
-            LayoutHorizontalArrangement(
-                arrangement = settings.appLayoutHorizontalArrangement,
-                setArrangement = vm::setHorizontalArrangement
+            LayoutReverseOrder(
+                reverse = vm.appLayoutReverseOrder.collectAsState(),
+                setReverse = vm.appLayoutReverseOrder::set
             )
-            LayoutVerticalArrangement(vm, settings)
-            LayoutSortBy(vm, settings)
+            LayoutHorizontalPadding(
+                padding = vm.appLayoutHorizontalPadding.collectAsState(),
+                setPadding = vm.appLayoutHorizontalPadding::set
+            )
+            LayoutVerticalPadding(
+                padding = vm.appLayoutVerticalPadding.collectAsState(),
+                setPadding = vm.appLayoutVerticalPadding::set
+            )
+            LayoutHorizontalArrangement(
+                arrangement = vm.appLayoutHorizontalArrangement.collectAsState(),
+                setArrangement = vm.appLayoutHorizontalArrangement::set
+            )
+            LayoutVerticalArrangement(
+                arrangement = vm.appLayoutVerticalArrangement.collectAsState(),
+                setArrangement = vm.appLayoutVerticalArrangement::set
+            )
+            LayoutSortBy(
+                sortBy = vm.appLayoutSortBy.collectAsState(),
+                setSortBy = vm.appLayoutSortBy::set
+            )
         }
         SettingsGroup(R.string.settings_group_app_card) {
             AppCardRemoveSpaces(
                 removeSpaces = vm.appCardRemoveSpaces.collectAsState(),
-                setRemoveSpaces = vm.appCardRemoveSpaces.setter
+                setRemoveSpaces = vm.appCardRemoveSpaces::set
             )
             AppCardLowercase(
-                lowercase = settings.appCardLabelLowercase,
-                setLowercase = vm::setAppCardLowercase
+                lowercase = vm.appCardLabelLowercase.collectAsState(),
+                setLowercase = vm.appCardLabelLowercase::set
             )
-            AppCardFontFamily(vm, settings)
-            AppCardTextStyle(vm, settings)
+            AppCardFontFamily(
+                fontFamily = vm.appCardFontFamily.collectAsState(),
+                setFontFamily = vm.appCardFontFamily::set
+            )
+            AppCardTextStyle(
+                textStyle = vm.appCardTextStyle.collectAsState(),
+                setTextStyle = vm.appCardTextStyle::set
+            )
             AppCardTextColor(
-                color = settings.appCardTextColor,
-                setColor = vm::setAppCardTextColor
+                color = vm.appCardTextColor.collectAsState(),
+                setColor = vm.appCardTextColor::set
             )
             AppCardPadding(
-                padding = settings.appCardPadding,
-                setPadding = vm::setAppCardPadding
+                padding = vm.appCardPadding.collectAsState(),
+                setPadding = vm.appCardPadding::set
             )
         }
     }
@@ -172,10 +190,10 @@ fun BackupImport(
         onClick = { launcher.launch(arrayOf("application/*")) }
     )
     result?.let {
-        LocalContext.current.contentResolver.openInputStream(it)
-            ?.use { stream ->
-                updateFromBytes(stream.readBytes())
-            }
+        LocalContext.current.contentResolver
+            .openInputStream(it)
+            ?.use { stream -> updateFromBytes(stream.readBytes()) }
+        result = null
     }
 }
 
@@ -189,12 +207,11 @@ fun BackupExport(
     ) {
         result = it
     }
+    val filename = stringResource(R.string.settings_backup_export_filename)
     SettingsField(
         name = R.string.settings_backup_export,
         label = stringResource(R.string.settings_backup_export_label),
-        onClick = {
-            launcher.launch("atbl-settings.binpb")
-        }
+        onClick = { launcher.launch(filename) }
     )
     result?.let {
         LocalContext.current.contentResolver.openFileDescriptor(it, "w")
@@ -207,34 +224,20 @@ fun BackupExport(
 }
 
 @Composable
-fun SettingsGroup(
-    @StringRes name: Int,
-    content: @Composable ColumnScope.() -> Unit
-) {
-    Column(modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium))) {
-        Text(stringResource(name))
-        Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-        Surface(modifier = Modifier.fillMaxWidth()) {
-            Column(content = content)
-        }
-    }
-}
-
-@Composable
 fun SplitScreenShortcuts(
-    apps: Collection<LauncherApp>,
-    shortcuts: List<LauncherSplitScreenShortcut>,
+    apps: State<Collection<LauncherApp>>,
+    shortcuts: State<List<LauncherSplitScreenShortcut>>,
+    shortcutSeparator: State<String>,
     addShortcut: (LauncherApp, LauncherApp) -> Unit,
     removeShortcut: (LauncherSplitScreenShortcut) -> Unit,
-    settings: LauncherSettings
 ) {
     var selectedTop by remember { mutableStateOf<LauncherApp?>(null) }
     var selectedBottom by remember { mutableStateOf<LauncherApp?>(null) }
-    val sortedApps = apps.sortedBy { it.label }
+    val sortedApps = apps.value.sortedBy { it.label }
     SettingsCustomItemWithAddField(
         name = R.string.settings_split_screen_shortcuts,
-        itemsCount = shortcuts.size,
-        itemsKey = { i -> shortcuts[i].toByteArray() },
+        itemsCount = shortcuts.value.size,
+        itemsKey = { i -> shortcuts.value[i].toByteArray() },
         addItemContent = {
             Column(modifier = Modifier.weight(1f)) {
                 SettingsDropDownSelectApp(
@@ -254,12 +257,12 @@ fun SplitScreenShortcuts(
         },
         onAddItemDismiss = { selectedTop = null; selectedBottom = null }
     ) { i ->
-        val shortcut = shortcuts[i]
+        val shortcut = shortcuts.value[i]
         Text(
             listOf(
                 shortcut.appTop.label,
                 shortcut.appBottom.label
-            ).joinToString(settings.appCardSplitScreenSeparator)
+            ).joinToString(shortcutSeparator.value)
         )
         Spacer(modifier = Modifier.weight(1f))
         IconButton(onClick = { removeShortcut(shortcut) }) {
@@ -285,12 +288,12 @@ fun SplitScreenShortcutSeparator(
 
 @Composable
 fun LayoutVerticalPadding(
-    vm: SettingsViewModel,
-    settings: LauncherSettings
+    padding: State<Int>,
+    setPadding: (Int) -> Unit
 ) {
     var curOption by remember {
         mutableIntStateOf(choiceOptions.layoutVerticalPadding.indexOf(
-            settings.appLayoutVerticalPadding.toString()
+            padding.value.toString()
         ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
@@ -299,21 +302,19 @@ fun LayoutVerticalPadding(
         options = choiceOptions.layoutVerticalPadding,
         onConfirm = { choice ->
             curOption = choice
-            vm.updateSettings {
-                it.setAppLayoutVerticalPadding(choiceOptions.layoutVerticalPadding[choice].toInt())
-            }
+            setPadding(choiceOptions.layoutVerticalPadding[choice].toInt())
         }
     )
 }
 
 @Composable
 fun LayoutHorizontalPadding(
-    vm: SettingsViewModel,
-    settings: LauncherSettings
+    padding: State<Int>,
+    setPadding: (Int) -> Unit
 ) {
     var curOption by remember {
         mutableIntStateOf(choiceOptions.layoutHorizontalPadding.indexOf(
-            settings.appLayoutHorizontalPadding.toString()
+            padding.toString()
         ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
@@ -322,19 +323,19 @@ fun LayoutHorizontalPadding(
         options = choiceOptions.layoutHorizontalPadding,
         onConfirm = { choice ->
             curOption = choice
-            vm.updateSettings { it.setAppLayoutHorizontalPadding(choiceOptions.layoutHorizontalPadding[choice].toInt()) }
+            setPadding(choiceOptions.layoutHorizontalPadding[choice].toInt())
         }
     )
 }
 
 @Composable
 fun LayoutSortBy(
-    vm: SettingsViewModel,
-    settings: LauncherSettings
+    sortBy: State<LauncherSortBy>,
+    setSortBy: (LauncherSortBy) -> Unit
 ) {
     var curOption by remember {
         mutableIntStateOf(choiceOptions.sortBy.indexOf(
-            settings.appLayoutSortBy.name
+            sortBy.value.name
         ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
@@ -343,42 +344,32 @@ fun LayoutSortBy(
         options = choiceOptions.sortBy,
         onConfirm = { choice ->
             curOption = choice
-            vm.updateSettings {
-                it.setAppLayoutSortBy(
-                    LauncherSortBy.valueOf(choiceOptions.sortBy[choice])
-                )
-            }
+            setSortBy(LauncherSortBy.valueOf(choiceOptions.sortBy[choice]))
         }
     )
 }
 
 @Composable
 fun LayoutReverseOrder(
-    vm: SettingsViewModel,
-    settings: LauncherSettings
+    reverse: State<Boolean>,
+    setReverse: (Boolean) -> Unit
 ) {
     SettingsSwitchField(
         name = R.string.settings_layout_reverse_order,
         label = R.string.settings_layout_reverse_order_label,
-        isToggled = settings.appLayoutReverseOrder,
-        onClick = {
-            vm.updateSettings {
-                it.setAppLayoutReverseOrder(
-                    settings.appLayoutReverseOrder.not()
-                )
-            }
-        }
+        isToggled = reverse.value,
+        onClick = { setReverse(reverse.value.not()) }
     )
 }
 
 @Composable
 fun LayoutVerticalArrangement(
-    vm: SettingsViewModel,
-    settings: LauncherSettings
+    arrangement: State<LauncherVerticalArrangement>,
+    setArrangement: (LauncherVerticalArrangement) -> Unit
 ) {
     var curOption by remember {
         mutableIntStateOf(choiceOptions.verticalArrangement.indexOf(
-            settings.appLayoutVerticalArrangement.name
+            arrangement.value.name
         ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
@@ -387,23 +378,19 @@ fun LayoutVerticalArrangement(
         options = choiceOptions.verticalArrangement,
         onConfirm = { choice ->
             curOption = choice
-            vm.updateSettings {
-                it.setAppLayoutVerticalArrangement(
-                    LauncherVerticalArrangement.valueOf(choiceOptions.verticalArrangement[choice])
-                )
-            }
+            setArrangement(LauncherVerticalArrangement.valueOf(choiceOptions.verticalArrangement[choice]))
         }
     )
 }
 
 @Composable
 fun AppCardFontFamily(
-    vm: SettingsViewModel,
-    settings: LauncherSettings
+    fontFamily: State<LauncherFontFamily>,
+    setFontFamily: (LauncherFontFamily) -> Unit
 ) {
     var curOption by remember {
         mutableIntStateOf(choiceOptions.fontFamilies.indexOf(
-            settings.appCardFontFamily.name
+            fontFamily.value.name
         ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
@@ -412,23 +399,19 @@ fun AppCardFontFamily(
         options = choiceOptions.fontFamilies,
         onConfirm = { choice ->
             curOption = choice
-            vm.updateSettings {
-                it.setAppCardFontFamily(
-                    LauncherFontFamily.valueOf(choiceOptions.fontFamilies[choice])
-                )
-            }
+            setFontFamily(LauncherFontFamily.valueOf(choiceOptions.fontFamilies[choice]))
         }
     )
 }
 
 @Composable
 fun AppCardTextStyle(
-    vm: SettingsViewModel,
-    settings: LauncherSettings
+    textStyle: State<LauncherTextStyle>,
+    setTextStyle: (LauncherTextStyle) -> Unit
 ) {
     var curOption by remember {
         mutableIntStateOf(choiceOptions.textStyles.indexOf(
-            settings.appCardTextStyle.name
+            textStyle.value.name
         ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
@@ -437,11 +420,7 @@ fun AppCardTextStyle(
         options = choiceOptions.textStyles,
         onConfirm = { choice ->
             curOption = choice
-            vm.updateSettings {
-                it.setAppCardTextStyle(
-                    LauncherTextStyle.valueOf(choiceOptions.textStyles[choice])
-                )
-            }
+            setTextStyle(LauncherTextStyle.valueOf(choiceOptions.textStyles[choice]))
         }
     )
 }
@@ -461,25 +440,25 @@ fun AppCardRemoveSpaces(
 
 @Composable
 fun AppCardLowercase(
-    lowercase: Boolean,
+    lowercase: State<Boolean>,
     setLowercase: (Boolean) -> Unit
 ) {
     SettingsSwitchField(
         name = R.string.settings_app_label_lowercase,
         label = R.string.settings_app_label_lowercase_label,
-        isToggled = lowercase,
-        onClick = { setLowercase(lowercase.not()) }
+        isToggled = lowercase.value,
+        onClick = { setLowercase(lowercase.value.not()) }
     )
 }
 
 @Composable
 fun AppCardTextColor(
-    color: LauncherTextColor,
+    color: State<LauncherTextColor>,
     setColor: (LauncherTextColor) -> Unit
 ) {
     var curOption by remember {
         mutableIntStateOf(
-            choiceOptions.textColor.indexOf(color.name)
+            choiceOptions.textColor.indexOf(color.value.name)
         )
     }
     SettingsSingleChoiceField(
@@ -495,13 +474,16 @@ fun AppCardTextColor(
 
 @Composable
 fun AppCardPadding(
-    padding: Int,
+    padding: State<Int>,
     setPadding: (Int) -> Unit,
 ) {
     var curOption by remember {
         mutableIntStateOf(
             choiceOptions.appCardPadding.indexOf(padding.toString())
         )
+    }
+    if (curOption == -1) {
+        curOption = 0
     }
     SettingsSingleChoiceField(
         name = R.string.settings_app_card_padding,
@@ -516,12 +498,12 @@ fun AppCardPadding(
 
 @Composable
 fun LayoutHorizontalArrangement(
-    arrangement: LauncherHorizontalArrangement,
+    arrangement: State<LauncherHorizontalArrangement>,
     setArrangement: (LauncherHorizontalArrangement) -> Unit
 ) {
     var curOption by remember {
         mutableIntStateOf(choiceOptions.horizontalArrangement.indexOf(
-            arrangement.name
+            arrangement.value.name
         ).let { if (it != -1) it else 0 })
     }
     SettingsSingleChoiceField(
@@ -541,11 +523,11 @@ fun LayoutHorizontalArrangement(
 
 @Composable
 fun HiddenApps(
-    apps: Collection<LauncherApp>,
+    apps: State<Collection<LauncherApp>>,
     setHiddenApps: (List<String>) -> Unit
 ) {
     val launcherPackageName = LocalContext.current.packageName
-    val options = apps
+    val options = apps.value
         .filter { it.packageName != launcherPackageName }
         .sortedBy { it.label }
     var hiddenApps =

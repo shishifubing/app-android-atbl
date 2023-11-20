@@ -10,7 +10,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -34,6 +36,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.State
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -53,9 +56,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shishifubing.atbl.LauncherApp
+import com.shishifubing.atbl.LauncherAppShortcut
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
-import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
@@ -64,108 +67,156 @@ import com.shishifubing.atbl.R
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun LauncherScreen(
-    goToSettings: () -> Unit,
-    goToAddWidget: () -> Unit,
+    navigate: (route: LauncherNav) -> Unit,
     modifier: Modifier = Modifier,
     vm: LauncherViewModel = viewModel(factory = LauncherViewModel.Factory)
 ) {
-    val settings by vm.settingsFlow.collectAsState(vm.initialSettings)
-    val apps by vm.appsFlow.collectAsState(listOf())
-    val shortcuts by vm.shortcutsFlow.collectAsState(listOf())
-    val showHiddenApps by vm.showHiddenAppsFlow.collectAsState()
-    val isHomeApp by vm.isHomeAppFlow.collectAsState(true)
+    val isHomeApp = vm.isHomeApp.collectAsState()
+    val appCardSettings = vm.appCardSettings.collectAsState()
+    ErrorToast(errorFlow = vm.error)
+    LauncherRow(
+        modifier = modifier,
+        rowSettings = vm.launcherRowSettings.collectAsState(),
+        showHiddenAppsToggle = vm::showHiddenAppsToggle,
+        showHiddenApps = vm.showHiddenAppsFlow.collectAsState(),
+        navigate = navigate
+    ) {
+        if (!isHomeApp.value) {
+            NotAHomeAppBanner()
+        }
+        SplitScreenShortcuts(
+            shortcuts = vm.shortcutsFlow.collectAsState(listOf()),
+            appCardSettings = appCardSettings,
+            shortcutSeparator = vm.shortcutSeparator.collectAsState(),
+            headerActions = vm.appActions,
+            shortcutActions = vm.splitScreenShortcutActions
+        )
+        LauncherApps(
+            apps = vm.appsFlow.collectAsState(listOf()),
+            actions = vm.appActions,
+            showShortcuts = isHomeApp,
+            launchShortcut = vm::launchShortcut,
+            appCardSettings = appCardSettings
+        )
+    }
+}
+
+@Composable
+fun LauncherApps(
+    apps: State<List<LauncherApp>>,
+    actions: AppActions,
+    showShortcuts: State<Boolean>,
+    launchShortcut: (LauncherAppShortcut) -> Unit,
+    appCardSettings: State<AppCardSettings>
+) {
     var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
+    apps.value.forEach { app ->
+        AppCard(
+            label = app.label,
+            onClick = { actions.launchApp(app.packageName) },
+            onLongClick = { dialogApp = app },
+            settings = appCardSettings
+        )
+    }
+    if (dialogApp != null) {
+        AppDialog(
+            app = dialogApp!!,
+            actions = actions,
+            launchAppShortcut = launchShortcut,
+            onDismissRequest = { dialogApp = null },
+            showShortcuts = showShortcuts
+        )
+    }
+}
+
+@Composable
+fun SplitScreenShortcuts(
+    shortcuts: State<List<LauncherSplitScreenShortcut>>,
+    appCardSettings: State<AppCardSettings>,
+    shortcutSeparator: State<String>,
+    headerActions: AppActions,
+    shortcutActions: SplitScreenShortcutActions,
+) {
     var dialogShortcut by remember {
         mutableStateOf<LauncherSplitScreenShortcut?>(null)
     }
+    shortcuts.value.forEach { shortcut ->
+        AppCard(
+            label = listOf(
+                shortcut.appTop.label,
+                shortcut.appBottom.label
+            ).joinToString(shortcutSeparator.value),
+            onClick = { shortcutActions.launch(shortcut) },
+            onLongClick = { dialogShortcut = shortcut },
+            settings = appCardSettings
+        )
+    }
+    if (dialogShortcut != null) {
+        SplitScreenShortcutDialog(
+            shortcut = dialogShortcut!!,
+            actions = headerActions,
+            deleteShortcut = shortcutActions.remove,
+            onDismissRequest = { dialogShortcut = null },
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+@Composable
+fun LauncherRow(
+    rowSettings: State<LauncherRowSettings>,
+    showHiddenApps: State<Boolean>,
+    showHiddenAppsToggle: () -> Unit,
+    navigate: (route: LauncherNav) -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable FlowRowScope.() -> Unit
+) {
     var showLauncherDialog by remember { mutableStateOf(false) }
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(
-                settings.appLayoutHorizontalPadding.dp,
-                settings.appLayoutVerticalPadding.dp
+                rowSettings.value.horizontalPadding.dp,
+                rowSettings.value.verticalPadding.dp
             )
             .combinedClickable(
                 onLongClick = { showLauncherDialog = true },
                 onClick = {}
             ),
-        horizontalArrangement = getHorizontalArrangement(
-            settings.appLayoutHorizontalArrangement
-        ),
-        verticalArrangement = getVerticalArrangement(
-            settings.appLayoutVerticalArrangement
-        )
-    ) {
-        if (!isHomeApp) {
-            NotAHomeAppBanner()
-        }
-        shortcuts.forEach { shortcut ->
-            AppCard(
-                label = listOf(
-                    shortcut.appTop.label,
-                    shortcut.appBottom.label
-                ).joinToString(settings.appCardSplitScreenSeparator),
-                onClick = { vm.launchSplitScreen(shortcut) },
-                onLongClick = { dialogShortcut = shortcut },
-                settings = settings
-            )
-        }
-        apps.forEach { app ->
-            AppCard(
-                label = app.label,
-                onClick = { vm.launchApp(app.packageName) },
-                onLongClick = { dialogApp = app },
-                settings = settings
-            )
-        }
-    }
-    when {
-        showLauncherDialog -> LauncherActionsDialog(
-            goToSettings = goToSettings,
-            goToAddWidget = goToAddWidget,
+        horizontalArrangement = getHorizontalArrangement(rowSettings.value.horizontalArrangement),
+        verticalArrangement = getVerticalArrangement(rowSettings.value.verticalArrangement),
+        content = content
+    )
+    if (showLauncherDialog) {
+        LauncherActionsDialog(
+            navigate = navigate,
             showHiddenApps = showHiddenApps,
-            showHiddenAppsToggle = vm::showHiddenAppsToggle,
+            showHiddenAppsToggle = showHiddenAppsToggle,
             onDismissRequest = { showLauncherDialog = false }
-        )
-
-        dialogShortcut != null -> SplitScreenShortcutDialog(
-            shortcut = dialogShortcut!!,
-            vm = vm,
-            onDismissRequest = { dialogShortcut = null },
-        )
-
-        dialogApp != null -> AppDialog(
-            app = dialogApp!!,
-            vm = vm,
-            onDismissRequest = { dialogApp = null },
-            showShortcuts = isHomeApp
         )
     }
 }
 
 @Composable
 fun LauncherActionsDialog(
-    goToSettings: () -> Unit,
-    goToAddWidget: () -> Unit,
-    showHiddenApps: Boolean,
+    navigate: (route: LauncherNav) -> Unit,
+    showHiddenApps: State<Boolean>,
     showHiddenAppsToggle: () -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     val items = listOf(
-        R.string.launcher_dialog_settings to goToSettings,
-        R.string.launcher_dialog_add_widget to goToAddWidget,
-        if (showHiddenApps) {
+        R.string.launcher_dialog_settings to { navigate(LauncherNav.Settings) },
+        R.string.launcher_dialog_add_widget to { navigate(LauncherNav.AddWidget) },
+        if (showHiddenApps.value) {
             R.string.launcher_dialog_hide_hidden_apps
         } else {
             R.string.launcher_dialog_show_hidden_apps
         } to showHiddenAppsToggle
     )
-
     LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
         AppDialogItems(
             modifier = modifier,
@@ -208,28 +259,35 @@ fun AppCard(
     label: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    settings: LauncherSettings,
+    settings: State<AppCardSettings>,
     modifier: Modifier = Modifier,
 ) {
-    val transformedLabel = label
-        .let {
-            if (settings.appCardLabelRemoveSpaces) {
-                it.replace(" ", "")
-            } else {
-                it
-            }
-        }
-        .let {
-            if (settings.appCardLabelLowercase) {
-                it.lowercase()
-            } else {
-                it
-            }
-        }
+    LongPressTextButton(
+        modifier = modifier,
+        onClick = onClick,
+        onLongClick = onLongClick
+    ) {
+        Text(
+            modifier = Modifier.padding(settings.value.padding.dp),
+            style = getTextStyle(settings.value.textStyle),
+            fontFamily = getFontFamily(settings.value.fontFamily),
+            color = getTextColor(settings.value.textColor),
+            text = settings.value.transformLabel(label)
+        )
+    }
+}
+
+@Composable
+fun LongPressTextButton(
+    modifier: Modifier = Modifier,
+    onClick: () -> Unit,
+    onLongClick: () -> Unit,
+    content: @Composable RowScope.() -> Unit
+) {
     // workaround to use long press on buttons: https://stackoverflow.com/a/76395585
     val interactionSource = remember { MutableInteractionSource() }
     val viewConfiguration = LocalViewConfiguration.current
-    LaunchedEffect(interactionSource, transformedLabel) {
+    LaunchedEffect(interactionSource) {
         var isLongClick = false
         interactionSource.interactions.collectLatest { interaction ->
             when (interaction) {
@@ -248,42 +306,35 @@ fun AppCard(
             }
         }
     }
-
     TextButton(
         modifier = modifier,
         onClick = { },
         interactionSource = interactionSource,
-    ) {
-        Text(
-            modifier = Modifier.padding(settings.appCardPadding.dp),
-            text = transformedLabel,
-            style = getTextStyle(settings.appCardTextStyle),
-            fontFamily = getFontFamily(settings.appCardFontFamily),
-            color = getTextColor(settings.appCardTextColor)
-        )
-    }
+        content = content
+    )
 }
 
 @Composable
 fun AppDialog(
     app: LauncherApp,
-    vm: LauncherViewModel,
+    actions: AppActions,
     onDismissRequest: () -> Unit,
-    showShortcuts: Boolean,
+    launchAppShortcut: (LauncherAppShortcut) -> Unit,
+    showShortcuts: State<Boolean>,
     modifier: Modifier = Modifier,
 ) {
     LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
         AppDialogHeader(
             app = app,
-            vm = vm,
+            actions = actions,
             onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-        if (app.shortcutsList.isNotEmpty() && showShortcuts) {
+        if (app.shortcutsList.isNotEmpty() && showShortcuts.value) {
             AppDialogShortcuts(
-                vm = vm,
                 app = app,
-                onDismissRequest = onDismissRequest
+                onDismissRequest = onDismissRequest,
+                launchAppShortcut = launchAppShortcut
             )
         }
     }
@@ -308,20 +359,21 @@ fun LauncherDialog(
 @Composable
 fun SplitScreenShortcutDialog(
     shortcut: LauncherSplitScreenShortcut,
-    vm: LauncherViewModel,
+    deleteShortcut: (LauncherSplitScreenShortcut) -> Unit,
+    actions: AppActions,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
         AppDialogHeader(
             app = shortcut.appTop,
-            vm = vm,
+            actions = actions,
             onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         AppDialogHeader(
             app = shortcut.appBottom,
-            vm = vm,
+            actions = actions,
             onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
@@ -329,7 +381,7 @@ fun SplitScreenShortcutDialog(
             AppDialogButton(
                 text = stringResource(R.string.drawer_app_delete_split_screen_shortcut),
                 onClick = {
-                    vm.deleteSplitScreenShortcut(shortcut)
+                    deleteShortcut(shortcut)
                     onDismissRequest()
                 },
                 textAlign = TextAlign.Start
@@ -341,7 +393,7 @@ fun SplitScreenShortcutDialog(
 @Composable
 fun AppDialogHeader(
     app: LauncherApp,
-    vm: LauncherViewModel,
+    actions: AppActions,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -362,7 +414,7 @@ fun AppDialogHeader(
                     modifier = Modifier
                         .padding(dimensionResource(R.dimen.padding_small))
                         .size(dimensionResource(R.dimen.image_size)),
-                    bitmap = vm.getAppIcon(app.packageName),
+                    bitmap = actions.getAppIcon(app.packageName),
                     contentDescription = "App icon",
                 )
                 Text(
@@ -383,7 +435,7 @@ fun AppDialogHeader(
                 AppDialogButton(
                     text = stringResource(R.string.drawer_app_info),
                     onClick = {
-                        vm.launchAppInfo(app.packageName)
+                        actions.launchAppInfo(app.packageName)
                         onDismissRequest()
                     }
                 )
@@ -392,28 +444,27 @@ fun AppDialogHeader(
                         if (app.isHidden) R.string.drawer_app_show else R.string.drawer_app_hide
                     ),
                     onClick = {
-                        vm.toggleIsHidden(app.packageName)
+                        actions.toggleIsHidden(app.packageName)
                         onDismissRequest()
                     }
                 )
                 AppDialogButton(
                     text = stringResource(R.string.drawer_app_uninstall),
                     onClick = {
-                        vm.launchAppUninstall(app.packageName)
+                        actions.launchAppUninstall(app.packageName)
                         onDismissRequest()
                     }
                 )
             }
         }
     }
-
 }
 
 @Composable
 fun AppDialogShortcuts(
-    vm: LauncherViewModel,
     app: LauncherApp,
     onDismissRequest: () -> Unit,
+    launchAppShortcut: (LauncherAppShortcut) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AppDialogItems(
@@ -425,7 +476,7 @@ fun AppDialogShortcuts(
             text = shortcut.label,
             textAlign = TextAlign.Start,
             onClick = {
-                vm.launchAppShortcut(shortcut)
+                launchAppShortcut(shortcut)
                 onDismissRequest()
             }
         )
@@ -497,7 +548,6 @@ fun getTextStyle(textStyle: LauncherTextStyle): TextStyle {
     }
 }
 
-@Composable
 fun getTextColor(textColor: LauncherTextColor): Color {
     return when (textColor) {
         LauncherTextColor.Unspecified -> Color.Unspecified
@@ -517,7 +567,6 @@ fun getTextColor(textColor: LauncherTextColor): Color {
     }
 }
 
-@Composable
 fun getFontFamily(fontFamily: LauncherFontFamily): FontFamily {
     return when (fontFamily) {
         LauncherFontFamily.Default -> FontFamily.Default
@@ -529,7 +578,6 @@ fun getFontFamily(fontFamily: LauncherFontFamily): FontFamily {
     }
 }
 
-@Composable
 fun getHorizontalArrangement(
     horizontalArrangement: LauncherHorizontalArrangement
 ): Arrangement.Horizontal {
@@ -544,7 +592,6 @@ fun getHorizontalArrangement(
     }
 }
 
-@Composable
 fun getVerticalArrangement(
     verticalArrangement: LauncherVerticalArrangement
 ): Arrangement.Vertical {

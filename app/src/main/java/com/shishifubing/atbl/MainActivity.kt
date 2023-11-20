@@ -5,9 +5,7 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.material3.Surface
 import androidx.compose.ui.Modifier
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
@@ -49,7 +47,7 @@ class MainActivity : ComponentActivity() {
         app.appsManager = LauncherAppsManager(this)
         val manager = app.appsManager!!
         val appsRepo = app.appsRepo!!
-
+        lifecycleScope.launch { appsRepo.fetchInitial() }
         manager.addCallback(
             onChanged = { packageName ->
                 lifecycleScope.launch { appsRepo.reloadApp(packageName) }
@@ -58,12 +56,9 @@ class MainActivity : ComponentActivity() {
                 lifecycleScope.launch { appsRepo.removeApp(packageName) }
             }
         )
-        lifecycleScope.launch { appsRepo.fetchInitial() }
         setContent {
             LauncherTheme {
-                Surface(modifier = Modifier.fillMaxSize()) {
-                    UI(modifier = Modifier.safeDrawingPadding())
-                }
+                UI(modifier = Modifier.safeDrawingPadding())
             }
         }
     }

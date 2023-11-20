@@ -34,6 +34,8 @@ class LauncherSettingsRepository(private val dataStore: DataStore<LauncherSettin
             }
         }
 
+    fun getDefault() = LauncherSettingsSerializer.defaultValue.toBuilder()
+
     suspend fun update(action: (LauncherSettings.Builder) -> (LauncherSettings.Builder)) {
         dataStore.updateData { current -> action(current.toBuilder()).build() }
     }

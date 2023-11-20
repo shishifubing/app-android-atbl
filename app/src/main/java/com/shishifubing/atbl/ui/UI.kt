@@ -19,16 +19,14 @@ fun UI(
     navController: NavHostController = rememberNavController(),
 ) {
     val goBack: () -> Unit = { navController.popBackStack() }
+    val navigate: (LauncherNav) -> Unit = { navController.navigate(it.name) }
     NavHost(
         modifier = modifier,
         navController = navController,
         startDestination = LauncherNav.Home.name
     ) {
         composable(route = LauncherNav.Home.name) {
-            LauncherScreen(
-                goToSettings = { navController.navigate(LauncherNav.Settings.name) },
-                goToAddWidget = { navController.navigate(LauncherNav.AddWidget.name) }
-            )
+            LauncherScreen(navigate = navigate)
         }
         composable(route = LauncherNav.Settings.name) {
             LauncherScaffold(screen = LauncherNav.Settings, goBack = goBack) {
