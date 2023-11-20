@@ -28,6 +28,7 @@
     <string name="settings_group_app_card">App card</string>
 
     <string name="settings_backup_export">Export</string>
+    <string name="settings_backup_export_filename">atbl-settings.binpb</string>
     <string name="settings_backup_export_label">
         Export launcher settings
     </string>
