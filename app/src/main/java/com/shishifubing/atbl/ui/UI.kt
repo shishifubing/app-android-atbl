@@ -26,7 +26,7 @@ fun UI(
         startDestination = LauncherNav.Home.name
     ) {
         composable(route = LauncherNav.Home.name) {
-            LauncherScreen(navigate = navigate)
+            LauncherRoute(navigate = navigate)
         }
         composable(route = LauncherNav.Settings.name) {
             LauncherScaffold(screen = LauncherNav.Settings, goBack = goBack) {
