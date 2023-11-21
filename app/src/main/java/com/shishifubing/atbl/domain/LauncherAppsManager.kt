@@ -25,8 +25,9 @@ class LauncherAppsManager(
     private val parent: ComponentActivity
 ) {
     private val packageManager = parent.packageManager
-    private val launcherAppsService =
-        parent.getSystemService(LauncherApps::class.java)
+    private val launcherAppsService = parent.getSystemService(
+        LauncherApps::class.java
+    )
     private val callbacks: MutableList<LauncherApps.Callback> = mutableListOf()
 
 
@@ -134,7 +135,7 @@ class LauncherAppsManager(
         })
         launchApp(
             shortcut.appBottom.packageName,
-            Intent.FLAG_ACTIVITY_NEW_TASK
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         )
     }
 }
