@@ -29,9 +29,7 @@ fun UI(
             LauncherRoute(navigate = navigate)
         }
         composable(route = LauncherNav.Settings.name) {
-            LauncherScaffold(screen = LauncherNav.Settings, goBack = goBack) {
-                SettingsScreen()
-            }
+            SettingsRoute(navigate = navigate, goBack = goBack)
         }
         composable(route = LauncherNav.AddWidget.name) {
             LauncherScaffold(screen = LauncherNav.AddWidget, goBack = goBack) {

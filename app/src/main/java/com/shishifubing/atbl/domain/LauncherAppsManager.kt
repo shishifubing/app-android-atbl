@@ -135,7 +135,7 @@ class LauncherAppsManager(
         })
         launchApp(
             shortcut.appBottom.packageName,
-            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
+            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
         )
     }
 }
