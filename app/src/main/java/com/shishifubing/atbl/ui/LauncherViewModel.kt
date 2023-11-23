@@ -19,8 +19,10 @@ import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.LauncherVerticalArrangement
 import com.shishifubing.atbl.domain.LauncherAppsManager
-import com.shishifubing.atbl.domain.LauncherAppsRepository
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
+import com.shishifubing.atbl.domain.LauncherSettingsSerializer
+import com.shishifubing.atbl.domain.LauncherStateRepository
+import com.shishifubing.atbl.domain.LauncherStateSerializer
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -33,7 +35,7 @@ import kotlinx.coroutines.launch
 
 class LauncherViewModel(
     settingsRepo: LauncherSettingsRepository,
-    private val appsRepo: LauncherAppsRepository,
+    private val appsRepo: LauncherStateRepository,
     private val appsManager: LauncherAppsManager
 ) : ViewModel() {
     companion object {
@@ -54,19 +56,35 @@ class LauncherViewModel(
     }
 
     private val _showHiddenAppsFlow = MutableStateFlow(false)
+
     private val _error = MutableStateFlow<Throwable?>(null)
     val error = _error.asStateFlow()
+
     private val exceptionHandler = CoroutineExceptionHandler { _, e ->
         _error.update { e }
     }
 
     val uiState = combine(
         settingsRepo.settingsFlow,
-        appsRepo.appsFlow,
+        appsRepo.stateFlow,
         _showHiddenAppsFlow
-    ) { settings, apps, showHiddenApps ->
+    ) { settingsResult, stateResult, showHiddenApps ->
+        val state = stateResult.fold(
+            onSuccess = { it },
+            onFailure = {
+                _error.update { it }
+                LauncherStateSerializer.defaultValue
+            }
+        )
+        val settings = settingsResult.fold(
+            onSuccess = { it },
+            onFailure = {
+                _error.update { it }
+                LauncherSettingsSerializer.defaultValue
+            }
+        )
         LauncherScreenUiState.Success(
-            apps = apps.appsMap.values
+            apps = state.appsMap.values
                 .let {
                     when (settings.appLayoutSortBy) {
                         LauncherSortBy.SortByLabel -> it.sortedBy { app -> app.label }
@@ -76,8 +94,10 @@ class LauncherViewModel(
                 .let {
                     if (settings.appLayoutReverseOrder) it.reversed() else it
                 }
-                .filter { showHiddenApps || !it.isHidden },
-            splitScreenShortcuts = apps.splitScreenShortcutsList,
+                .let { apps ->
+                    if (showHiddenApps) apps else apps.filterNot { it.isHidden }
+                },
+            splitScreenShortcuts = state.splitScreenShortcutsList,
             showHiddenApps = showHiddenApps,
             appCardSettings = LauncherAppCardSettings(
                 removeSpaces = settings.appCardLabelRemoveSpaces,
@@ -88,7 +108,7 @@ class LauncherViewModel(
                 fontFamily = settings.appCardFontFamily,
                 textColor = settings.appCardTextColor
             ),
-            isHomeApp = apps.isHomeApp,
+            isHomeApp = state.isHomeApp,
             launcherRowSettings = LauncherRowSettings(
                 horizontalPadding = settings.appLayoutHorizontalPadding,
                 verticalPadding = settings.appLayoutVerticalPadding,
@@ -107,8 +127,8 @@ class LauncherViewModel(
             appsManager.launchAppUninstall(packageName)
         }
 
-        override fun toggleIsHidden(packageName: String) {
-            launch { appsRepo.toggleIsHidden(packageName) }
+        override fun setIsHidden(packageName: String, isHidden: Boolean) {
+            launch { appsRepo.setIsHidden(packageName, isHidden) }
         }
 
         override fun launchAppInfo(packageName: String) {
@@ -128,7 +148,7 @@ class LauncherViewModel(
         }
 
         override fun getAppIcon(packageName: String): ImageBitmap {
-            return appsRepo.getAppIcon(packageName)
+            return appsManager.getAppIcon(packageName)
         }
 
         override fun transformLabel(
@@ -156,8 +176,8 @@ class LauncherViewModel(
 
 sealed interface LauncherScreenUiState {
     data class Success(
-        val apps: Collection<LauncherApp>,
-        val splitScreenShortcuts: Collection<LauncherSplitScreenShortcut>,
+        val apps: List<LauncherApp>,
+        val splitScreenShortcuts: List<LauncherSplitScreenShortcut>,
         val showHiddenApps: Boolean,
         val isHomeApp: Boolean,
         val appCardSettings: LauncherAppCardSettings,
@@ -185,12 +205,12 @@ data class LauncherRowSettings(
 )
 
 interface AppActions {
-    fun launchAppUninstall(packageName: String): Unit
-    fun toggleIsHidden(packageName: String)
-    fun launchAppInfo(packageName: String): Unit
-    fun launchApp(packageName: String): Unit
-    fun launchShortcut(shortcut: LauncherAppShortcut): Unit
-    fun showHiddenAppsToggle(): Unit
+    fun launchAppUninstall(packageName: String)
+    fun setIsHidden(packageName: String, isHidden: Boolean)
+    fun launchAppInfo(packageName: String)
+    fun launchApp(packageName: String)
+    fun launchShortcut(shortcut: LauncherAppShortcut)
+    fun showHiddenAppsToggle()
     fun getAppIcon(packageName: String): ImageBitmap
     fun transformLabel(
         label: String,
@@ -199,6 +219,6 @@ interface AppActions {
 }
 
 interface SplitScreenShortcutActions {
-    fun launchSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut): Unit
+    fun launchSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
     fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
 }

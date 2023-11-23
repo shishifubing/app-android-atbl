@@ -36,7 +36,6 @@ import java.io.FileOutputStream
 
 @Composable
 fun SettingsRoute(
-    navigate: (route: LauncherNav) -> Unit,
     goBack: () -> Unit,
     modifier: Modifier = Modifier,
     vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
@@ -109,7 +108,7 @@ fun SettingsScreen(
                 separator = uiState.settings.appCardSplitScreenSeparator,
                 setSeparator = {
                     actions.updateSettings {
-                        setAppCardSplitScreenSeparator(it)
+                        appCardSplitScreenSeparator = it
                     }
                 }
             )
@@ -119,7 +118,7 @@ fun SettingsScreen(
                 reverse = uiState.settings.appLayoutReverseOrder,
                 setReverse = {
                     actions.updateSettings {
-                        setAppLayoutReverseOrder(it)
+                        appLayoutReverseOrder = it
                     }
                 }
             )
@@ -127,7 +126,7 @@ fun SettingsScreen(
                 padding = uiState.settings.appLayoutHorizontalPadding,
                 setPadding = {
                     actions.updateSettings {
-                        setAppLayoutHorizontalPadding(it)
+                        appLayoutHorizontalPadding = it
                     }
                 }
             )
@@ -135,7 +134,7 @@ fun SettingsScreen(
                 padding = uiState.settings.appLayoutVerticalPadding,
                 setPadding = {
                     actions.updateSettings {
-                        setAppLayoutVerticalPadding(it)
+                        appLayoutVerticalPadding = it
                     }
                 }
             )
@@ -143,7 +142,7 @@ fun SettingsScreen(
                 arrangement = uiState.settings.appLayoutHorizontalArrangement,
                 setArrangement = {
                     actions.updateSettings {
-                        setAppLayoutHorizontalArrangement(it)
+                        appLayoutHorizontalArrangement = it
                     }
                 }
             )
@@ -151,7 +150,7 @@ fun SettingsScreen(
                 arrangement = uiState.settings.appLayoutVerticalArrangement,
                 setArrangement = {
                     actions.updateSettings {
-                        setAppLayoutVerticalArrangement(it)
+                        appLayoutVerticalArrangement = it
                     }
                 }
             )
@@ -159,7 +158,7 @@ fun SettingsScreen(
                 sortBy = uiState.settings.appLayoutSortBy,
                 setSortBy = {
                     actions.updateSettings {
-                        setAppLayoutSortBy(it)
+                        appLayoutSortBy = it
                     }
                 }
             )
@@ -169,7 +168,7 @@ fun SettingsScreen(
                 removeSpaces = uiState.settings.appCardLabelRemoveSpaces,
                 setRemoveSpaces = {
                     actions.updateSettings {
-                        setAppCardLabelRemoveSpaces(it)
+                        appCardLabelRemoveSpaces = it
                     }
                 }
             )
@@ -177,7 +176,7 @@ fun SettingsScreen(
                 lowercase = uiState.settings.appCardLabelLowercase,
                 setLowercase = {
                     actions.updateSettings {
-                        setAppCardLabelLowercase(it)
+                        appCardLabelLowercase = it
                     }
                 }
             )
@@ -185,7 +184,7 @@ fun SettingsScreen(
                 fontFamily = uiState.settings.appCardFontFamily,
                 setFontFamily = {
                     actions.updateSettings {
-                        setAppCardFontFamily(it)
+                        appCardFontFamily = it
                     }
                 }
             )
@@ -193,7 +192,7 @@ fun SettingsScreen(
                 textStyle = uiState.settings.appCardTextStyle,
                 setTextStyle = {
                     actions.updateSettings {
-                        setAppCardTextStyle(it)
+                        appCardTextStyle = it
                     }
                 }
             )
@@ -201,7 +200,7 @@ fun SettingsScreen(
                 color = uiState.settings.appCardTextColor,
                 setColor = {
                     actions.updateSettings {
-                        setAppCardTextColor(it)
+                        appCardTextColor = it
                     }
                 }
             )
@@ -209,7 +208,7 @@ fun SettingsScreen(
                 padding = uiState.settings.appCardPadding,
                 setPadding = {
                     actions.updateSettings {
-                        setAppCardPadding(it)
+                        appCardPadding = it
                     }
                 }
             )

@@ -38,6 +38,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -124,28 +125,32 @@ private fun LauncherScreen(
 
 @Composable
 private fun LauncherApps(
-    apps: Collection<LauncherApp>,
+    apps: List<LauncherApp>,
     actions: AppActions,
     showShortcuts: Boolean,
     launchShortcut: (LauncherAppShortcut) -> Unit,
     appCardSettings: LauncherAppCardSettings
 ) {
-    var dialogApp by remember { mutableStateOf<LauncherApp?>(null) }
-    apps.forEach { app ->
+    var dialogAppIndex by remember { mutableIntStateOf(-1) }
+    apps.forEachIndexed { i, app ->
         AppCard(
             label = app.label,
             onClick = { actions.launchApp(app.packageName) },
-            onLongClick = { dialogApp = app },
+            onLongClick = { dialogAppIndex = i },
             settings = appCardSettings,
             actions = actions
         )
     }
-    if (dialogApp != null) {
+    if (dialogAppIndex != -1) {
+        val dialogApp = apps[dialogAppIndex]
         AppDialog(
-            app = dialogApp!!,
+            packageName = dialogApp.packageName,
+            label = dialogApp.label,
+            isHidden = dialogApp.isHidden,
+            shortcuts = dialogApp.shortcutsList,
             actions = actions,
             launchAppShortcut = launchShortcut,
-            onDismissRequest = { dialogApp = null },
+            onDismissRequest = { dialogAppIndex = -1 },
             showShortcuts = showShortcuts
         )
     }
@@ -153,32 +158,30 @@ private fun LauncherApps(
 
 @Composable
 private fun SplitScreenShortcuts(
-    shortcuts: Collection<LauncherSplitScreenShortcut>,
+    shortcuts: List<LauncherSplitScreenShortcut>,
     appCardSettings: LauncherAppCardSettings,
     appActions: AppActions,
     shortcutActions: SplitScreenShortcutActions,
 ) {
-    var dialogShortcut by remember {
-        mutableStateOf<LauncherSplitScreenShortcut?>(null)
-    }
-    shortcuts.forEach { shortcut ->
+    var dialogShortcutIndex by remember { mutableIntStateOf(-1) }
+    shortcuts.forEachIndexed { i, shortcut ->
         AppCard(
             label = listOf(
                 shortcut.appTop.label,
                 shortcut.appBottom.label
             ).joinToString(appCardSettings.shortcutSeparator),
             onClick = { shortcutActions.launchSplitScreenShortcut(shortcut) },
-            onLongClick = { dialogShortcut = shortcut },
+            onLongClick = { dialogShortcutIndex = i },
             settings = appCardSettings,
             actions = appActions
         )
     }
-    if (dialogShortcut != null) {
+    if (dialogShortcutIndex != -1) {
         SplitScreenShortcutDialog(
-            shortcut = dialogShortcut!!,
+            shortcut = shortcuts[dialogShortcutIndex],
             actions = appActions,
             deleteShortcut = shortcutActions::removeSplitScreenShortcut,
-            onDismissRequest = { dialogShortcut = null },
+            onDismissRequest = { dialogShortcutIndex = -1 },
         )
     }
 }
@@ -336,7 +339,10 @@ private fun LongPressTextButton(
 
 @Composable
 private fun AppDialog(
-    app: LauncherApp,
+    packageName: String,
+    label: String,
+    isHidden: Boolean,
+    shortcuts: List<LauncherAppShortcut>,
     actions: AppActions,
     onDismissRequest: () -> Unit,
     launchAppShortcut: (LauncherAppShortcut) -> Unit,
@@ -345,14 +351,16 @@ private fun AppDialog(
 ) {
     LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
         AppDialogHeader(
-            app = app,
+            packageName = packageName,
+            label = label,
+            isHidden = isHidden,
             actions = actions,
             onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-        if (app.shortcutsList.isNotEmpty() && showShortcuts) {
+        if (shortcuts.isNotEmpty() && showShortcuts) {
             AppDialogShortcuts(
-                app = app,
+                shortcuts = shortcuts,
                 onDismissRequest = onDismissRequest,
                 launchAppShortcut = launchAppShortcut
             )
@@ -386,13 +394,17 @@ private fun SplitScreenShortcutDialog(
 ) {
     LauncherDialog(onDismissRequest = onDismissRequest, modifier = modifier) {
         AppDialogHeader(
-            app = shortcut.appTop,
+            packageName = shortcut.appTop.packageName,
+            label = shortcut.appBottom.label,
+            isHidden = shortcut.appBottom.isHidden,
             actions = actions,
             onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         AppDialogHeader(
-            app = shortcut.appBottom,
+            packageName = shortcut.appBottom.packageName,
+            label = shortcut.appBottom.label,
+            isHidden = shortcut.appBottom.isHidden,
             actions = actions,
             onDismissRequest = onDismissRequest
         )
@@ -412,7 +424,9 @@ private fun SplitScreenShortcutDialog(
 
 @Composable
 private fun AppDialogHeader(
-    app: LauncherApp,
+    packageName: String,
+    label: String,
+    isHidden: Boolean,
     actions: AppActions,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
@@ -434,11 +448,11 @@ private fun AppDialogHeader(
                     modifier = Modifier
                         .padding(dimensionResource(R.dimen.padding_small))
                         .size(dimensionResource(R.dimen.image_size)),
-                    bitmap = actions.getAppIcon(app.packageName),
+                    bitmap = actions.getAppIcon(packageName),
                     contentDescription = "App icon",
                 )
                 Text(
-                    text = app.label,
+                    text = label,
                     modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
                     style = MaterialTheme.typography.bodyLarge,
                     textAlign = TextAlign.Center
@@ -455,23 +469,23 @@ private fun AppDialogHeader(
                 AppDialogButton(
                     text = stringResource(R.string.drawer_app_info),
                     onClick = {
-                        actions.launchAppInfo(app.packageName)
+                        actions.launchAppInfo(packageName)
                         onDismissRequest()
                     }
                 )
                 AppDialogButton(
                     text = stringResource(
-                        if (app.isHidden) R.string.drawer_app_show else R.string.drawer_app_hide
+                        if (isHidden) R.string.drawer_app_show else R.string.drawer_app_hide
                     ),
                     onClick = {
-                        actions.toggleIsHidden(app.packageName)
+                        actions.setIsHidden(packageName, !isHidden)
                         onDismissRequest()
                     }
                 )
                 AppDialogButton(
                     text = stringResource(R.string.drawer_app_uninstall),
                     onClick = {
-                        actions.launchAppUninstall(app.packageName)
+                        actions.launchAppUninstall(packageName)
                         onDismissRequest()
                     }
                 )
@@ -482,16 +496,16 @@ private fun AppDialogHeader(
 
 @Composable
 private fun AppDialogShortcuts(
-    app: LauncherApp,
+    shortcuts: List<LauncherAppShortcut>,
     onDismissRequest: () -> Unit,
     launchAppShortcut: (LauncherAppShortcut) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     AppDialogItems(
         modifier = modifier,
-        itemsCount = app.shortcutsList.size,
-        itemKey = { i -> app.shortcutsList[i].hashCode() }) { i ->
-        val shortcut = app.shortcutsList[i]
+        itemsCount = shortcuts.size,
+        itemKey = { i -> shortcuts[i].hashCode() }) { i ->
+        val shortcut = shortcuts[i]
         AppDialogButton(
             text = shortcut.label,
             textAlign = TextAlign.Start,

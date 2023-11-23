@@ -11,10 +11,10 @@ import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import androidx.lifecycle.lifecycleScope
 import com.shishifubing.atbl.domain.LauncherAppsManager
-import com.shishifubing.atbl.domain.LauncherAppsRepository
-import com.shishifubing.atbl.domain.LauncherAppsSerializer
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
 import com.shishifubing.atbl.domain.LauncherSettingsSerializer
+import com.shishifubing.atbl.domain.LauncherStateRepository
+import com.shishifubing.atbl.domain.LauncherStateSerializer
 import com.shishifubing.atbl.ui.LauncherTheme
 import com.shishifubing.atbl.ui.UI
 import kotlinx.coroutines.launch
@@ -26,9 +26,9 @@ val Context.settingsDataStore: DataStore<LauncherSettings> by dataStore(
     serializer = LauncherSettingsSerializer
 )
 
-val Context.launcherAppsDataStore: DataStore<LauncherApps> by dataStore(
+val Context.launcherAppsDataStore: DataStore<LauncherState> by dataStore(
     fileName = "launcherApps.pb",
-    serializer = LauncherAppsSerializer
+    serializer = LauncherStateSerializer
 )
 
 class MainActivity : ComponentActivity() {
@@ -40,14 +40,15 @@ class MainActivity : ComponentActivity() {
         app.appWidgetHost = AppWidgetHost(this, 0)
         app.settingsRepo =
             LauncherSettingsRepository(settingsDataStore)
-        app.appsRepo = LauncherAppsRepository(
-            launcherAppsDataStore,
-            this
-        )
+
         app.appsManager = LauncherAppsManager(this)
+        app.appsRepo = LauncherStateRepository(
+            launcherAppsDataStore,
+            app.appsManager!!
+        )
         val manager = app.appsManager!!
         val appsRepo = app.appsRepo!!
-        lifecycleScope.launch { appsRepo.fetchInitial() }
+        lifecycleScope.launch { appsRepo.updateState() }
         manager.addCallback(
             onChanged = { packageName ->
                 lifecycleScope.launch { appsRepo.reloadApp(packageName) }
@@ -64,9 +65,7 @@ class MainActivity : ComponentActivity() {
     }
 
     override fun onResume() {
-        lifecycleScope.launch {
-            app.appsRepo!!.updateIsHomeApp(app.appsManager!!.isHomeApp())
-        }
+        lifecycleScope.launch { app.appsRepo!!.updateIsHomeApp() }
         super.onResume()
     }
 
