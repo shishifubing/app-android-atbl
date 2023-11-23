@@ -11,8 +11,10 @@ import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherApplication
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
-import com.shishifubing.atbl.domain.LauncherAppsRepository
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
+import com.shishifubing.atbl.domain.LauncherSettingsSerializer
+import com.shishifubing.atbl.domain.LauncherStateRepository
+import com.shishifubing.atbl.domain.LauncherStateSerializer
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -22,12 +24,11 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.runBlocking
 
 
 class SettingsViewModel(
     private val settingsRepo: LauncherSettingsRepository,
-    private val appsRepo: LauncherAppsRepository
+    private val appsRepo: LauncherStateRepository
 ) : ViewModel() {
     companion object {
         val Factory: ViewModelProvider.Factory = viewModelFactory {
@@ -49,12 +50,26 @@ class SettingsViewModel(
     }
 
     val uiState = combine(
-        appsRepo.appsFlow,
+        appsRepo.stateFlow,
         settingsRepo.settingsFlow
-    ) { apps, settings ->
+    ) { stateResult, settingsResult ->
+        val state = stateResult.fold(
+            onSuccess = { it },
+            onFailure = {
+                _error.update { it }
+                LauncherStateSerializer.defaultValue
+            }
+        )
+        val settings = settingsResult.fold(
+            onSuccess = { it },
+            onFailure = {
+                _error.update { it }
+                LauncherSettingsSerializer.defaultValue
+            }
+        )
         SettingsScreenUiState.Success(
-            apps = apps.appsMap.values,
-            splitScreenShortcuts = apps.splitScreenShortcutsList,
+            apps = state.appsMap.values,
+            splitScreenShortcuts = state.splitScreenShortcutsList,
             settings = settings
         )
     }.stateIn(
@@ -65,9 +80,9 @@ class SettingsViewModel(
 
     val settingsActions = object : SettingsActions {
         override fun updateSettings(
-            action: suspend LauncherSettings.Builder.() -> LauncherSettings.Builder
+            action: LauncherSettings.Builder.() -> Unit
         ) {
-            launch { settingsRepo.update { runBlocking { action(it) } } }
+            launch { settingsRepo.update(action) }
         }
 
         override fun updateSettingsFromBytes(bytes: ByteArray) {
@@ -118,7 +133,7 @@ sealed interface SettingsScreenUiState {
 }
 
 interface SettingsActions {
-    fun updateSettings(action: suspend LauncherSettings.Builder.() -> LauncherSettings.Builder)
+    fun updateSettings(action: LauncherSettings.Builder.() -> Unit)
 
     fun updateSettingsFromBytes(bytes: ByteArray)
 

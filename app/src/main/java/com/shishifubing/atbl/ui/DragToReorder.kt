@@ -1,9 +1,28 @@
 package com.shishifubing.atbl.ui
 
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
+
 enum class SlideState {
     NONE,
     UP,
     DOWN
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Preview
+@Composable
+fun DragToReorder() {
+    LazyColumn(
+        modifier = Modifier,
+    ) {
+
+
+    }
+
 }
 
 /*

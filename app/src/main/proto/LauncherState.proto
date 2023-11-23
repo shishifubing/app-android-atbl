@@ -3,7 +3,7 @@ syntax = "proto3";
 option java_package = "com.shishifubing.atbl";
 option java_multiple_files = true;
 
-message LauncherApps {
+message LauncherState {
   reserved 1;
   map<string, LauncherApp> apps = 4;
   repeated LauncherSplitScreenShortcut splitScreenShortcuts = 2;
@@ -15,6 +15,10 @@ message LauncherApp {
   string packageName = 2;
   repeated LauncherAppShortcut shortcuts = 3;
   bool isHidden = 4;
+}
+
+message LauncherWidget {
+
 }
 
 message LauncherAppShortcut {
