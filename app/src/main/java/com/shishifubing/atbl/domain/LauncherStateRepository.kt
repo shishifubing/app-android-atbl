@@ -4,8 +4,12 @@ import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
 import com.google.protobuf.InvalidProtocolBufferException
+import com.shishifubing.atbl.LauncherScreen
+import com.shishifubing.atbl.LauncherScreenItem
+import com.shishifubing.atbl.LauncherScreenItemComplex
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.LauncherState
+import com.shishifubing.atbl.LauncherStateOrBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.map
@@ -27,6 +31,18 @@ class LauncherStateRepository(
         return dataStore.updateData { it.toBuilder().apply(action).build() }
     }
 
+    private suspend fun updateScreen(
+        screen: Int,
+        action: LauncherScreen.Builder.(state: LauncherStateOrBuilder) -> Unit
+    ) {
+        update {
+            val builder = this
+            setScreens(
+                screen,
+                getScreens(screen).toBuilder().apply { action(builder) })
+        }
+    }
+
     suspend fun updateIsHomeApp() = update { isHomeApp = manager.isHomeApp() }
 
     suspend fun setIsHidden(packageName: String, isHidden: Boolean) = update {
@@ -41,20 +57,27 @@ class LauncherStateRepository(
     }
 
     suspend fun addSplitScreenShortcut(
-        appTop: String, appBottom: String
-    ) = update {
+        screen: Int, appTop: String, appBottom: String
+    ) = updateScreen(screen) { state ->
         val shortcut = LauncherSplitScreenShortcut.getDefaultInstance()
             .toBuilder()
-            .setAppBottom(getAppsOrThrow(appBottom))
-            .setAppTop(getAppsOrThrow(appTop))
-            .build()
-        addSplitScreenShortcuts(shortcut)
+            .setAppBottom(state.getAppsOrThrow(appBottom))
+            .setAppTop(state.getAppsOrThrow(appTop))
+        val screenItem = LauncherScreenItem.getDefaultInstance()
+            .toBuilder()
+            .setSplitScreenShortcut(shortcut)
+        addItems(screenItem)
     }
 
     suspend fun removeSplitScreenShortcut(
-        shortcut: LauncherSplitScreenShortcut
-    ) = update {
-        removeSplitScreenShortcuts(splitScreenShortcutsList.indexOf(shortcut))
+        screen: Int, shortcut: LauncherSplitScreenShortcut
+    ) = updateScreen(screen) {
+        val index = itemsList.indexOfFirst {
+            it.hasSplitScreenShortcut() && it.splitScreenShortcut == shortcut
+        }
+        if (index != -1) {
+            removeItems(index)
+        }
     }
 
     suspend fun reloadApp(packageName: String) = update {
@@ -78,6 +101,15 @@ class LauncherStateRepository(
         }.toMap()
         clearApps()
         putAllApps(newApps)
+        if (screensCount == 0) {
+            val item = LauncherScreenItem.getDefaultInstance()
+                .toBuilder()
+                .setComplex(LauncherScreenItemComplex.APPS)
+            val screen = LauncherScreen.getDefaultInstance()
+                .toBuilder()
+                .addItems(item)
+            addScreens(screen)
+        }
         isHomeApp = manager.isHomeApp()
     }
 }

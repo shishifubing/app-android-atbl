@@ -83,7 +83,7 @@ class LauncherViewModel(
                 LauncherSettingsSerializer.defaultValue
             }
         )
-        LauncherScreenUiState.Success(
+        LauncherUiState.Success(
             apps = state.appsMap.values
                 .let {
                     when (settings.appLayoutSortBy) {
@@ -97,7 +97,7 @@ class LauncherViewModel(
                 .let { apps ->
                     if (showHiddenApps) apps else apps.filterNot { it.isHidden }
                 },
-            splitScreenShortcuts = state.splitScreenShortcutsList,
+            splitScreenShortcuts = state.screensList[0].sho,
             showHiddenApps = showHiddenApps,
             appCardSettings = LauncherAppCardSettings(
                 removeSpaces = settings.appCardLabelRemoveSpaces,
@@ -119,7 +119,7 @@ class LauncherViewModel(
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.WhileSubscribed(5_000),
-        initialValue = LauncherScreenUiState.Loading
+        initialValue = LauncherUiState.Loading
     )
 
     val appActions = object : AppActions {
@@ -169,23 +169,28 @@ class LauncherViewModel(
         }
 
         override fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
-            launch { appsRepo.removeSplitScreenShortcut(shortcut) }
+            launch { appsRepo.removeSplitScreenShortcut(0, shortcut) }
         }
     }
 }
 
-sealed interface LauncherScreenUiState {
+
+sealed interface LauncherUiState {
     data class Success(
-        val apps: List<LauncherApp>,
-        val splitScreenShortcuts: List<LauncherSplitScreenShortcut>,
-        val showHiddenApps: Boolean,
+        val screens: List<LauncherScreenUiState>,
         val isHomeApp: Boolean,
         val appCardSettings: LauncherAppCardSettings,
         val launcherRowSettings: LauncherRowSettings
-    ) : LauncherScreenUiState
+    ) : LauncherUiState
 
-    object Loading : LauncherScreenUiState
+    object Loading : LauncherUiState
 }
+
+data class LauncherScreenUiState(
+    val apps: List<LauncherApp>,
+    val splitScreenShortcuts: List<LauncherSplitScreenShortcut>,
+    val showHiddenApps: Boolean,
+)
 
 data class LauncherAppCardSettings(
     val removeSpaces: Boolean,

@@ -89,11 +89,11 @@ fun LauncherRoute(
 private fun LauncherScreen(
     navigate: (route: LauncherNav) -> Unit,
     modifier: Modifier = Modifier,
-    uiState: LauncherScreenUiState,
+    uiState: LauncherUiState,
     appActions: AppActions,
     splitScreenShortcutActions: SplitScreenShortcutActions
 ) {
-    if (uiState !is LauncherScreenUiState.Success) {
+    if (uiState !is LauncherUiState.Success) {
         return
     }
     LauncherRow(
