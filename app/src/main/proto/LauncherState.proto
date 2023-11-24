@@ -4,10 +4,31 @@ option java_package = "com.shishifubing.atbl";
 option java_multiple_files = true;
 
 message LauncherState {
-  reserved 1;
-  map<string, LauncherApp> apps = 4;
-  repeated LauncherSplitScreenShortcut splitScreenShortcuts = 2;
+  repeated LauncherScreen screens = 1;
+  map<string, LauncherApp> apps = 2;
   bool isHomeApp = 3;
+}
+
+message LauncherScreen {
+  int32 position = 1;
+  repeated LauncherScreenItem items = 2;
+}
+
+message LauncherScreenItem {
+  message LauncherSplitScreenShortcuts {
+    repeated LauncherSplitScreenShortcut splitScreenShortcuts = 1;
+  }
+  oneof item {
+    LauncherApp app = 1;
+    LauncherScreenItemComplex complex = 2;
+    LauncherWidget widget = 3;
+    LauncherSplitScreenShortcut splitScreenShortcut = 4;
+    LauncherSplitScreenShortcuts splitScreenShortcuts = 5;
+  }
+}
+
+enum LauncherScreenItemComplex {
+  APPS = 0;
 }
 
 message LauncherApp {
