@@ -3,6 +3,7 @@ package com.shishifubing.atbl.ui
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -16,6 +17,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.tooling.preview.Preview
 
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -53,5 +55,17 @@ fun LauncherScaffold(
                 .padding(paddingValues),
             content = content
         )
+    }
+}
+
+@Preview(showSystemUi = true)
+@Composable
+private fun LauncherScaffoldPreview() {
+    LauncherTheme(darkTheme = true) {
+        LauncherScaffold(
+            screen = LauncherNav.Home, goBack = { }
+        ) {
+            Text("content")
+        }
     }
 }

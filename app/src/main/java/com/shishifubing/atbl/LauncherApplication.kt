@@ -8,7 +8,7 @@ import com.shishifubing.atbl.domain.LauncherStateRepository
 
 class LauncherApplication : Application() {
     var appsManager: LauncherAppsManager? = null
-    var appsRepo: LauncherStateRepository? = null
+    var stateRepo: LauncherStateRepository? = null
     var settingsRepo: LauncherSettingsRepository? = null
     var appWidgetHost: AppWidgetHost? = null
 }
