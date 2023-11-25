@@ -59,11 +59,7 @@ fun ErrorToast(errorFlow: StateFlow<Throwable?>) {
     val error by errorFlow.collectAsState()
     LaunchedEffect(context, error) {
         error?.let {
-            Toast.makeText(
-                context,
-                it.message ?: it.toString(),
-                Toast.LENGTH_LONG
-            ).show()
+            Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
         }
     }
 }

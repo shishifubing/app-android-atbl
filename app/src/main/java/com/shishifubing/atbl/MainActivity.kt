@@ -5,8 +5,6 @@ import android.content.Context
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.layout.safeDrawingPadding
-import androidx.compose.ui.Modifier
 import androidx.datastore.core.DataStore
 import androidx.datastore.dataStore
 import androidx.lifecycle.lifecycleScope
@@ -36,36 +34,38 @@ class MainActivity : ComponentActivity() {
     private lateinit var app: LauncherApplication
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        app = application as LauncherApplication
-        app.appWidgetHost = AppWidgetHost(this, 0)
-        app.settingsRepo =
-            LauncherSettingsRepository(settingsDataStore)
 
-        app.appsManager = LauncherAppsManager(this)
-        app.appsRepo = LauncherStateRepository(
-            launcherAppsDataStore,
-            app.appsManager!!
-        )
-        val manager = app.appsManager!!
-        val appsRepo = app.appsRepo!!
-        lifecycleScope.launch { appsRepo.updateState() }
+        val manager = LauncherAppsManager(this)
+        val stateRepo = LauncherStateRepository(launcherAppsDataStore, manager)
+        val settingsRepo = LauncherSettingsRepository(settingsDataStore)
+        val appWidgetHost = AppWidgetHost(this, 0)
+
+        app = (application as LauncherApplication).apply {
+            this.settingsRepo = settingsRepo
+            this.appsManager = manager
+            this.stateRepo = stateRepo
+            this.appWidgetHost = appWidgetHost
+        }
+
+        lifecycleScope.launch { stateRepo.updateState() }
         manager.addCallback(
             onChanged = { packageName ->
-                lifecycleScope.launch { appsRepo.reloadApp(packageName) }
+                lifecycleScope.launch { stateRepo.reloadApp(packageName) }
             },
             onRemoved = { packageName ->
-                lifecycleScope.launch { appsRepo.removeApp(packageName) }
+                lifecycleScope.launch { stateRepo.removeApp(packageName) }
             }
         )
+
         setContent {
             LauncherTheme {
-                UI(modifier = Modifier.safeDrawingPadding())
+                UI()
             }
         }
     }
 
     override fun onResume() {
-        lifecycleScope.launch { app.appsRepo!!.updateIsHomeApp() }
+        lifecycleScope.launch { app.stateRepo!!.updateIsHomeApp() }
         super.onResume()
     }
 

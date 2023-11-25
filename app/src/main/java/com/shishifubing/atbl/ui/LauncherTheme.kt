@@ -3,6 +3,7 @@ package com.shishifubing.atbl.ui
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.darkColorScheme
@@ -37,6 +38,11 @@ fun LauncherTheme(
     }
 
     MaterialTheme(colorScheme = colorScheme) {
-        Surface(modifier = Modifier.fillMaxSize(), content = content)
+        Surface(
+            modifier = Modifier
+                .safeDrawingPadding()
+                .fillMaxSize(),
+            content = content
+        )
     }
 }

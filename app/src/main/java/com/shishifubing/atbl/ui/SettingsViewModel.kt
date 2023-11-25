@@ -12,9 +12,7 @@ import com.shishifubing.atbl.LauncherApplication
 import com.shishifubing.atbl.LauncherSettings
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.domain.LauncherSettingsRepository
-import com.shishifubing.atbl.domain.LauncherSettingsSerializer
 import com.shishifubing.atbl.domain.LauncherStateRepository
-import com.shishifubing.atbl.domain.LauncherStateSerializer
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +34,7 @@ class SettingsViewModel(
                 val app = this[APPLICATION_KEY] as LauncherApplication
                 SettingsViewModel(
                     settingsRepo = app.settingsRepo!!,
-                    appsRepo = app.appsRepo!!
+                    appsRepo = app.stateRepo!!
                 )
             }
         }
@@ -52,24 +50,10 @@ class SettingsViewModel(
     val uiState = combine(
         appsRepo.stateFlow,
         settingsRepo.settingsFlow
-    ) { stateResult, settingsResult ->
-        val state = stateResult.fold(
-            onSuccess = { it },
-            onFailure = {
-                _error.update { it }
-                LauncherStateSerializer.defaultValue
-            }
-        )
-        val settings = settingsResult.fold(
-            onSuccess = { it },
-            onFailure = {
-                _error.update { it }
-                LauncherSettingsSerializer.defaultValue
-            }
-        )
+    ) { state, settings ->
         SettingsScreenUiState.Success(
             apps = state.appsMap.values,
-            splitScreenShortcuts = state.splitScreenShortcutsList,
+            splitScreenShortcuts = state.splitScreenShortcutsMap.values.sortedBy { it.appTop.packageName },
             settings = settings
         )
     }.stateIn(

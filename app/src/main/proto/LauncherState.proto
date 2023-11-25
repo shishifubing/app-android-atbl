@@ -6,29 +6,23 @@ option java_multiple_files = true;
 message LauncherState {
   repeated LauncherScreen screens = 1;
   map<string, LauncherApp> apps = 2;
-  bool isHomeApp = 3;
+  map<string, LauncherSplitScreenShortcut> splitScreenShortcuts = 3;
+  bool isHomeApp = 4;
 }
 
 message LauncherScreen {
-  int32 position = 1;
-  repeated LauncherScreenItem items = 2;
+  repeated LauncherScreenItem items = 1;
 }
 
 message LauncherScreenItem {
-  message LauncherSplitScreenShortcuts {
-    repeated LauncherSplitScreenShortcut splitScreenShortcuts = 1;
-  }
   oneof item {
-    LauncherApp app = 1;
-    LauncherScreenItemComplex complex = 2;
-    LauncherWidget widget = 3;
-    LauncherSplitScreenShortcut splitScreenShortcut = 4;
-    LauncherSplitScreenShortcuts splitScreenShortcuts = 5;
+    LauncherScreenItemComplex complex = 1;
   }
 }
 
 enum LauncherScreenItemComplex {
   APPS = 0;
+  SPLIT_SCREEN_SHORTCUTS = 1;
 }
 
 message LauncherApp {

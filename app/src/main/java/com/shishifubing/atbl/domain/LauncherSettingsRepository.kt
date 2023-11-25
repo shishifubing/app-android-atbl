@@ -13,7 +13,6 @@ import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.LauncherVerticalArrangement
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
-import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -21,9 +20,9 @@ class LauncherSettingsRepository(private val dataStore: DataStore<LauncherSettin
 
     private val tag = LauncherSettingsRepository::class.simpleName
 
-    val settingsFlow: Flow<Result<LauncherSettings>> = dataStore.data
-        .map { Result.success(it) }
-        .catch { Result.failure<LauncherSettings>(it) }
+    val settingsFlow: Flow<LauncherSettings> = dataStore.data.catch {
+        emit(LauncherSettingsSerializer.defaultValue)
+    }
 
     fun getDefault(): LauncherSettings.Builder =
         LauncherSettingsSerializer.defaultValue.toBuilder()
@@ -32,9 +31,8 @@ class LauncherSettingsRepository(private val dataStore: DataStore<LauncherSettin
         dataStore.updateData { it.toBuilder().apply(action).build() }
     }
 
-    suspend fun updateFromBytes(bytes: ByteArray) {
-        dataStore.updateData { LauncherSettings.parseFrom(bytes) }
-    }
+    suspend fun updateFromBytes(bytes: ByteArray) = update { mergeFrom(bytes) }
+
 }
 
 object LauncherSettingsSerializer : Serializer<LauncherSettings> {
