@@ -3,6 +3,7 @@ package com.shishifubing.atbl.ui
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.shishifubing.atbl.LauncherFontFamily
@@ -10,13 +11,6 @@ import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.R
 
-
-private val choiceOptions = object {
-    val textStyles = enumToList<LauncherTextStyle>()
-    val textColor = enumToList<LauncherTextColor>()
-    val appCardPadding = (0..30).map { it.toString() }
-    val fontFamilies = enumToList<LauncherFontFamily>()
-}
 
 @Composable
 fun SettingsGroupAppCard(
@@ -80,19 +74,10 @@ private fun AppCardFontFamily(
     fontFamily: LauncherFontFamily,
     setFontFamily: (LauncherFontFamily) -> Unit
 ) {
-    var curOption by remember {
-        mutableIntStateOf(choiceOptions.fontFamilies.indexOf(
-            fontFamily.name
-        ).let { if (it != -1) it else 0 })
-    }
-    SettingsSingleChoiceField(
+    SettingsSingleChoiceFieldEnum(
         name = R.string.settings_app_card_font_family,
-        selectedOption = curOption,
-        options = choiceOptions.fontFamilies,
-        onConfirm = { choice ->
-            curOption = choice
-            setFontFamily(LauncherFontFamily.valueOf(choiceOptions.fontFamilies[choice]))
-        }
+        selectedOption = fontFamily,
+        onConfirm = setFontFamily
     )
 }
 
@@ -101,19 +86,10 @@ private fun AppCardTextStyle(
     textStyle: LauncherTextStyle,
     setTextStyle: (LauncherTextStyle) -> Unit
 ) {
-    var curOption by remember {
-        mutableIntStateOf(choiceOptions.textStyles.indexOf(
-            textStyle.name
-        ).let { if (it != -1) it else 0 })
-    }
-    SettingsSingleChoiceField(
+    SettingsSingleChoiceFieldEnum(
         name = R.string.settings_app_card_text_style,
-        selectedOption = curOption,
-        options = choiceOptions.textStyles,
-        onConfirm = { choice ->
-            curOption = choice
-            setTextStyle(LauncherTextStyle.valueOf(choiceOptions.textStyles[choice]))
-        }
+        selectedOption = textStyle,
+        onConfirm = setTextStyle
     )
 }
 
@@ -148,19 +124,10 @@ private fun AppCardTextColor(
     color: LauncherTextColor,
     setColor: (LauncherTextColor) -> Unit
 ) {
-    var curOption by remember {
-        mutableIntStateOf(
-            choiceOptions.textColor.indexOf(color.name)
-        )
-    }
-    SettingsSingleChoiceField(
+    SettingsSingleChoiceFieldEnum(
         name = R.string.settings_app_card_text_color,
-        selectedOption = curOption,
-        options = choiceOptions.textColor,
-        onConfirm = { option ->
-            curOption = option
-            setColor(LauncherTextColor.valueOf(choiceOptions.textColor[option]))
-        }
+        selectedOption = color,
+        onConfirm = setColor
     )
 }
 
@@ -169,22 +136,13 @@ private fun AppCardPadding(
     padding: Int,
     setPadding: (Int) -> Unit,
 ) {
-    var curOption by remember {
-        mutableIntStateOf(
-            choiceOptions.appCardPadding.indexOf(padding.toString())
-        )
-    }
-    if (curOption == -1) {
-        curOption = 0
-    }
+    val options by remember { mutableStateOf((0..30).map { it.toString() }) }
+    var curOption by remember { mutableIntStateOf(options.indexOf(padding.toString())) }
     SettingsSingleChoiceField(
         name = R.string.settings_app_card_padding,
-        selectedOption = curOption,
-        options = choiceOptions.appCardPadding,
-        onConfirm = { choice ->
-            curOption = choice
-            setPadding(choiceOptions.appCardPadding[choice].toInt())
-        }
+        selectedOption = if (curOption == -1) 0 else curOption,
+        options = options,
+        onConfirm = { curOption = it; setPadding(options[it].toInt()) }
     )
 }
 

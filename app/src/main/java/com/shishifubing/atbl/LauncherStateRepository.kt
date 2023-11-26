@@ -1,34 +1,37 @@
-package com.shishifubing.atbl.domain
+package com.shishifubing.atbl
 
-import androidx.datastore.core.DataStore
+import android.content.Context
 import androidx.datastore.core.Serializer
+import androidx.datastore.dataStore
 import com.google.protobuf.InvalidProtocolBufferException
-import com.shishifubing.atbl.LauncherApp
-import com.shishifubing.atbl.LauncherScreen
-import com.shishifubing.atbl.LauncherScreenItem
-import com.shishifubing.atbl.LauncherScreenItemComplex
-import com.shishifubing.atbl.LauncherSplitScreenShortcut
-import com.shishifubing.atbl.LauncherSplitScreenShortcutOrBuilder
-import com.shishifubing.atbl.LauncherState
-import com.shishifubing.atbl.LauncherStateOrBuilder
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import java.io.InputStream
 import java.io.OutputStream
 
+private val Context.dataStore by dataStore(
+    fileName = "launcherApps.pb",
+    serializer = LauncherStateSerializer
+)
+
 class LauncherStateRepository(
-    private val dataStore: DataStore<LauncherState>,
-    private val manager: LauncherAppsManager
+    private val manager: LauncherManager,
+    private val context: Context
 ) {
 
     private val tag = LauncherStateRepository::class.simpleName
 
-    val stateFlow: Flow<LauncherState> = dataStore.data.catch {
-        emit(LauncherStateSerializer.defaultValue)
+    companion object {
+        val default = LauncherStateSerializer.defaultValue
     }
 
+    val stateFlow: Flow<LauncherState> =
+        context.dataStore.data.catch {
+            emit(LauncherStateSerializer.defaultValue)
+        }
+
     private suspend fun update(action: LauncherState.Builder.() -> Unit) {
-        dataStore.updateData { it.toBuilder().apply(action).build() }
+        context.dataStore.updateData { it.toBuilder().apply(action).build() }
     }
 
     private suspend fun updateScreen(
@@ -118,7 +121,7 @@ class LauncherStateRepository(
     }
 }
 
-object LauncherStateSerializer : Serializer<LauncherState> {
+private object LauncherStateSerializer : Serializer<LauncherState> {
     override val defaultValue: LauncherState =
         LauncherState.getDefaultInstance()
 

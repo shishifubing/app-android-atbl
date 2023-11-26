@@ -1,41 +1,42 @@
-package com.shishifubing.atbl.domain
+package com.shishifubing.atbl
 
+import android.content.Context
 import androidx.datastore.core.CorruptionException
-import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
+import androidx.datastore.dataStore
 import com.google.protobuf.InvalidProtocolBufferException
-import com.shishifubing.atbl.LauncherFontFamily
-import com.shishifubing.atbl.LauncherHorizontalArrangement
-import com.shishifubing.atbl.LauncherSettings
-import com.shishifubing.atbl.LauncherSortBy
-import com.shishifubing.atbl.LauncherTextColor
-import com.shishifubing.atbl.LauncherTextStyle
-import com.shishifubing.atbl.LauncherVerticalArrangement
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import java.io.InputStream
 import java.io.OutputStream
 
-class LauncherSettingsRepository(private val dataStore: DataStore<LauncherSettings>) {
+private val Context.dataStore by dataStore(
+    fileName = "settings.pb",
+    serializer = LauncherSettingsSerializer
+)
+
+class LauncherSettingsRepository(private val context: Context) {
 
     private val tag = LauncherSettingsRepository::class.simpleName
 
-    val settingsFlow: Flow<LauncherSettings> = dataStore.data.catch {
+    companion object {
+        val default = LauncherSettingsSerializer.defaultValue
+    }
+
+    val settingsFlow: Flow<LauncherSettings> = context.dataStore.data.catch {
         emit(LauncherSettingsSerializer.defaultValue)
     }
 
-    fun getDefault(): LauncherSettings.Builder =
-        LauncherSettingsSerializer.defaultValue.toBuilder()
 
     suspend fun update(action: LauncherSettings.Builder.() -> Unit) {
-        dataStore.updateData { it.toBuilder().apply(action).build() }
+        context.dataStore.updateData { it.toBuilder().apply(action).build() }
     }
 
     suspend fun updateFromBytes(bytes: ByteArray) = update { mergeFrom(bytes) }
 
 }
 
-object LauncherSettingsSerializer : Serializer<LauncherSettings> {
+private object LauncherSettingsSerializer : Serializer<LauncherSettings> {
     override val defaultValue: LauncherSettings =
         LauncherSettings.getDefaultInstance()
             .toBuilder()

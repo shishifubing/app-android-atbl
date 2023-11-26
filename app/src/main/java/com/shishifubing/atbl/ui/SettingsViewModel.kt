@@ -2,17 +2,13 @@ package com.shishifubing.atbl.ui
 
 
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.shishifubing.atbl.LauncherApp
-import com.shishifubing.atbl.LauncherApplication
 import com.shishifubing.atbl.LauncherSettings
+import com.shishifubing.atbl.LauncherSettingsRepository
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
-import com.shishifubing.atbl.domain.LauncherSettingsRepository
-import com.shishifubing.atbl.domain.LauncherStateRepository
+import com.shishifubing.atbl.LauncherStateRepository
+import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -26,17 +22,14 @@ import kotlinx.coroutines.launch
 
 class SettingsViewModel(
     private val settingsRepo: LauncherSettingsRepository,
-    private val appsRepo: LauncherStateRepository
+    private val stateRepo: LauncherStateRepository
 ) : ViewModel() {
     companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val app = this[APPLICATION_KEY] as LauncherApplication
-                SettingsViewModel(
-                    settingsRepo = app.settingsRepo!!,
-                    appsRepo = app.stateRepo!!
-                )
-            }
+        val Factory = launcherViewModelFactory {
+            SettingsViewModel(
+                settingsRepo = settingsRepo!!,
+                stateRepo = stateRepo!!
+            )
         }
     }
 
@@ -48,7 +41,7 @@ class SettingsViewModel(
     }
 
     val uiState = combine(
-        appsRepo.stateFlow,
+        stateRepo.stateFlow,
         settingsRepo.settingsFlow
     ) { state, settings ->
         SettingsScreenUiState.Success(
@@ -65,44 +58,41 @@ class SettingsViewModel(
     val settingsActions = object : SettingsActions {
         override fun updateSettings(
             action: LauncherSettings.Builder.() -> Unit
-        ) {
-            launch { settingsRepo.update(action) }
+        ) = settingsAction { update(action) }
+
+        override fun updateSettingsFromBytes(
+            bytes: ByteArray
+        ) = settingsAction { updateFromBytes(bytes) }
+
+        override fun backupReset() = updateSettings {
+            LauncherSettingsRepository.default
         }
 
-        override fun updateSettingsFromBytes(bytes: ByteArray) {
-            launch { settingsRepo.updateFromBytes(bytes) }
-        }
-
-        override fun backupReset() {
-            updateSettings { settingsRepo.getDefault() }
-        }
-
-        override fun setHiddenApps(packageNames: List<String>) {
-            launch { appsRepo.setHiddenApps(packageNames) }
+        override fun setHiddenApps(packageNames: List<String>) = stateAction {
+            setHiddenApps(packageNames)
         }
 
         override fun addSplitScreenShortcut(
-            appTop: LauncherApp,
-            appBottom: LauncherApp
-        ) {
-            launch {
-                appsRepo.addSplitScreenShortcut(
-                    appTop.packageName,
-                    appBottom.packageName
-                )
-            }
+            appTop: LauncherApp, appBottom: LauncherApp
+        ) = stateAction {
+            addSplitScreenShortcut(appTop.packageName, appBottom.packageName)
         }
 
-        override fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
-            launch {
-                appsRepo.removeSplitScreenShortcut(shortcut)
-            }
-        }
-
+        override fun removeSplitScreenShortcut(
+            shortcut: LauncherSplitScreenShortcut
+        ) = stateAction { removeSplitScreenShortcut(shortcut) }
     }
 
     private fun launch(action: suspend CoroutineScope.() -> Unit) {
         viewModelScope.launch(exceptionHandler) { action() }
+    }
+
+    private fun stateAction(action: suspend LauncherStateRepository.() -> Unit) {
+        launch { action.invoke(stateRepo) }
+    }
+
+    private fun settingsAction(action: suspend LauncherSettingsRepository.() -> Unit) {
+        launch { action.invoke(settingsRepo) }
     }
 }
 

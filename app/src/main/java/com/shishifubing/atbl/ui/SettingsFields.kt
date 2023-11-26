@@ -53,6 +53,14 @@ import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.R
 import kotlinx.coroutines.flow.StateFlow
 
+private fun <T : Enum<*>> Class<T>.names() = enumConstants!!.mapNotNull {
+    if (it.name == "UNRECOGNIZED") null else it.name
+}
+
+private fun <T : Enum<*>> Class<T>.find(name: String) = enumConstants!!.first {
+    it.name == name
+}
+
 @Composable
 fun ErrorToast(errorFlow: StateFlow<Throwable?>) {
     val context = LocalContext.current
@@ -320,6 +328,47 @@ fun SettingsSingleChoiceField(
             curChoice = i
         }
     }
+}
+
+
+@Composable
+fun <T : Enum<*>> SettingsSingleChoiceFieldEnum(
+    @StringRes name: Int,
+    selectedOption: T,
+    modifier: Modifier = Modifier,
+    onConfirm: (enum: T) -> Unit,
+) {
+    val options by remember { mutableStateOf(selectedOption::class.java.names()) }
+    SettingsSingleChoiceField(
+        modifier = modifier,
+        name = name,
+        options = options,
+        selectedOption = options.indexOf(selectedOption.name),
+        onConfirm = { i -> onConfirm(selectedOption::class.java.find(options[i])) }
+    )
+}
+
+@Composable
+fun <T : Enum<*>> SettingsMultiChoiceFieldEnum(
+    @StringRes name: Int,
+    enum: Class<T>,
+    selectedOptions: List<T>,
+    onConfirm: (List<T>) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val options by remember {
+        mutableStateOf(enum.names())
+    }
+    val selectedOptions by remember(selectedOptions) {
+        mutableStateOf(selectedOptions.map { options.indexOf(it.name) })
+    }
+    SettingsMultiChoiceField(
+        modifier = modifier,
+        name = name,
+        options = options,
+        selectedOptions = selectedOptions,
+        onConfirm = { onConfirm(it.map { i -> enum.find(options[i]) }) }
+    )
 }
 
 @Composable

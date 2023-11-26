@@ -11,11 +11,8 @@ import com.shishifubing.atbl.LauncherVerticalArrangement
 import com.shishifubing.atbl.R
 
 private val choices = object {
-    val verticalArrangement = enumToList<LauncherVerticalArrangement>()
     val layoutHorizontalPadding = (0..150 step 10).map { it.toString() }
     val layoutVerticalPadding = (0..150 step 10).map { it.toString() }
-    val horizontalArrangement = enumToList<LauncherHorizontalArrangement>()
-    val sortBy = enumToList<LauncherSortBy>()
 }
 
 @Composable
@@ -122,19 +119,10 @@ private fun LayoutSortBy(
     sortBy: LauncherSortBy,
     setSortBy: (LauncherSortBy) -> Unit
 ) {
-    var curOption by remember {
-        mutableIntStateOf(choices.sortBy.indexOf(
-            sortBy.name
-        ).let { if (it != -1) it else 0 })
-    }
-    SettingsSingleChoiceField(
+    SettingsSingleChoiceFieldEnum(
         name = R.string.settings_layout_sort_by,
-        selectedOption = curOption,
-        options = choices.sortBy,
-        onConfirm = { choice ->
-            curOption = choice
-            setSortBy(LauncherSortBy.valueOf(choices.sortBy[choice]))
-        }
+        selectedOption = sortBy,
+        onConfirm = { setSortBy(it) }
     )
 }
 
@@ -156,19 +144,10 @@ private fun LayoutVerticalArrangement(
     arrangement: LauncherVerticalArrangement,
     setArrangement: (LauncherVerticalArrangement) -> Unit
 ) {
-    var curOption by remember {
-        mutableIntStateOf(choices.verticalArrangement.indexOf(
-            arrangement.name
-        ).let { if (it != -1) it else 0 })
-    }
-    SettingsSingleChoiceField(
+    SettingsSingleChoiceFieldEnum(
         name = R.string.settings_layout_vertical_arrangement,
-        selectedOption = curOption,
-        options = choices.verticalArrangement,
-        onConfirm = { choice ->
-            curOption = choice
-            setArrangement(LauncherVerticalArrangement.valueOf(choices.verticalArrangement[choice]))
-        }
+        selectedOption = arrangement,
+        onConfirm = setArrangement
     )
 }
 
@@ -178,20 +157,9 @@ private fun LayoutHorizontalArrangement(
     arrangement: LauncherHorizontalArrangement,
     setArrangement: (LauncherHorizontalArrangement) -> Unit
 ) {
-    var curOption by remember {
-        mutableIntStateOf(choices.horizontalArrangement.indexOf(
-            arrangement.name
-        ).let { if (it != -1) it else 0 })
-    }
-    SettingsSingleChoiceField(
+    SettingsSingleChoiceFieldEnum(
         name = R.string.settings_layout_horizontal_arrangement,
-        selectedOption = curOption,
-        options = choices.horizontalArrangement,
-        onConfirm = { choice ->
-            curOption = choice
-            setArrangement(
-                LauncherHorizontalArrangement.valueOf(choices.horizontalArrangement[choice])
-            )
-        }
+        selectedOption = arrangement,
+        onConfirm = setArrangement
     )
 }

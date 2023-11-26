@@ -1,7 +1,8 @@
-package com.shishifubing.atbl.domain
+package com.shishifubing.atbl
 
 import android.app.role.RoleManager
 import android.content.ComponentName
+import android.content.Context
 import android.content.Intent
 import android.content.Intent.ACTION_MAIN
 import android.content.Intent.CATEGORY_HOME
@@ -16,24 +17,22 @@ import android.os.Build
 import android.os.UserHandle
 import android.provider.Settings
 import android.util.Log
-import androidx.activity.ComponentActivity
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import com.shishifubing.atbl.LauncherApp
-import com.shishifubing.atbl.LauncherAppShortcut
-import com.shishifubing.atbl.LauncherSplitScreenShortcut
 
 
-private val tag = LauncherAppsManager::class.simpleName
+private val tag = LauncherManager::class.simpleName
 
-class LauncherAppsManager(
-    private val parent: ComponentActivity
+class LauncherManager(
+    private val context: Context,
+    private val lifecycle: Lifecycle
 ) {
-    private val packageManager = parent.packageManager
-    private val launcherAppsService = parent.getSystemService(
+    private val packageManager = context.packageManager
+    private val launcherAppsService = context.getSystemService(
         LauncherApps::class.java
     )
     private val callbacks: MutableList<LauncherApps.Callback> = mutableListOf()
@@ -41,7 +40,7 @@ class LauncherAppsManager(
 
     fun isHomeApp(): Boolean {
         return when {
-            Build.VERSION.SDK_INT >= 29 -> parent
+            Build.VERSION.SDK_INT >= 29 -> context
                 .getSystemService(RoleManager::class.java)
                 .isRoleHeld(RoleManager.ROLE_HOME)
 
@@ -54,14 +53,14 @@ class LauncherAppsManager(
                             }
                         ),
                         this,
-                        parent.packageName
+                        context.packageName
                     )
             }.isNotEmpty()
         }
     }
 
     fun launchApp(packageName: String, flags: Int? = null) {
-        parent.startActivity(
+        context.startActivity(
             packageManager
                 .getLaunchIntentForPackage(packageName)
                 .let { if (flags == null) it else it?.setFlags(flags) }
@@ -69,7 +68,7 @@ class LauncherAppsManager(
     }
 
     fun launchAppInfo(packageName: String) {
-        parent.startActivity(
+        context.startActivity(
             Intent(
                 Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
                 Uri.parse("package:${packageName}")
@@ -78,7 +77,7 @@ class LauncherAppsManager(
     }
 
     fun launchAppUninstall(packageName: String) {
-        parent.startActivity(
+        context.startActivity(
             Intent(Intent.ACTION_DELETE, Uri.parse("package:${packageName}"))
         )
     }
@@ -96,21 +95,21 @@ class LauncherAppsManager(
         }
     }
 
-    fun queryPackageManager(intent: Intent): List<ResolveInfo> {
+    private fun queryPackageManager(intent: Intent): List<ResolveInfo> {
         return when {
-            Build.VERSION.SDK_INT >= 33 -> parent.packageManager
+            Build.VERSION.SDK_INT >= 33 -> context.packageManager
                 .queryIntentActivities(
                     intent,
                     PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_ALL.toLong())
                 )
 
-            else -> parent.packageManager.queryIntentActivities(
+            else -> context.packageManager.queryIntentActivities(
                 intent, 0
             )
         }
     }
 
-    fun getAppShortcuts(packageName: String): List<LauncherAppShortcut> {
+    private fun getAppShortcuts(packageName: String): List<LauncherAppShortcut> {
         val userHandle = android.os.Process.myUserHandle()
         val query = LauncherApps.ShortcutQuery()
             .setPackage(packageName)
@@ -148,7 +147,7 @@ class LauncherAppsManager(
         }
         val info = queryResults[0].activityInfo
         return LauncherApp.newBuilder()
-            .setLabel(info.loadLabel(parent.packageManager).toString())
+            .setLabel(info.loadLabel(packageManager).toString())
             .setPackageName(info.packageName)
             .addAllShortcuts(getAppShortcuts(info.packageName))
             .build()
@@ -163,7 +162,7 @@ class LauncherAppsManager(
             val activity = info.activityInfo
             val name = activity.packageName
             name to LauncherApp.newBuilder()
-                .setLabel(activity.loadLabel(parent.packageManager).toString())
+                .setLabel(activity.loadLabel(packageManager).toString())
                 .setPackageName(name)
                 .addAllShortcuts(getAppShortcuts(name))
                 .build()
@@ -212,18 +211,20 @@ class LauncherAppsManager(
     })
 
     fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
-        parent.lifecycle.addObserver(object : DefaultLifecycleObserver {
+        lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
-                parent.lifecycle.removeObserver(this)
+                lifecycle.removeObserver(this)
                 launchApp(
-                    shortcut.appTop.packageName,
-                    Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                    packageName = shortcut.appTop.packageName,
+                    flags = Intent.FLAG_ACTIVITY_NEW_TASK
+                            or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
+                            or Intent.FLAG_ACTIVITY_CLEAR_TOP
                 )
             }
         })
         launchApp(
-            shortcut.appBottom.packageName,
-            Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_SINGLE_TOP
+            packageName = shortcut.appBottom.packageName,
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         )
     }
 }
