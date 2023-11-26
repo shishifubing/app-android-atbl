@@ -58,7 +58,7 @@ fun LauncherScaffold(
     }
 }
 
-@Preview(showSystemUi = true)
+@Preview
 @Composable
 private fun LauncherScaffoldPreview() {
     LauncherTheme(darkTheme = true) {

@@ -27,8 +27,12 @@ fun SplitScreenShortcuts(
                 shortcut.appTop.label,
                 shortcut.appBottom.label
             ).joinToString(appCardSettings.shortcutSeparator),
-            onClick = { shortcutActions.launchSplitScreenShortcut(shortcut) },
-            onLongClick = { dialogShortcutIndex = i },
+            onClick = {
+                shortcutActions.launchSplitScreenShortcut(shortcut)
+            },
+            onLongClick = {
+                dialogShortcutIndex = i
+            },
             settings = appCardSettings,
             actions = appActions
         )
@@ -38,7 +42,9 @@ fun SplitScreenShortcuts(
             shortcut = shortcuts[dialogShortcutIndex],
             actions = appActions,
             deleteShortcut = shortcutActions::removeSplitScreenShortcut,
-            onDismissRequest = { dialogShortcutIndex = -1 },
+            onDismissRequest = {
+                dialogShortcutIndex = -1
+            },
         )
     }
 }

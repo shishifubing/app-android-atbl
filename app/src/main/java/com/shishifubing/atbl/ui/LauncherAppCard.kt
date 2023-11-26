@@ -4,14 +4,22 @@ import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.PressInteraction
 import androidx.compose.foundation.layout.RowScope
 import androidx.compose.foundation.layout.padding
+import androidx.compose.material3.ElevatedCard
+import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.platform.LocalViewConfiguration
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.shishifubing.atbl.LauncherAppShortcut
+import com.shishifubing.atbl.LauncherFontFamily
+import com.shishifubing.atbl.LauncherTextColor
+import com.shishifubing.atbl.LauncherTextStyle
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.collectLatest
 
@@ -74,4 +82,51 @@ private fun LongPressTextButton(
         interactionSource = interactionSource,
         content = content
     )
+}
+
+@Preview
+@Composable
+private fun AppCardPreview() {
+    LauncherTheme(darkTheme = true) {
+        AppCard(
+            modifier = Modifier.padding(30.dp),
+            label = "app",
+            onClick = { /*TODO*/ },
+            onLongClick = { /*TODO*/ },
+            settings = LauncherAppCardSettings(
+                removeSpaces = true,
+                lowercase = true,
+                padding = 0,
+                textStyle = LauncherTextStyle.DisplayLarge,
+                fontFamily = LauncherFontFamily.Monospace,
+                textColor = LauncherTextColor.Unspecified,
+                shortcutSeparator = "/"
+            ),
+            actions = object : AppActions {
+                override fun launchAppUninstall(packageName: String) {}
+
+                override fun setIsHidden(
+                    packageName: String,
+                    isHidden: Boolean
+                ) {
+                }
+
+                override fun launchAppInfo(packageName: String) {}
+
+                override fun launchApp(packageName: String) {}
+
+                override fun launchShortcut(shortcut: LauncherAppShortcut) {}
+
+                override fun showHiddenAppsToggle() {}
+
+                override fun getAppIcon(packageName: String): ImageBitmap =
+                    ImageBitmap(0, 0)
+
+                override fun transformLabel(
+                    label: String,
+                    settings: LauncherAppCardSettings
+                ): String = label
+            }
+        )
+    }
 }

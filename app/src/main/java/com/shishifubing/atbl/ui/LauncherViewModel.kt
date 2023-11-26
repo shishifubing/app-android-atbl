@@ -3,25 +3,22 @@ package com.shishifubing.atbl.ui
 
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewModelScope
-import androidx.lifecycle.viewmodel.initializer
-import androidx.lifecycle.viewmodel.viewModelFactory
 import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherAppShortcut
-import com.shishifubing.atbl.LauncherApplication
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
+import com.shishifubing.atbl.LauncherManager
 import com.shishifubing.atbl.LauncherScreenItemComplex
+import com.shishifubing.atbl.LauncherSettings
+import com.shishifubing.atbl.LauncherSettingsRepository
 import com.shishifubing.atbl.LauncherSortBy
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
+import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.LauncherVerticalArrangement
-import com.shishifubing.atbl.domain.LauncherAppsManager
-import com.shishifubing.atbl.domain.LauncherSettingsRepository
-import com.shishifubing.atbl.domain.LauncherStateRepository
+import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -32,21 +29,22 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+
+typealias LaunchShortcut = (shortcut: LauncherAppShortcut) -> Unit
+typealias GetAppIcon = (packageName: String) -> ImageBitmap
+
 class LauncherViewModel(
     settingsRepo: LauncherSettingsRepository,
     private val stateRepo: LauncherStateRepository,
-    private val appsManager: LauncherAppsManager
+    private val manager: LauncherManager
 ) : ViewModel() {
     companion object {
-        val Factory: ViewModelProvider.Factory = viewModelFactory {
-            initializer {
-                val app = this[APPLICATION_KEY] as LauncherApplication
-                LauncherViewModel(
-                    settingsRepo = app.settingsRepo!!,
-                    appsManager = app.appsManager!!,
-                    stateRepo = app.stateRepo!!
-                )
-            }
+        val Factory = launcherViewModelFactory {
+            LauncherViewModel(
+                settingsRepo = settingsRepo!!,
+                manager = appsManager!!,
+                stateRepo = stateRepo!!
+            )
         }
     }
 
@@ -68,38 +66,17 @@ class LauncherViewModel(
         stateRepo.stateFlow,
         _showHiddenAppsFlow
     ) { settings, state, showHiddenApps ->
-        val apps = state.appsMap.values
-            .let {
-                when (settings.appLayoutSortBy) {
-                    LauncherSortBy.SortByLabel -> it.sortedBy { app -> app.label }
-                    else -> it.sortedBy { app -> app.label }
-                }
-            }
-            .let {
-                if (settings.appLayoutReverseOrder) it.reversed() else it
-            }
-            .let { apps ->
-                if (showHiddenApps) apps else apps.filterNot { it.isHidden }
-            }
+        val apps = transformApps(
+            state.appsMap.values, showHiddenApps, settings
+        )
         val splitScreenShortcuts = state.splitScreenShortcutsMap.values
             .sortedBy { it.appTop.packageName }
-        val appCardSettings = LauncherAppCardSettings(
-            removeSpaces = settings.appCardLabelRemoveSpaces,
-            lowercase = settings.appCardLabelLowercase,
-            padding = settings.appCardPadding,
-            shortcutSeparator = settings.appCardSplitScreenSeparator,
-            textStyle = settings.appCardTextStyle,
-            fontFamily = settings.appCardFontFamily,
-            textColor = settings.appCardTextColor
-        )
-        val launcherRowSettings = LauncherRowSettings(
-            horizontalPadding = settings.appLayoutHorizontalPadding,
-            verticalPadding = settings.appLayoutVerticalPadding,
-            horizontalArrangement = settings.appLayoutHorizontalArrangement,
-            verticalArrangement = settings.appLayoutVerticalArrangement
-        )
         val screens = state.screensList.map { screen ->
             LauncherScreenUiState(
+                showHiddenApps = showHiddenApps,
+                appCardSettings = settings.appCardSettings(),
+                launcherRowSettings = settings.rowSettings(),
+                isHomeApp = state.isHomeApp,
                 items = screen.itemsList.mapNotNull {
                     when (it.complex) {
                         LauncherScreenItemComplex.APPS ->
@@ -111,10 +88,6 @@ class LauncherViewModel(
                         else -> null
                     }
                 },
-                showHiddenApps = showHiddenApps,
-                appCardSettings = appCardSettings,
-                launcherRowSettings = launcherRowSettings,
-                isHomeApp = state.isHomeApp
             )
         }
         LauncherUiState.Success(screens = screens)
@@ -124,56 +97,78 @@ class LauncherViewModel(
         initialValue = LauncherUiState.Loading
     )
 
+    val splitScreenShortcutActions = object : SplitScreenShortcutActions {
+        override fun launchSplitScreenShortcut(
+            shortcut: LauncherSplitScreenShortcut
+        ) = manager.launchSplitScreen(shortcut)
+
+        override fun removeSplitScreenShortcut(
+            shortcut: LauncherSplitScreenShortcut
+        ) = stateAction {
+            removeSplitScreenShortcut(shortcut)
+        }
+    }
+
     val appActions = object : AppActions {
-        override fun launchAppUninstall(packageName: String) {
-            appsManager.launchAppUninstall(packageName)
+        override fun launchAppUninstall(
+            packageName: String
+        ) = manager.launchAppUninstall(packageName)
+
+        override fun setIsHidden(
+            packageName: String, isHidden: Boolean
+        ) = stateAction {
+            setIsHidden(packageName, isHidden)
         }
 
-        override fun setIsHidden(packageName: String, isHidden: Boolean) {
-            launch { stateRepo.setIsHidden(packageName, isHidden) }
-        }
+        override fun launchAppInfo(
+            packageName: String
+        ) = manager.launchAppInfo(packageName)
 
-        override fun launchAppInfo(packageName: String) {
-            appsManager.launchAppInfo(packageName)
-        }
+        override fun launchApp(
+            packageName: String
+        ) = manager.launchApp(packageName)
 
-        override fun launchApp(packageName: String) {
-            appsManager.launchApp(packageName)
-        }
-
-        override fun launchShortcut(shortcut: LauncherAppShortcut) {
-            appsManager.launchAppShortcut(shortcut)
-        }
+        override fun launchShortcut(
+            shortcut: LauncherAppShortcut
+        ) = manager.launchAppShortcut(shortcut)
 
         override fun showHiddenAppsToggle() {
             _showHiddenAppsFlow.value = _showHiddenAppsFlow.value.not()
         }
 
-        override fun getAppIcon(packageName: String): ImageBitmap {
-            return appsManager.getAppIcon(packageName)
-        }
+        override fun getAppIcon(
+            packageName: String
+        ): ImageBitmap = manager.getAppIcon(packageName)
 
         override fun transformLabel(
             label: String,
             settings: LauncherAppCardSettings
-        ): String {
-            return label.let {
-                if (settings.removeSpaces) it.replace(" ", "") else it
-            }.let {
-                if (settings.lowercase) it.lowercase() else it
+        ): String = label
+            .let { if (settings.removeSpaces) it.replace(" ", "") else it }
+            .let { if (settings.lowercase) it.lowercase() else it }
+    }
+
+    fun stateAction(
+        action: suspend LauncherStateRepository.() -> Unit
+    ) = launch { action.invoke(stateRepo) }
+
+    private fun transformApps(
+        apps: MutableCollection<LauncherApp>,
+        showHiddenApps: Boolean,
+        settings: LauncherSettings
+    ): List<LauncherApp> = apps
+        .let {
+            when (settings.appLayoutSortBy) {
+                LauncherSortBy.SortByLabel -> it.sortedBy { app -> app.label }
+                else -> it.sortedBy { app -> app.label }
             }
         }
-    }
-
-    val splitScreenShortcutActions = object : SplitScreenShortcutActions {
-        override fun launchSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
-            appsManager.launchSplitScreen(shortcut)
+        .let {
+            if (settings.appLayoutReverseOrder) it.reversed() else it
         }
-
-        override fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
-            launch { stateRepo.removeSplitScreenShortcut(shortcut) }
+        .let {
+            if (showHiddenApps) it else it.filterNot { app -> app.isHidden }
         }
-    }
 }
 
 
@@ -190,6 +185,25 @@ sealed interface LauncherUiItem {
     data class Shortcuts(
         val shortcuts: List<LauncherSplitScreenShortcut>
     ) : LauncherUiItem
+}
+
+interface AppActions {
+    fun launchAppUninstall(packageName: String)
+    fun setIsHidden(packageName: String, isHidden: Boolean)
+    fun launchAppInfo(packageName: String)
+    fun launchApp(packageName: String)
+    fun launchShortcut(shortcut: LauncherAppShortcut)
+    fun showHiddenAppsToggle()
+    fun getAppIcon(packageName: String): ImageBitmap
+    fun transformLabel(
+        label: String,
+        settings: LauncherAppCardSettings
+    ): String
+}
+
+interface SplitScreenShortcutActions {
+    fun launchSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
+    fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
 }
 
 data class LauncherScreenUiState(
@@ -217,21 +231,25 @@ data class LauncherRowSettings(
     val verticalArrangement: LauncherVerticalArrangement
 )
 
-interface AppActions {
-    fun launchAppUninstall(packageName: String)
-    fun setIsHidden(packageName: String, isHidden: Boolean)
-    fun launchAppInfo(packageName: String)
-    fun launchApp(packageName: String)
-    fun launchShortcut(shortcut: LauncherAppShortcut)
-    fun showHiddenAppsToggle()
-    fun getAppIcon(packageName: String): ImageBitmap
-    fun transformLabel(
-        label: String,
-        settings: LauncherAppCardSettings
-    ): String
-}
+private fun LauncherSettings.rowSettings() = LauncherRowSettings(
+    horizontalPadding = appLayoutHorizontalPadding,
+    verticalPadding = appLayoutVerticalPadding,
+    horizontalArrangement = appLayoutHorizontalArrangement,
+    verticalArrangement = appLayoutVerticalArrangement
+)
 
-interface SplitScreenShortcutActions {
-    fun launchSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
-    fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
-}
+private fun LauncherSettings.appCardSettings() = LauncherAppCardSettings(
+    removeSpaces = appCardLabelRemoveSpaces,
+    lowercase = appCardLabelLowercase,
+    padding = appCardPadding,
+    shortcutSeparator = appCardSplitScreenSeparator,
+    textStyle = appCardTextStyle,
+    fontFamily = appCardFontFamily,
+    textColor = appCardTextColor
+)
+
+private fun LauncherAppCardSettings.transformLabel(label: String) = label
+    .let { if (removeSpaces) it.replace(" ", "") else it }
+    .let {
+        if (lowercase) it.lowercase() else it
+    }

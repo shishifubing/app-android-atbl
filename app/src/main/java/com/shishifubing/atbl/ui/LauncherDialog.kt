@@ -26,6 +26,7 @@ import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.shishifubing.atbl.R
@@ -169,5 +170,13 @@ private fun LauncherDialogButton(
             style = MaterialTheme.typography.bodyLarge,
             textAlign = textAlign
         )
+    }
+}
+
+@Preview
+@Composable
+private fun LauncherDialogButtonPreview() {
+    LauncherTheme {
+        LauncherDialogButton(text = "button", onClick = { })
     }
 }

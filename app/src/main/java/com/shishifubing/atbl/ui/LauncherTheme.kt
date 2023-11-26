@@ -37,11 +37,21 @@ fun LauncherTheme(
         else -> colorSchemes.light
     }
 
-    MaterialTheme(colorScheme = colorScheme) {
+    MaterialTheme(colorScheme = colorScheme, content = content)
+}
+
+@Composable
+fun LauncherThemeWithSurface(
+    darkTheme: Boolean = isSystemInDarkTheme(),
+    content: @Composable () -> Unit
+) {
+    LauncherTheme(
+        darkTheme = darkTheme
+    ) {
         Surface(
             modifier = Modifier
-                .safeDrawingPadding()
-                .fillMaxSize(),
+                .fillMaxSize()
+                .safeDrawingPadding(),
             content = content
         )
     }

@@ -4,7 +4,10 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -82,5 +85,20 @@ private fun LauncherPageIndicator(
 @Preview
 @Composable
 private fun LauncherPageIndicatorPreview() {
-    LauncherPageIndicator(3, 10)
+    LauncherTheme(darkTheme = true) {
+        LauncherPageIndicator(3, 10)
+    }
+}
+
+@Preview
+@Composable
+private fun LauncherPageIndicatorFloatingPreview() {
+    LauncherTheme(darkTheme = true) {
+        Box {
+            Column {
+                Spacer(modifier = Modifier.size(300.dp))
+            }
+            LauncherPageIndicatorFloating(3, 10)
+        }
+    }
 }
