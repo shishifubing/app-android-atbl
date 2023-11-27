@@ -1,11 +1,9 @@
 package com.shishifubing.atbl
 
-import android.appwidget.AppWidgetHost
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
-import com.shishifubing.atbl.ui.LauncherThemeWithSurface
 import com.shishifubing.atbl.ui.UI
 import kotlinx.coroutines.launch
 
@@ -18,48 +16,39 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
 
-        val manager = LauncherManager(this, lifecycle)
-        val stateRepo = LauncherStateRepository(manager, this)
-        val settingsRepo = LauncherSettingsRepository(this)
-        val appWidgetHost = AppWidgetHost(this, 0)
-
-        // needed for view models
-        app = (application as LauncherApplication).apply {
-            this.settingsRepo = settingsRepo
-            this.appsManager = manager
-            this.stateRepo = stateRepo
-            this.appWidgetHost = appWidgetHost
-        }
+        app = (application as LauncherApplication).init(this)
 
         lifecycleScope.launch {
-            stateRepo.updateState()
+            app.stateRepo.updateState()
         }
-        manager.addCallback(
-            onChanged = { packageName ->
-                lifecycleScope.launch { stateRepo.reloadApp(packageName) }
+        app.manager.addCallback(
+            onChanged = {
+                lifecycleScope.launch {
+                    app.stateRepo.reloadApp(it)
+                }
             },
-            onRemoved = { packageName ->
-                lifecycleScope.launch { stateRepo.removeApp(packageName) }
+            onRemoved = {
+                lifecycleScope.launch {
+                    app.stateRepo.removeApp(it)
+                }
             }
         )
 
         setContent {
-            LauncherThemeWithSurface {
-                UI()
-            }
+            UI()
         }
     }
 
     override fun onResume() {
         super.onResume()
-
-        lifecycleScope.launch { app.stateRepo!!.updateIsHomeApp() }
+        lifecycleScope.launch {
+            app.stateRepo.updateIsHomeApp()
+        }
     }
 
     override fun onStop() {
         super.onStop()
-
-        app.appsManager!!.removeCallbacks()
+        app.manager.removeCallbacks()
     }
 }
 

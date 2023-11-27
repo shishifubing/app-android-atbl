@@ -30,13 +30,17 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
+import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.LauncherVerticalArrangement
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.launcherSettingsDefault
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -47,41 +51,49 @@ fun LauncherRoute(
 ) {
     val uiState by vm.uiState.collectAsState()
     ErrorToast(errorFlow = vm.error)
-    if (uiState !is LauncherUiState.Success) {
-        return
-    }
-    val screens = (uiState as LauncherUiState.Success).screens
-    val pagerState = rememberPagerState(pageCount = { screens.size })
-    Box {
-        HorizontalPager(modifier = modifier, state = pagerState) {
-            LauncherScreen(
-                modifier = Modifier.fillMaxSize(),
-                navigate = navigate,
-                screenState = screens[it],
-                appActions = vm.appActions,
-                splitScreenShortcutActions = vm.splitScreenShortcutActions
-            )
+    when (uiState) {
+        LauncherUiState.Loading -> LauncherPageLoadingIndicator()
+
+        is LauncherUiState.Success -> {
+            val screens = (uiState as LauncherUiState.Success).screens
+            val pagerState = rememberPagerState(pageCount = { screens.size })
+            Box {
+                HorizontalPager(modifier = modifier, state = pagerState) {
+                    LauncherScreen(
+                        modifier = Modifier.fillMaxSize(),
+                        navigate = navigate,
+                        screenState = screens[it],
+                        currentPage = pagerState.currentPage,
+                        appActions = vm.appActions,
+                        launcherActions = vm.launcherActions,
+                        splitScreenShortcutActions = vm.splitScreenShortcutActions
+                    )
+                }
+                LauncherPageIndicatorFloating(
+                    currentPage = pagerState.currentPage,
+                    pageCount = pagerState.pageCount
+                )
+            }
         }
-        LauncherPageIndicatorFloating(
-            currentPage = pagerState.currentPage,
-            pageCount = pagerState.pageCount
-        )
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class)
+@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun LauncherScreen(
     navigate: (route: LauncherNav) -> Unit,
     modifier: Modifier = Modifier,
     screenState: LauncherScreenUiState,
+    currentPage: Int,
     appActions: AppActions,
+    launcherActions: LauncherActions,
     splitScreenShortcutActions: SplitScreenShortcutActions
 ) {
     LauncherRow(
         modifier = modifier,
         rowSettings = screenState.launcherRowSettings,
-        showHiddenAppsToggle = appActions::showHiddenAppsToggle,
+        launcherActions = launcherActions,
+        currentPage = currentPage,
         showHiddenApps = screenState.showHiddenApps,
         navigate = navigate
     ) {
@@ -130,6 +142,61 @@ private fun NotAHomeAppBanner() {
             Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
             Text(stringResource(R.string.not_a_home_app_banner))
         }
+    }
+}
+
+
+@Preview(
+    name = "phone",
+    device = "spec:shape=Normal,width=360,height=640,unit=dp,dpi=480"
+)
+@Preview(
+    name = "landscape",
+    device = "spec:shape=Normal,width=640,height=360,unit=dp,dpi=480"
+)
+@Preview(
+    name = "foldable",
+    device = "spec:shape=Normal,width=673,height=841,unit=dp,dpi=480"
+)
+@Preview(
+    name = "tablet",
+    device = "spec:shape=Normal,width=1280,height=800,unit=dp,dpi=480"
+)
+@Composable
+private fun LauncherScreenPreview() {
+    val apps = (0..40).map {
+        LauncherApp.getDefaultInstance()
+            .toBuilder()
+            .setLabel("app-$it")
+            .build()
+    }
+    LauncherTheme(darkTheme = true) {
+        LauncherScreen(
+            modifier = Modifier.fillMaxSize(),
+            navigate = {},
+            screenState = LauncherScreenUiState(
+                items = listOf(
+                    LauncherUiItem.Apps(apps = apps),
+                    LauncherUiItem.Shortcuts(
+                        shortcuts = listOf(
+                            LauncherSplitScreenShortcut.getDefaultInstance()
+                                .toBuilder()
+                                .setAppTop(apps[0])
+                                .setAppBottom(apps[1])
+                                .build()
+                        )
+                    )
+                ),
+                launcherRowSettings = launcherSettingsDefault.rowSettings(),
+                appCardSettings = launcherSettingsDefault.appCardSettings(),
+                isHomeApp = true,
+                showHiddenApps = false,
+            ),
+            appActions = appActionStub,
+            currentPage = 1,
+            launcherActions = launcherActionsStub,
+            splitScreenShortcutActions = splitScreenShortcutActionsStub
+        )
     }
 }
 

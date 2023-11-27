@@ -17,7 +17,7 @@ fun LauncherApps(
     launchShortcut: (LauncherAppShortcut) -> Unit,
     appCardSettings: LauncherAppCardSettings
 ) {
-    var dialogAppIndex by remember { mutableIntStateOf(-1) }
+    var dialogAppIndex by remember(apps) { mutableIntStateOf(-1) }
     apps.forEachIndexed { i, app ->
         AppCard(
             label = app.label,
@@ -58,10 +58,7 @@ private fun LauncherDialogApp(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         actionButtons = shortcuts.takeIf { showShortcuts }?.map {
-            Pair(it.label) {
-                launchAppShortcut(it)
-                onDismissRequest()
-            }
+            it.label to { launchAppShortcut(it); onDismissRequest() }
         }
     ) {
         LauncherDialogHeader(

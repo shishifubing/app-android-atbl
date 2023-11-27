@@ -27,8 +27,8 @@ class SettingsViewModel(
     companion object {
         val Factory = launcherViewModelFactory {
             SettingsViewModel(
-                settingsRepo = settingsRepo!!,
-                stateRepo = stateRepo!!
+                settingsRepo = settingsRepo,
+                stateRepo = stateRepo
             )
         }
     }
@@ -51,7 +51,7 @@ class SettingsViewModel(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.Eagerly,
         initialValue = SettingsScreenUiState.Loading
     )
 

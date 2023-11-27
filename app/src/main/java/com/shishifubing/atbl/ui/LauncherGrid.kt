@@ -23,7 +23,8 @@ import com.shishifubing.atbl.R
 fun LauncherRow(
     rowSettings: LauncherRowSettings,
     showHiddenApps: Boolean,
-    showHiddenAppsToggle: () -> Unit,
+    currentPage: Int,
+    launcherActions: LauncherActions,
     navigate: (route: LauncherNav) -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable FlowRowScope.() -> Unit
@@ -48,7 +49,8 @@ fun LauncherRow(
         LauncherDialogActions(
             navigate = navigate,
             showHiddenApps = showHiddenApps,
-            showHiddenAppsToggle = showHiddenAppsToggle,
+            actions = launcherActions,
+            currentPage = currentPage,
             onDismissRequest = { showLauncherDialog = false }
         )
     }
@@ -59,7 +61,8 @@ fun LauncherRow(
 private fun LauncherDialogActions(
     navigate: (route: LauncherNav) -> Unit,
     showHiddenApps: Boolean,
-    showHiddenAppsToggle: () -> Unit,
+    currentPage: Int,
+    actions: LauncherActions,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -77,7 +80,16 @@ private fun LauncherDialogActions(
                 stringResource(R.string.launcher_dialog_hide_hidden_apps)
             } else {
                 stringResource(R.string.launcher_dialog_show_hidden_apps)
-            } to showHiddenAppsToggle
+            } to { actions.setShowHiddenApps(showHiddenApps.not()) },
+            stringResource(R.string.launcher_dialog_add_screen_before) to {
+                actions.addScreenBefore(currentPage)
+            },
+            stringResource(R.string.launcher_dialog_add_screen_after) to {
+                actions.addScreenAfter(currentPage)
+            },
+            stringResource(R.string.launcher_dialog_remove_screen) to {
+                actions.removeScreen(currentPage)
+            }
         )
     )
 }

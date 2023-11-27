@@ -82,7 +82,7 @@ private fun LayoutVerticalPadding(
             padding.toString()
         ).let { if (it != -1) it else 0 })
     }
-    SettingsSingleChoiceField(
+    SettingsFieldSingleChoice(
         name = R.string.settings_layout_vertical_padding,
         selectedOption = curOption,
         options = choices.layoutVerticalPadding,
@@ -103,7 +103,7 @@ private fun LayoutHorizontalPadding(
             padding.toString()
         ).let { if (it != -1) it else 0 })
     }
-    SettingsSingleChoiceField(
+    SettingsFieldSingleChoice(
         name = R.string.settings_layout_horizontal_padding,
         selectedOption = curOption,
         options = choices.layoutHorizontalPadding,
@@ -119,7 +119,7 @@ private fun LayoutSortBy(
     sortBy: LauncherSortBy,
     setSortBy: (LauncherSortBy) -> Unit
 ) {
-    SettingsSingleChoiceFieldEnum(
+    SettingsFieldSingleChoiceEnum(
         name = R.string.settings_layout_sort_by,
         selectedOption = sortBy,
         onConfirm = { setSortBy(it) }
@@ -131,7 +131,7 @@ private fun LayoutReverseOrder(
     reverse: Boolean,
     setReverse: (Boolean) -> Unit
 ) {
-    SettingsSwitchField(
+    SettingsFieldSwitch(
         name = R.string.settings_layout_reverse_order,
         label = R.string.settings_layout_reverse_order_label,
         isToggled = reverse,
@@ -144,7 +144,7 @@ private fun LayoutVerticalArrangement(
     arrangement: LauncherVerticalArrangement,
     setArrangement: (LauncherVerticalArrangement) -> Unit
 ) {
-    SettingsSingleChoiceFieldEnum(
+    SettingsFieldSingleChoiceEnum(
         name = R.string.settings_layout_vertical_arrangement,
         selectedOption = arrangement,
         onConfirm = setArrangement
@@ -157,7 +157,7 @@ private fun LayoutHorizontalArrangement(
     arrangement: LauncherHorizontalArrangement,
     setArrangement: (LauncherHorizontalArrangement) -> Unit
 ) {
-    SettingsSingleChoiceFieldEnum(
+    SettingsFieldSingleChoiceEnum(
         name = R.string.settings_layout_horizontal_arrangement,
         selectedOption = arrangement,
         onConfirm = setArrangement

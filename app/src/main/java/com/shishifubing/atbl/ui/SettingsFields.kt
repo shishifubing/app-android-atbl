@@ -124,7 +124,7 @@ fun SettingsField(
 }
 
 @Composable
-fun SettingsSwitchField(
+fun SettingsFieldSwitch(
     @StringRes name: Int,
     @StringRes label: Int,
     isToggled: Boolean,
@@ -140,7 +140,7 @@ fun SettingsSwitchField(
 }
 
 @Composable
-fun SettingsTextInputField(
+fun SettingsFieldTextInput(
     @StringRes name: Int,
     initialValue: String,
     onConfirm: (String) -> Unit,
@@ -179,7 +179,7 @@ fun SettingsTextInputField(
 }
 
 @Composable
-fun SettingsCustomItemWithAddField(
+fun SettingsFieldCustomItemWithAdd(
     @StringRes name: Int,
     itemsCount: Int,
     itemsKey: (Int) -> Any,
@@ -296,7 +296,7 @@ fun SettingsDropDownSelectApp(
 }
 
 @Composable
-fun SettingsSingleChoiceField(
+fun SettingsFieldSingleChoice(
     @StringRes name: Int,
     options: List<String>,
     selectedOption: Int,
@@ -332,14 +332,14 @@ fun SettingsSingleChoiceField(
 
 
 @Composable
-fun <T : Enum<*>> SettingsSingleChoiceFieldEnum(
+fun <T : Enum<*>> SettingsFieldSingleChoiceEnum(
     @StringRes name: Int,
     selectedOption: T,
     modifier: Modifier = Modifier,
     onConfirm: (enum: T) -> Unit,
 ) {
     val options by remember { mutableStateOf(selectedOption::class.java.names()) }
-    SettingsSingleChoiceField(
+    SettingsFieldSingleChoice(
         modifier = modifier,
         name = name,
         options = options,
@@ -362,7 +362,7 @@ fun <T : Enum<*>> SettingsMultiChoiceFieldEnum(
     val selectedOptions by remember(selectedOptions) {
         mutableStateOf(selectedOptions.map { options.indexOf(it.name) })
     }
-    SettingsMultiChoiceField(
+    SettingsFieldMultiChoice(
         modifier = modifier,
         name = name,
         options = options,
@@ -372,7 +372,7 @@ fun <T : Enum<*>> SettingsMultiChoiceFieldEnum(
 }
 
 @Composable
-fun SettingsMultiChoiceField(
+fun SettingsFieldMultiChoice(
     @StringRes name: Int,
     options: List<String>,
     selectedOptions: List<Int>,

@@ -15,12 +15,34 @@ private val Context.dataStore by dataStore(
     serializer = LauncherSettingsSerializer
 )
 
+val launcherSettingsDefault: LauncherSettings = LauncherSettings
+    .getDefaultInstance()
+    .toBuilder()
+    .setAppCardPadding(0)
+    .setAppCardLabelRemoveSpaces(true)
+    .setAppCardTextStyle(LauncherTextStyle.HeadlineSmall)
+    .setAppCardLabelLowercase(true)
+    .setAppLayoutHorizontalArrangement(
+        LauncherHorizontalArrangement.HorizontalStart
+    )
+    .setAppLayoutVerticalArrangement(
+        LauncherVerticalArrangement.VerticalSpaceBetween
+    )
+    .setAppCardTextColor(LauncherTextColor.Unspecified)
+    .setAppCardFontFamily(LauncherFontFamily.Monospace)
+    .setAppLayoutSortBy(LauncherSortBy.SortByLabel)
+    .setAppLayoutReverseOrder(false)
+    .setAppLayoutHorizontalPadding(0)
+    .setAppLayoutVerticalPadding(0)
+    .setAppCardSplitScreenSeparator("/")
+    .build()
+
 class LauncherSettingsRepository(private val context: Context) {
 
     private val tag = LauncherSettingsRepository::class.simpleName
 
     companion object {
-        val default = LauncherSettingsSerializer.defaultValue
+        val default = launcherSettingsDefault
     }
 
     val settingsFlow: Flow<LauncherSettings> = context.dataStore.data.catch {
@@ -37,27 +59,7 @@ class LauncherSettingsRepository(private val context: Context) {
 }
 
 private object LauncherSettingsSerializer : Serializer<LauncherSettings> {
-    override val defaultValue: LauncherSettings =
-        LauncherSettings.getDefaultInstance()
-            .toBuilder()
-            .setAppCardPadding(0)
-            .setAppCardLabelRemoveSpaces(true)
-            .setAppCardTextStyle(LauncherTextStyle.HeadlineSmall)
-            .setAppCardLabelLowercase(true)
-            .setAppLayoutHorizontalArrangement(
-                LauncherHorizontalArrangement.HorizontalStart
-            )
-            .setAppLayoutVerticalArrangement(
-                LauncherVerticalArrangement.VerticalSpaceBetween
-            )
-            .setAppCardTextColor(LauncherTextColor.Unspecified)
-            .setAppCardFontFamily(LauncherFontFamily.Monospace)
-            .setAppLayoutSortBy(LauncherSortBy.SortByLabel)
-            .setAppLayoutReverseOrder(false)
-            .setAppLayoutHorizontalPadding(0)
-            .setAppLayoutVerticalPadding(0)
-            .setAppCardSplitScreenSeparator("/")
-            .build()
+    override val defaultValue: LauncherSettings = launcherSettingsDefault
 
     override suspend fun readFrom(input: InputStream): LauncherSettings {
         try {

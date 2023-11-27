@@ -5,9 +5,9 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.ExperimentalLayoutApi
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -51,6 +51,7 @@ fun BoxScope.LauncherPageIndicatorFloating(
     }
 }
 
+@OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun LauncherPageIndicator(
     curPage: Int,
@@ -58,10 +59,10 @@ private fun LauncherPageIndicator(
     modifier: Modifier = Modifier
 ) {
     Card(modifier = modifier) {
-        Row(
+        FlowRow(
             modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
             horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
+            verticalArrangement = Arrangement.Center
         ) {
             repeat(pageCount) { i ->
                 val color = if (curPage == i) {
@@ -94,11 +95,18 @@ private fun LauncherPageIndicatorPreview() {
 @Composable
 private fun LauncherPageIndicatorFloatingPreview() {
     LauncherTheme(darkTheme = true) {
-        Box {
-            Column {
-                Spacer(modifier = Modifier.size(300.dp))
-            }
+        Box(Modifier.size(300.dp)) {
             LauncherPageIndicatorFloating(3, 10)
+        }
+    }
+}
+
+@Preview
+@Composable
+private fun LauncherPageIndicatorFloatingOverflowPreview() {
+    LauncherTheme(darkTheme = true) {
+        Box(Modifier.size(300.dp)) {
+            LauncherPageIndicatorFloating(3, 30)
         }
     }
 }

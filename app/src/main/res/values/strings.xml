@@ -19,6 +19,9 @@
     <string name="launcher_dialog_add_widget">Add widget</string>
     <string name="launcher_dialog_show_hidden_apps">Show hidden apps</string>
     <string name="launcher_dialog_hide_hidden_apps">Hide hidden apps</string>
+    <string name="launcher_dialog_add_screen_after">Add screen after</string>
+    <string name="launcher_dialog_add_screen_before">Add screen before</string>
+    <string name="launcher_dialog_remove_screen">Remove screen</string>
 
     <string name="settings_group_general">General</string>
     <string name="settings_group_backup">Backup</string>

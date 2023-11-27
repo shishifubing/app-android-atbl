@@ -14,6 +14,8 @@ private val Context.dataStore by dataStore(
     serializer = LauncherStateSerializer
 )
 
+val launcherStateDefault: LauncherState = LauncherState.getDefaultInstance()
+
 class LauncherStateRepository(
     private val manager: LauncherManager,
     private val context: Context
@@ -22,13 +24,12 @@ class LauncherStateRepository(
     private val tag = LauncherStateRepository::class.simpleName
 
     companion object {
-        val default = LauncherStateSerializer.defaultValue
+        val default = launcherStateDefault
     }
 
-    val stateFlow: Flow<LauncherState> =
-        context.dataStore.data.catch {
-            emit(LauncherStateSerializer.defaultValue)
-        }
+    val stateFlow: Flow<LauncherState> = context.dataStore.data.catch {
+        emit(launcherStateDefault)
+    }
 
     private suspend fun update(action: LauncherState.Builder.() -> Unit) {
         context.dataStore.updateData { it.toBuilder().apply(action).build() }
@@ -43,6 +44,18 @@ class LauncherStateRepository(
             screen,
             getScreens(screen).toBuilder().apply { action(builder) }
         )
+    }
+
+    private suspend fun addScreen(screen: LauncherScreen) = update {
+        addScreens(screen)
+    }
+
+    suspend fun addEmptyScreen() = addScreen(
+        LauncherScreen.getDefaultInstance()
+    )
+
+    suspend fun removeScreen(screen: Int) = update {
+        removeScreens(screen)
     }
 
     private suspend fun updateApp(
@@ -122,8 +135,7 @@ class LauncherStateRepository(
 }
 
 private object LauncherStateSerializer : Serializer<LauncherState> {
-    override val defaultValue: LauncherState =
-        LauncherState.getDefaultInstance()
+    override val defaultValue: LauncherState = launcherStateDefault
 
     override suspend fun readFrom(input: InputStream): LauncherState {
         return try {

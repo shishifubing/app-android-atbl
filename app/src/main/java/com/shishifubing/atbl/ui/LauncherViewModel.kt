@@ -2,6 +2,7 @@ package com.shishifubing.atbl.ui
 
 
 import androidx.compose.ui.graphics.ImageBitmap
+import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherApp
@@ -41,9 +42,9 @@ class LauncherViewModel(
     companion object {
         val Factory = launcherViewModelFactory {
             LauncherViewModel(
-                settingsRepo = settingsRepo!!,
-                manager = appsManager!!,
-                stateRepo = stateRepo!!
+                settingsRepo = settingsRepo,
+                manager = manager,
+                stateRepo = stateRepo
             )
         }
     }
@@ -93,7 +94,7 @@ class LauncherViewModel(
         LauncherUiState.Success(screens = screens)
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.WhileSubscribed(5_000),
+        started = SharingStarted.Eagerly,
         initialValue = LauncherUiState.Loading
     )
 
@@ -132,9 +133,6 @@ class LauncherViewModel(
             shortcut: LauncherAppShortcut
         ) = manager.launchAppShortcut(shortcut)
 
-        override fun showHiddenAppsToggle() {
-            _showHiddenAppsFlow.value = _showHiddenAppsFlow.value.not()
-        }
 
         override fun getAppIcon(
             packageName: String
@@ -146,6 +144,22 @@ class LauncherViewModel(
         ): String = label
             .let { if (settings.removeSpaces) it.replace(" ", "") else it }
             .let { if (settings.lowercase) it.lowercase() else it }
+    }
+
+    val launcherActions = object : LauncherActions {
+        override fun setShowHiddenApps(showHiddenApps: Boolean) {
+            _showHiddenAppsFlow.value = showHiddenApps
+        }
+
+        override fun addScreenAfter(screen: Int) =
+            stateAction { addEmptyScreen() }
+
+        override fun addScreenBefore(screen: Int) = Unit
+
+        override fun removeScreen(screen: Int) = stateAction {
+            removeScreen(screen)
+        }
+
     }
 
     fun stateAction(
@@ -193,7 +207,6 @@ interface AppActions {
     fun launchAppInfo(packageName: String)
     fun launchApp(packageName: String)
     fun launchShortcut(shortcut: LauncherAppShortcut)
-    fun showHiddenAppsToggle()
     fun getAppIcon(packageName: String): ImageBitmap
     fun transformLabel(
         label: String,
@@ -204,6 +217,13 @@ interface AppActions {
 interface SplitScreenShortcutActions {
     fun launchSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
     fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
+}
+
+interface LauncherActions {
+    fun setShowHiddenApps(showHiddenApps: Boolean)
+    fun addScreenAfter(screen: Int)
+    fun addScreenBefore(screen: Int)
+    fun removeScreen(screen: Int)
 }
 
 data class LauncherScreenUiState(
@@ -231,14 +251,56 @@ data class LauncherRowSettings(
     val verticalArrangement: LauncherVerticalArrangement
 )
 
-private fun LauncherSettings.rowSettings() = LauncherRowSettings(
+val appActionStub = object : AppActions {
+    override fun launchAppUninstall(packageName: String) = Unit
+
+    override fun setIsHidden(packageName: String, isHidden: Boolean) = Unit
+
+    override fun launchAppInfo(packageName: String) = Unit
+
+    override fun launchApp(packageName: String) = Unit
+
+    override fun launchShortcut(shortcut: LauncherAppShortcut) = Unit
+
+    override fun getAppIcon(packageName: String): ImageBitmap {
+        return ImageBitmap(0, 0, ImageBitmapConfig.Argb8888)
+    }
+
+    override fun transformLabel(
+        label: String, settings: LauncherAppCardSettings
+    ): String = label
+}
+
+val splitScreenShortcutActionsStub = object : SplitScreenShortcutActions {
+    override fun launchSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) =
+        Unit
+
+    override fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) =
+        Unit
+
+}
+
+val launcherActionsStub = object : LauncherActions {
+    override fun setShowHiddenApps(showHiddenApps: Boolean) = Unit
+    override fun addScreenAfter(screen: Int) = Unit
+    override fun addScreenBefore(screen: Int) = Unit
+    override fun removeScreen(screen: Int) = Unit
+}
+
+fun LauncherSplitScreenShortcut.label(settings: LauncherAppCardSettings) =
+    listOf(
+        appTop.label,
+        appBottom.label
+    ).joinToString(settings.shortcutSeparator)
+
+fun LauncherSettings.rowSettings() = LauncherRowSettings(
     horizontalPadding = appLayoutHorizontalPadding,
     verticalPadding = appLayoutVerticalPadding,
     horizontalArrangement = appLayoutHorizontalArrangement,
     verticalArrangement = appLayoutVerticalArrangement
 )
 
-private fun LauncherSettings.appCardSettings() = LauncherAppCardSettings(
+fun LauncherSettings.appCardSettings() = LauncherAppCardSettings(
     removeSpaces = appCardLabelRemoveSpaces,
     lowercase = appCardLabelLowercase,
     padding = appCardPadding,
@@ -247,9 +309,3 @@ private fun LauncherSettings.appCardSettings() = LauncherAppCardSettings(
     fontFamily = appCardFontFamily,
     textColor = appCardTextColor
 )
-
-private fun LauncherAppCardSettings.transformLabel(label: String) = label
-    .let { if (removeSpaces) it.replace(" ", "") else it }
-    .let {
-        if (lowercase) it.lowercase() else it
-    }

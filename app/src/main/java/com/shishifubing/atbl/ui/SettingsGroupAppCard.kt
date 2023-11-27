@@ -74,7 +74,7 @@ private fun AppCardFontFamily(
     fontFamily: LauncherFontFamily,
     setFontFamily: (LauncherFontFamily) -> Unit
 ) {
-    SettingsSingleChoiceFieldEnum(
+    SettingsFieldSingleChoiceEnum(
         name = R.string.settings_app_card_font_family,
         selectedOption = fontFamily,
         onConfirm = setFontFamily
@@ -86,7 +86,7 @@ private fun AppCardTextStyle(
     textStyle: LauncherTextStyle,
     setTextStyle: (LauncherTextStyle) -> Unit
 ) {
-    SettingsSingleChoiceFieldEnum(
+    SettingsFieldSingleChoiceEnum(
         name = R.string.settings_app_card_text_style,
         selectedOption = textStyle,
         onConfirm = setTextStyle
@@ -98,7 +98,7 @@ private fun AppCardRemoveSpaces(
     removeSpaces: Boolean,
     setRemoveSpaces: (Boolean) -> Unit
 ) {
-    SettingsSwitchField(
+    SettingsFieldSwitch(
         name = R.string.settings_app_label_remove_spaces,
         label = R.string.settings_app_label_remove_spaces_label,
         isToggled = removeSpaces,
@@ -111,7 +111,7 @@ private fun AppCardLowercase(
     lowercase: Boolean,
     setLowercase: (Boolean) -> Unit
 ) {
-    SettingsSwitchField(
+    SettingsFieldSwitch(
         name = R.string.settings_app_label_lowercase,
         label = R.string.settings_app_label_lowercase_label,
         isToggled = lowercase,
@@ -124,7 +124,7 @@ private fun AppCardTextColor(
     color: LauncherTextColor,
     setColor: (LauncherTextColor) -> Unit
 ) {
-    SettingsSingleChoiceFieldEnum(
+    SettingsFieldSingleChoiceEnum(
         name = R.string.settings_app_card_text_color,
         selectedOption = color,
         onConfirm = setColor
@@ -138,7 +138,7 @@ private fun AppCardPadding(
 ) {
     val options by remember { mutableStateOf((0..30).map { it.toString() }) }
     var curOption by remember { mutableIntStateOf(options.indexOf(padding.toString())) }
-    SettingsSingleChoiceField(
+    SettingsFieldSingleChoice(
         name = R.string.settings_app_card_padding,
         selectedOption = if (curOption == -1) 0 else curOption,
         options = options,

@@ -30,7 +30,7 @@ private fun HiddenApps(
     var hiddenApps =
         options.mapIndexedNotNull { i, app -> if (app.isHidden) i else null }
 
-    SettingsMultiChoiceField(
+    SettingsFieldMultiChoice(
         name = R.string.settings_hidden_apps,
         selectedOptions = hiddenApps,
         options = options.map { it.label },

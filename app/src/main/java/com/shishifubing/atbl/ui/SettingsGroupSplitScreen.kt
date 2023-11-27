@@ -52,7 +52,7 @@ private fun SplitScreenShortcuts(
     var selectedTop by remember { mutableStateOf<LauncherApp?>(null) }
     var selectedBottom by remember { mutableStateOf<LauncherApp?>(null) }
     val sortedApps = apps.sortedBy { it.label }
-    SettingsCustomItemWithAddField(
+    SettingsFieldCustomItemWithAdd(
         name = R.string.settings_split_screen_shortcuts,
         itemsCount = shortcuts.size,
         itemsKey = { i -> shortcuts[i].toByteArray() },
@@ -97,7 +97,7 @@ private fun SplitScreenShortcutSeparator(
     separator: String,
     setSeparator: (String) -> Unit
 ) {
-    SettingsTextInputField(
+    SettingsFieldTextInput(
         name = R.string.settings_split_screen_shortcut_separator,
         initialValue = separator,
         onConfirm = setSeparator
