@@ -54,6 +54,7 @@ class LauncherViewModel(
     }
 
     private val _showHiddenAppsFlow = MutableStateFlow(false)
+    val showHiddenApps = _showHiddenAppsFlow.asStateFlow()
 
     private val _error = MutableStateFlow<Throwable?>(null)
     val error = _error.asStateFlow()

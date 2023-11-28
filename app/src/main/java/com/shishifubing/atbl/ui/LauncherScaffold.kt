@@ -14,24 +14,28 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import androidx.navigation.NavController
+import androidx.navigation.compose.currentBackStackEntryAsState
 
 
 @Composable
 fun LauncherScaffold(
-    route: String?,
-    goBack: () -> Unit,
+    navController: NavController,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
+    val navBackStackEntry by navController.currentBackStackEntryAsState()
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (route != null && route != LauncherNav.Home.name) {
-                LauncherTopBar(label = route, goBack = goBack)
-            }
+            LauncherTopBar(
+                label = navBackStackEntry?.destination?.route ?: "",
+                goBack = { navController.popBackStack() }
+            )
         }
     ) { paddingValues ->
         Box(
@@ -60,30 +64,4 @@ private fun LauncherTopBar(label: String, goBack: () -> Unit) {
             }
         }
     )
-}
-
-@Preview
-@Composable
-private fun LauncherScaffoldPreview() {
-    LauncherTheme(darkTheme = true) {
-        LauncherScaffold("Settings", {}) {
-            Column {
-                Text("content1", Modifier.padding(30.dp))
-                Text("content2", Modifier.padding(30.dp))
-            }
-        }
-    }
-}
-
-@Preview
-@Composable
-private fun LauncherScaffoldHomePreview() {
-    LauncherTheme(darkTheme = true) {
-        LauncherScaffold("Settings", {}) {
-            Column {
-                Text("content1", Modifier.padding(30.dp))
-                Text("content2", Modifier.padding(30.dp))
-            }
-        }
-    }
 }
