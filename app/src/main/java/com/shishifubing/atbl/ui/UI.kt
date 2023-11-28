@@ -4,18 +4,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
-import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 
-enum class LauncherNav {
-    Home,
-    Settings,
-    AddWidget
+
+sealed class LauncherNav(val route: String) {
+    object Home : LauncherNav(route = "home_screen")
+    object Settings : LauncherNav(route = "settings_screen")
+    object AddWidget : LauncherNav(route = "add_widget_screen")
 }
 
 @Composable
@@ -29,13 +28,7 @@ fun UI(
                 .safeDrawingPadding(),
         ) {
             val navController = rememberNavController()
-            val navBackStackEntry by navController.currentBackStackEntryAsState()
-            LauncherScaffold(
-                route = navBackStackEntry?.destination?.route,
-                goBack = navController::popBackStack
-            ) {
-                LauncherNavGraph(navController = navController)
-            }
+            LauncherNavGraph(navController = navController)
         }
     }
 }
@@ -45,20 +38,19 @@ private fun LauncherNavGraph(
     navController: NavHostController,
     modifier: Modifier = Modifier,
 ) {
-    val navigate: (LauncherNav) -> Unit = { navController.navigate(it.name) }
     NavHost(
         modifier = modifier,
         navController = navController,
-        startDestination = LauncherNav.Home.name
+        startDestination = LauncherNav.Home.route
     ) {
-        composable(route = LauncherNav.Home.name) {
-            LauncherRoute(navigate = navigate)
+        composable(route = LauncherNav.Home.route) {
+            LauncherRoute(navController = navController)
         }
-        composable(route = LauncherNav.Settings.name) {
-            SettingsRoute()
+        composable(route = LauncherNav.Settings.route) {
+            SettingsRoute(navController = navController)
         }
-        composable(route = LauncherNav.AddWidget.name) {
-            AddWidgetScreen()
+        composable(route = LauncherNav.AddWidget.route) {
+            AddWidgetScreen(navController = navController)
         }
     }
 }

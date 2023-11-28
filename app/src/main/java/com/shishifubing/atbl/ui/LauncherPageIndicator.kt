@@ -4,10 +4,8 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
@@ -35,8 +33,8 @@ fun BoxScope.LauncherPageIndicatorFloating(
     modifier: Modifier = Modifier,
     delayMillis: Long = 1000
 ) {
-    var show by remember { mutableStateOf(true) }
-    LaunchedEffect(Unit) {
+    var show by remember(currentPage, pageCount) { mutableStateOf(true) }
+    LaunchedEffect(show) {
         delay(delayMillis)
         show = false
     }
@@ -68,7 +66,7 @@ private fun LauncherPageIndicator(
                 val color = if (curPage == i) {
                     MaterialTheme.colorScheme.primary
                 } else {
-                    MaterialTheme.colorScheme.secondary
+                    MaterialTheme.colorScheme.inversePrimary
                 }
                 Box(
                     modifier = Modifier

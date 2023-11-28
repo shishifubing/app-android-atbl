@@ -1,6 +1,7 @@
 package com.shishifubing.atbl.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -23,6 +24,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -32,6 +36,7 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
+import androidx.navigation.NavController
 import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
@@ -45,33 +50,48 @@ import com.shishifubing.atbl.launcherSettingsDefault
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun LauncherRoute(
-    navigate: (route: LauncherNav) -> Unit,
+    navController: NavController,
     modifier: Modifier = Modifier,
     vm: LauncherViewModel = viewModel(factory = LauncherViewModel.Factory)
 ) {
     val uiState by vm.uiState.collectAsState()
+    var showLauncherDialog by remember { mutableStateOf(false) }
+    val showHiddenApps by vm.showHiddenApps.collectAsState()
+
     ErrorToast(errorFlow = vm.error)
+
     when (uiState) {
         LauncherUiState.Loading -> LauncherPageLoadingIndicator()
 
         is LauncherUiState.Success -> {
             val screens = (uiState as LauncherUiState.Success).screens
             val pagerState = rememberPagerState(pageCount = { screens.size })
-            Box {
+            Box(
+                modifier = Modifier.combinedClickable(
+                    onLongClick = { showLauncherDialog = true },
+                    onClick = { }
+                )
+            ) {
                 HorizontalPager(modifier = modifier, state = pagerState) {
                     LauncherScreen(
                         modifier = Modifier.fillMaxSize(),
-                        navigate = navigate,
                         screenState = screens[it],
-                        currentPage = pagerState.currentPage,
                         appActions = vm.appActions,
-                        launcherActions = vm.launcherActions,
                         splitScreenShortcutActions = vm.splitScreenShortcutActions
                     )
                 }
                 LauncherPageIndicatorFloating(
                     currentPage = pagerState.currentPage,
                     pageCount = pagerState.pageCount
+                )
+            }
+            if (showLauncherDialog) {
+                LauncherDialogActions(
+                    navigate = { navController.navigate(it.route) },
+                    showHiddenApps = showHiddenApps,
+                    actions = vm.launcherActions,
+                    currentPage = pagerState.currentPage,
+                    onDismissRequest = { showLauncherDialog = false }
                 )
             }
         }
@@ -81,21 +101,14 @@ fun LauncherRoute(
 @OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
 @Composable
 private fun LauncherScreen(
-    navigate: (route: LauncherNav) -> Unit,
     modifier: Modifier = Modifier,
     screenState: LauncherScreenUiState,
-    currentPage: Int,
     appActions: AppActions,
-    launcherActions: LauncherActions,
     splitScreenShortcutActions: SplitScreenShortcutActions
 ) {
     LauncherRow(
         modifier = modifier,
         rowSettings = screenState.launcherRowSettings,
-        launcherActions = launcherActions,
-        currentPage = currentPage,
-        showHiddenApps = screenState.showHiddenApps,
-        navigate = navigate
     ) {
         if (!screenState.isHomeApp) {
             NotAHomeAppBanner()
@@ -145,6 +158,43 @@ private fun NotAHomeAppBanner() {
     }
 }
 
+@Composable
+private fun LauncherDialogActions(
+    navigate: (route: LauncherNav) -> Unit,
+    showHiddenApps: Boolean,
+    currentPage: Int,
+    actions: LauncherActions,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    LauncherDialog(
+        onDismissRequest = onDismissRequest,
+        modifier = modifier,
+        actionButtons = listOf(
+            stringResource(R.string.launcher_dialog_settings) to {
+                navigate(LauncherNav.Settings)
+            },
+            stringResource(R.string.launcher_dialog_add_widget) to {
+                navigate(LauncherNav.AddWidget)
+            },
+            if (showHiddenApps) {
+                stringResource(R.string.launcher_dialog_hide_hidden_apps)
+            } else {
+                stringResource(R.string.launcher_dialog_show_hidden_apps)
+            } to { actions.setShowHiddenApps(showHiddenApps.not()) },
+            stringResource(R.string.launcher_dialog_add_screen_before) to {
+                actions.addScreenBefore(currentPage)
+            },
+            stringResource(R.string.launcher_dialog_add_screen_after) to {
+                actions.addScreenAfter(currentPage)
+            },
+            stringResource(R.string.launcher_dialog_remove_screen) to {
+                actions.removeScreen(currentPage)
+            }
+        )
+    )
+}
+
 
 @Preview(
     name = "phone",
@@ -173,7 +223,6 @@ private fun LauncherScreenPreview() {
     LauncherTheme(darkTheme = true) {
         LauncherScreen(
             modifier = Modifier.fillMaxSize(),
-            navigate = {},
             screenState = LauncherScreenUiState(
                 items = listOf(
                     LauncherUiItem.Apps(apps = apps),
@@ -193,8 +242,6 @@ private fun LauncherScreenPreview() {
                 showHiddenApps = false,
             ),
             appActions = appActionStub,
-            currentPage = 1,
-            launcherActions = launcherActionsStub,
             splitScreenShortcutActions = splitScreenShortcutActionsStub
         )
     }
