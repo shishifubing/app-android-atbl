@@ -1,4 +1,5 @@
 syntax = "proto3";
+import "LauncherSettings.proto";
 
 option java_package = "com.shishifubing.atbl";
 option java_multiple_files = true;
@@ -7,6 +8,7 @@ message LauncherState {
   repeated LauncherScreen screens = 1;
   map<string, LauncherApp> apps = 2;
   map<string, LauncherSplitScreenShortcut> splitScreenShortcuts = 3;
+  LauncherSettings settings = 5;
   bool isHomeApp = 4;
 }
 

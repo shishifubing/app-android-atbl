@@ -5,7 +5,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherSettings
-import com.shishifubing.atbl.LauncherSettingsRepository
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.launcherViewModelFactory
@@ -14,22 +13,18 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
 
 class SettingsViewModel(
-    private val settingsRepo: LauncherSettingsRepository,
     private val stateRepo: LauncherStateRepository
 ) : ViewModel() {
     companion object {
         val Factory = launcherViewModelFactory {
-            SettingsViewModel(
-                settingsRepo = settingsRepo,
-                stateRepo = stateRepo
-            )
+            SettingsViewModel(stateRepo = stateRepo)
         }
     }
 
@@ -40,14 +35,11 @@ class SettingsViewModel(
         _error.update { e }
     }
 
-    val uiState = combine(
-        stateRepo.stateFlow,
-        settingsRepo.settingsFlow
-    ) { state, settings ->
+    val uiState = stateRepo.observeState().map { state ->
         SettingsScreenUiState.Success(
             apps = state.appsMap.values,
             splitScreenShortcuts = state.splitScreenShortcutsMap.values.sortedBy { it.appTop.packageName },
-            settings = settings
+            settings = state.settings
         )
     }.stateIn(
         scope = viewModelScope,
@@ -58,15 +50,13 @@ class SettingsViewModel(
     val settingsActions = object : SettingsActions {
         override fun updateSettings(
             action: LauncherSettings.Builder.() -> Unit
-        ) = settingsAction { update(action) }
+        ) = stateAction { updateSettings(action) }
 
         override fun updateSettingsFromBytes(
             bytes: ByteArray
-        ) = settingsAction { updateFromBytes(bytes) }
+        ) = stateAction { updateSettings { mergeFrom(bytes) } }
 
-        override fun backupReset() = updateSettings {
-            LauncherSettingsRepository.default
-        }
+        override fun backupReset() = launch { stateRepo.resetSettings() }
 
         override fun setHiddenApps(packageNames: List<String>) = stateAction {
             setHiddenApps(packageNames)
@@ -89,10 +79,6 @@ class SettingsViewModel(
 
     private fun stateAction(action: suspend LauncherStateRepository.() -> Unit) {
         launch { action.invoke(stateRepo) }
-    }
-
-    private fun settingsAction(action: suspend LauncherSettingsRepository.() -> Unit) {
-        launch { action.invoke(settingsRepo) }
     }
 }
 

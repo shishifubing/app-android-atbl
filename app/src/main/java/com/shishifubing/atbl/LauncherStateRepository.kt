@@ -1,20 +1,34 @@
 package com.shishifubing.atbl
 
 import android.content.Context
+import android.util.Log
 import androidx.datastore.core.Serializer
 import androidx.datastore.dataStore
 import com.google.protobuf.InvalidProtocolBufferException
-import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.CoroutineExceptionHandler
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.catch
 import java.io.InputStream
 import java.io.OutputStream
 
+
+private val tag = LauncherStateRepository::class.simpleName
+
+private val handler = CoroutineExceptionHandler { ctx, exception ->
+    Log.d(tag, "got repo exception: $exception")
+}
+
+private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob() + handler)
+
+
 private val Context.dataStore by dataStore(
     fileName = "launcherApps.pb",
-    serializer = LauncherStateSerializer
+    serializer = LauncherStateSerializer,
+    scope = scope
 )
 
-val launcherStateDefault: LauncherState = LauncherState.getDefaultInstance()
 
 class LauncherStateRepository(
     private val manager: LauncherManager,
@@ -24,12 +38,38 @@ class LauncherStateRepository(
     private val tag = LauncherStateRepository::class.simpleName
 
     companion object {
-        val default = launcherStateDefault
+        val defaultSettings: LauncherSettings = LauncherSettings
+            .getDefaultInstance()
+            .toBuilder()
+            .setAppCardPadding(0)
+            .setAppCardLabelRemoveSpaces(true)
+            .setAppCardTextStyle(LauncherTextStyle.HeadlineSmall)
+            .setAppCardLabelLowercase(true)
+            .setAppLayoutHorizontalArrangement(
+                LauncherHorizontalArrangement.HorizontalStart
+            )
+            .setAppLayoutVerticalArrangement(
+                LauncherVerticalArrangement.VerticalSpaceBetween
+            )
+            .setAppCardTextColor(LauncherTextColor.Unspecified)
+            .setAppCardFontFamily(LauncherFontFamily.Monospace)
+            .setAppLayoutSortBy(LauncherSortBy.SortByLabel)
+            .setAppLayoutReverseOrder(false)
+            .setAppLayoutHorizontalPadding(0)
+            .setAppLayoutVerticalPadding(0)
+            .setAppCardSplitScreenSeparator("/")
+            .build()
+
+
+        val defaultState: LauncherState = LauncherState
+            .getDefaultInstance()
+            .toBuilder()
+            .setSettings(defaultSettings)
+            .setIsHomeApp(false)
+            .build()
     }
 
-    val stateFlow: Flow<LauncherState> = context.dataStore.data.catch {
-        emit(launcherStateDefault)
-    }
+    fun observeState() = context.dataStore.data.catch { emit(defaultState) }
 
     private suspend fun update(action: LauncherState.Builder.() -> Unit) {
         context.dataStore.updateData { it.toBuilder().apply(action).build() }
@@ -80,7 +120,9 @@ class LauncherStateRepository(
         }
 
     suspend fun removeApp(packageName: String) = update {
-        removeApps(packageName)
+        if (appsMap.containsKey(packageName)) {
+            removeApps(packageName)
+        }
     }
 
     suspend fun addSplitScreenShortcut(appTop: String, appBottom: String) =
@@ -109,7 +151,16 @@ class LauncherStateRepository(
         }
     }
 
-    suspend fun updateState() = update {
+    suspend fun resetSettings() = updateSettings {
+        clear().mergeFrom(defaultSettings)
+    }
+
+    suspend fun updateSettings(action: LauncherSettings.Builder.() -> Unit) =
+        update {
+            settings = settings.toBuilder().apply(action).build()
+        }
+
+    suspend fun reloadState() = update {
         val newApps = manager.fetchAllApps().map { (name, app) ->
             val isHidden = getAppsOrDefault(name, app).isHidden
             name to app.toBuilder().setIsHidden(isHidden).build()
@@ -135,7 +186,7 @@ class LauncherStateRepository(
 }
 
 private object LauncherStateSerializer : Serializer<LauncherState> {
-    override val defaultValue: LauncherState = launcherStateDefault
+    override val defaultValue = LauncherStateRepository.defaultState
 
     override suspend fun readFrom(input: InputStream): LauncherState {
         return try {

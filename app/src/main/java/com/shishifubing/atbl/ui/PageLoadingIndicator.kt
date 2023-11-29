@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
@@ -16,7 +17,7 @@ import androidx.compose.ui.unit.dp
 import com.shishifubing.atbl.R
 
 @Composable
-fun LauncherPageLoadingIndicator(
+fun PageLoadingIndicator(
     modifier: Modifier = Modifier
 ) {
     Column(
@@ -25,7 +26,9 @@ fun LauncherPageLoadingIndicator(
         verticalArrangement = Arrangement.Center
     ) {
         CircularProgressIndicator(
-            modifier = Modifier.size(dimensionResource(R.dimen.image_size)),
+            modifier = Modifier
+                .size(dimensionResource(R.dimen.image_size))
+                .padding(dimensionResource(R.dimen.padding_small)),
             color = MaterialTheme.colorScheme.secondary,
             trackColor = MaterialTheme.colorScheme.surfaceVariant,
         )
@@ -34,10 +37,10 @@ fun LauncherPageLoadingIndicator(
 
 @Preview
 @Composable
-private fun LauncherPageLoadingIndicatorPreview() {
+private fun PageLoadingIndicatorPreview() {
     LauncherTheme {
         Box(Modifier.size(300.dp)) {
-            LauncherPageLoadingIndicator()
+            PageLoadingIndicator()
         }
     }
 }

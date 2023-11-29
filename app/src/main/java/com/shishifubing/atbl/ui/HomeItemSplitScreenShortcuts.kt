@@ -14,7 +14,7 @@ import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.R
 
 @Composable
-fun SplitScreenShortcuts(
+fun HomeItemSplitScreenShortcuts(
     shortcuts: List<LauncherSplitScreenShortcut>,
     appCardSettings: LauncherAppCardSettings,
     appActions: AppActions,
@@ -22,7 +22,7 @@ fun SplitScreenShortcuts(
 ) {
     var dialogShortcutIndex by remember { mutableIntStateOf(-1) }
     shortcuts.forEachIndexed { i, shortcut ->
-        AppCard(
+        HomeAppCard(
             label = shortcut.label(appCardSettings),
             onClick = { shortcutActions.launchSplitScreenShortcut(shortcut) },
             onLongClick = { dialogShortcutIndex = i },
@@ -48,7 +48,7 @@ private fun SplitScreenShortcutDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    LauncherDialog(
+    HomeDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         actionButtons = listOf(
@@ -58,7 +58,7 @@ private fun SplitScreenShortcutDialog(
             }
         )
     ) {
-        LauncherDialogHeader(
+        HomeDialogHeader(
             packageName = shortcut.appTop.packageName,
             label = shortcut.appBottom.label,
             isHidden = shortcut.appBottom.isHidden,
@@ -66,7 +66,7 @@ private fun SplitScreenShortcutDialog(
             onDismissRequest = onDismissRequest
         )
         Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-        LauncherDialogHeader(
+        HomeDialogHeader(
             packageName = shortcut.appBottom.packageName,
             label = shortcut.appBottom.label,
             isHidden = shortcut.appBottom.isHidden,

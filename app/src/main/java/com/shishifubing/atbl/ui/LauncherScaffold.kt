@@ -16,6 +16,7 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavController
@@ -24,17 +25,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 
 @Composable
 fun LauncherScaffold(
-    navController: NavController,
+    nav: LauncherNav,
+    goBack: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
 ) {
-    val navBackStackEntry by navController.currentBackStackEntryAsState()
     Scaffold(
         modifier = modifier,
         topBar = {
             LauncherTopBar(
-                label = navBackStackEntry?.destination?.route ?: "",
-                goBack = { navController.popBackStack() }
+                label = stringResource(id = nav.label),
+                goBack = goBack
             )
         }
     ) { paddingValues ->

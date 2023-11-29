@@ -41,72 +41,97 @@ import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.LauncherFontFamily
 import com.shishifubing.atbl.LauncherHorizontalArrangement
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
+import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.LauncherTextColor
 import com.shishifubing.atbl.LauncherTextStyle
 import com.shishifubing.atbl.LauncherVerticalArrangement
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.launcherSettingsDefault
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun LauncherRoute(
+fun HomeRoute(
     navController: NavController,
     modifier: Modifier = Modifier,
-    vm: LauncherViewModel = viewModel(factory = LauncherViewModel.Factory)
+    vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
 ) {
     val uiState by vm.uiState.collectAsState()
-    var showLauncherDialog by remember { mutableStateOf(false) }
     val showHiddenApps by vm.showHiddenApps.collectAsState()
 
     ErrorToast(errorFlow = vm.error)
 
     when (uiState) {
-        LauncherUiState.Loading -> LauncherPageLoadingIndicator()
+        LauncherUiState.Loading -> {
+            PageLoadingIndicator(
+                modifier = modifier
+            )
+        }
 
         is LauncherUiState.Success -> {
-            val screens = (uiState as LauncherUiState.Success).screens
-            val pagerState = rememberPagerState(pageCount = { screens.size })
-            Box(
-                modifier = Modifier.combinedClickable(
-                    onLongClick = { showLauncherDialog = true },
-                    onClick = { }
-                )
-            ) {
-                HorizontalPager(modifier = modifier, state = pagerState) {
-                    LauncherScreen(
-                        modifier = Modifier.fillMaxSize(),
-                        screenState = screens[it],
-                        appActions = vm.appActions,
-                        splitScreenShortcutActions = vm.splitScreenShortcutActions
-                    )
-                }
-                LauncherPageIndicatorFloating(
-                    currentPage = pagerState.currentPage,
-                    pageCount = pagerState.pageCount
-                )
-            }
-            if (showLauncherDialog) {
-                LauncherDialogActions(
-                    navigate = { navController.navigate(it.route) },
-                    showHiddenApps = showHiddenApps,
-                    actions = vm.launcherActions,
-                    currentPage = pagerState.currentPage,
-                    onDismissRequest = { showLauncherDialog = false }
-                )
-            }
+            HomeScreen(
+                modifier = modifier,
+                uiState = uiState as LauncherUiState.Success,
+                showHiddenApps = showHiddenApps,
+                navigate = navController::navigate,
+                launcherActions = vm.launcherActions,
+                splitScreenShortcutActions = vm.splitScreenShortcutActions,
+                appActions = vm.appActions
+            )
         }
     }
 }
 
-@OptIn(ExperimentalLayoutApi::class, ExperimentalFoundationApi::class)
+@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun LauncherScreen(
+private fun HomeScreen(
+    uiState: LauncherUiState.Success,
+    navigate: (LauncherNav) -> Unit,
+    appActions: AppActions,
+    launcherActions: LauncherActions,
+    splitScreenShortcutActions: SplitScreenShortcutActions,
+    showHiddenApps: Boolean,
+    modifier: Modifier = Modifier
+) {
+    var showLauncherDialog by remember { mutableStateOf(false) }
+    val pagerState = rememberPagerState(pageCount = { uiState.screens.size })
+
+    Box {
+        HorizontalPager(modifier = modifier, state = pagerState) {
+            HomePage(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .combinedClickable(
+                        onLongClick = { showLauncherDialog = true },
+                        onClick = { }
+                    ),
+                screenState = uiState.screens[it],
+                appActions = appActions,
+                splitScreenShortcutActions = splitScreenShortcutActions
+            )
+        }
+        HomePageIndicatorFloating(
+            currentPage = pagerState.currentPage,
+            pageCount = pagerState.pageCount
+        )
+    }
+    if (showLauncherDialog) {
+        HomeLauncherDialogActions(
+            navigate = navigate,
+            showHiddenApps = showHiddenApps,
+            actions = launcherActions,
+            currentPage = pagerState.currentPage,
+            onDismissRequest = { showLauncherDialog = false }
+        )
+    }
+}
+
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun HomePage(
     modifier: Modifier = Modifier,
     screenState: LauncherScreenUiState,
     appActions: AppActions,
     splitScreenShortcutActions: SplitScreenShortcutActions
 ) {
-    LauncherRow(
+    HomeRow(
         modifier = modifier,
         rowSettings = screenState.launcherRowSettings,
     ) {
@@ -114,28 +139,44 @@ private fun LauncherScreen(
             NotAHomeAppBanner()
         }
         screenState.items.forEach {
-            when (it) {
-                is LauncherUiItem.Apps ->
-                    LauncherApps(
-                        apps = it.apps,
-                        actions = appActions,
-                        showShortcuts = screenState.isHomeApp,
-                        launchShortcut = appActions::launchShortcut,
-                        appCardSettings = screenState.appCardSettings
-                    )
-
-                is LauncherUiItem.Shortcuts ->
-                    SplitScreenShortcuts(
-                        shortcuts = it.shortcuts,
-                        appCardSettings = screenState.appCardSettings,
-                        appActions = appActions,
-                        shortcutActions = splitScreenShortcutActions
-                    )
-            }
+            HomeItem(
+                item = it,
+                appActions = appActions,
+                splitScreenShortcutActions = splitScreenShortcutActions,
+                isHomeApp = screenState.isHomeApp,
+                appCardSettings = screenState.appCardSettings
+            )
         }
     }
 }
 
+@Composable
+fun HomeItem(
+    item: LauncherUiItem,
+    appActions: AppActions,
+    splitScreenShortcutActions: SplitScreenShortcutActions,
+    isHomeApp: Boolean,
+    appCardSettings: LauncherAppCardSettings
+) {
+    when (item) {
+        is LauncherUiItem.Apps ->
+            HomeItemApps(
+                apps = item.apps,
+                actions = appActions,
+                showShortcuts = isHomeApp,
+                launchShortcut = appActions::launchShortcut,
+                appCardSettings = appCardSettings
+            )
+
+        is LauncherUiItem.Shortcuts ->
+            HomeItemSplitScreenShortcuts(
+                shortcuts = item.shortcuts,
+                appCardSettings = appCardSettings,
+                appActions = appActions,
+                shortcutActions = splitScreenShortcutActions
+            )
+    }
+}
 
 @Composable
 private fun NotAHomeAppBanner() {
@@ -158,43 +199,6 @@ private fun NotAHomeAppBanner() {
     }
 }
 
-@Composable
-private fun LauncherDialogActions(
-    navigate: (route: LauncherNav) -> Unit,
-    showHiddenApps: Boolean,
-    currentPage: Int,
-    actions: LauncherActions,
-    onDismissRequest: () -> Unit,
-    modifier: Modifier = Modifier
-) {
-    LauncherDialog(
-        onDismissRequest = onDismissRequest,
-        modifier = modifier,
-        actionButtons = listOf(
-            stringResource(R.string.launcher_dialog_settings) to {
-                navigate(LauncherNav.Settings)
-            },
-            stringResource(R.string.launcher_dialog_add_widget) to {
-                navigate(LauncherNav.AddWidget)
-            },
-            if (showHiddenApps) {
-                stringResource(R.string.launcher_dialog_hide_hidden_apps)
-            } else {
-                stringResource(R.string.launcher_dialog_show_hidden_apps)
-            } to { actions.setShowHiddenApps(showHiddenApps.not()) },
-            stringResource(R.string.launcher_dialog_add_screen_before) to {
-                actions.addScreenBefore(currentPage)
-            },
-            stringResource(R.string.launcher_dialog_add_screen_after) to {
-                actions.addScreenAfter(currentPage)
-            },
-            stringResource(R.string.launcher_dialog_remove_screen) to {
-                actions.removeScreen(currentPage)
-            }
-        )
-    )
-}
-
 
 @Preview(
     name = "phone",
@@ -213,7 +217,7 @@ private fun LauncherDialogActions(
     device = "spec:shape=Normal,width=1280,height=800,unit=dp,dpi=480"
 )
 @Composable
-private fun LauncherScreenPreview() {
+private fun HomePagePreview() {
     val apps = (0..40).map {
         LauncherApp.getDefaultInstance()
             .toBuilder()
@@ -221,7 +225,7 @@ private fun LauncherScreenPreview() {
             .build()
     }
     LauncherTheme(darkTheme = true) {
-        LauncherScreen(
+        HomePage(
             modifier = Modifier.fillMaxSize(),
             screenState = LauncherScreenUiState(
                 items = listOf(
@@ -236,8 +240,8 @@ private fun LauncherScreenPreview() {
                         )
                     )
                 ),
-                launcherRowSettings = launcherSettingsDefault.rowSettings(),
-                appCardSettings = launcherSettingsDefault.appCardSettings(),
+                launcherRowSettings = LauncherStateRepository.defaultSettings.rowSettings(),
+                appCardSettings = LauncherStateRepository.defaultSettings.appCardSettings(),
                 isHomeApp = true,
                 showHiddenApps = false,
             ),

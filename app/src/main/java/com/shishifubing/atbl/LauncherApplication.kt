@@ -11,13 +11,11 @@ import androidx.lifecycle.viewmodel.viewModelFactory
 class LauncherApplication : Application() {
     lateinit var manager: LauncherManager
     lateinit var stateRepo: LauncherStateRepository
-    lateinit var settingsRepo: LauncherSettingsRepository
     lateinit var appWidgetHost: AppWidgetHost
 
     fun init(activity: ComponentActivity) = apply {
         manager = LauncherManager(activity, activity.lifecycle)
         stateRepo = LauncherStateRepository(manager, activity)
-        settingsRepo = LauncherSettingsRepository(activity)
         appWidgetHost = AppWidgetHost(activity, 0)
     }
 }

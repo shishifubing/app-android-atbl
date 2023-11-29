@@ -17,11 +17,11 @@ import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.shishifubing.atbl.launcherSettingsDefault
+import com.shishifubing.atbl.LauncherStateRepository
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun AppCard(
+fun HomeAppCard(
     label: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -63,12 +63,12 @@ fun AppCard(
 @Composable
 private fun AppCardPreview() {
     LauncherTheme(darkTheme = true) {
-        AppCard(
+        HomeAppCard(
             modifier = Modifier.padding(30.dp),
             label = "app",
             onClick = { /*TODO*/ },
             onLongClick = { /*TODO*/ },
-            settings = launcherSettingsDefault.appCardSettings(),
+            settings = LauncherStateRepository.defaultSettings.appCardSettings(),
             actions = appActionStub
         )
     }
