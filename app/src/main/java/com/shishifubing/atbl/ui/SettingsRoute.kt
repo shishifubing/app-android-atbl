@@ -13,16 +13,17 @@ import androidx.navigation.NavController
 @Composable
 fun SettingsRoute(
     modifier: Modifier = Modifier,
+    nav: LauncherNav,
     navController: NavController,
     vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
 ) {
     val uiState by vm.uiState.collectAsState()
     ErrorToast(errorFlow = vm.error)
-    LauncherScaffold(
-        navController = navController
-    ) {
+    LauncherScaffold(nav = nav, goBack = { navController.popBackStack() }) {
         when (uiState) {
-            SettingsScreenUiState.Loading -> LauncherPageLoadingIndicator()
+            SettingsScreenUiState.Loading -> {
+                PageLoadingIndicator(modifier = modifier)
+            }
 
             is SettingsScreenUiState.Success -> (uiState as SettingsScreenUiState.Success).let {
                 Column(modifier = modifier.verticalScroll(rememberScrollState())) {

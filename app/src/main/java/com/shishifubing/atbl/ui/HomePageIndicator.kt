@@ -27,7 +27,7 @@ import com.shishifubing.atbl.R
 import kotlinx.coroutines.delay
 
 @Composable
-fun BoxScope.LauncherPageIndicatorFloating(
+fun BoxScope.HomePageIndicatorFloating(
     currentPage: Int,
     pageCount: Int,
     modifier: Modifier = Modifier,
@@ -39,7 +39,7 @@ fun BoxScope.LauncherPageIndicatorFloating(
         show = false
     }
     if (show) {
-        LauncherPageIndicator(
+        HomePageIndicator(
             modifier = modifier
                 .align(Alignment.BottomCenter)
                 .padding(0.dp, dimensionResource(R.dimen.padding_small)),
@@ -51,14 +51,13 @@ fun BoxScope.LauncherPageIndicatorFloating(
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun LauncherPageIndicator(
+private fun HomePageIndicator(
     curPage: Int,
     pageCount: Int,
     modifier: Modifier = Modifier
 ) {
     Card(modifier = modifier) {
         FlowRow(
-            modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
             horizontalArrangement = Arrangement.Center,
             verticalArrangement = Arrangement.Center
         ) {
@@ -70,10 +69,10 @@ private fun LauncherPageIndicator(
                 }
                 Box(
                     modifier = Modifier
-                        .padding(2.dp)
+                        .padding(dimensionResource(R.dimen.padding_small))
                         .clip(CircleShape)
                         .background(color)
-                        .size(16.dp)
+                        .size(dimensionResource(R.dimen.padding_medium))
                 )
             }
         }
@@ -83,28 +82,28 @@ private fun LauncherPageIndicator(
 
 @Preview
 @Composable
-private fun LauncherPageIndicatorPreview() {
+private fun HomePageIndicatorPreview() {
     LauncherTheme(darkTheme = true) {
-        LauncherPageIndicator(3, 10)
+        HomePageIndicator(3, 10)
     }
 }
 
 @Preview
 @Composable
-private fun LauncherPageIndicatorFloatingPreview() {
+private fun HomePageIndicatorFloatingPreview() {
     LauncherTheme(darkTheme = true) {
         Box(Modifier.size(300.dp)) {
-            LauncherPageIndicatorFloating(3, 10)
+            HomePageIndicatorFloating(3, 10)
         }
     }
 }
 
 @Preview
 @Composable
-private fun LauncherPageIndicatorFloatingOverflowPreview() {
+private fun HomePageIndicatorFloatingOverflowPreview() {
     LauncherTheme(darkTheme = true) {
         Box(Modifier.size(300.dp)) {
-            LauncherPageIndicatorFloating(3, 30)
+            HomePageIndicatorFloating(3, 30)
         }
     }
 }

@@ -23,7 +23,7 @@ fun SettingsGroupSplitScreen(
     actions: SettingsActions
 ) {
     SettingsGroup(R.string.settings_group_split_screen) {
-        SplitScreenShortcuts(
+        HomeItemSplitScreenShortcuts(
             apps = uiState.apps,
             shortcuts = uiState.splitScreenShortcuts,
             addShortcut = actions::addSplitScreenShortcut,
@@ -42,7 +42,7 @@ fun SettingsGroupSplitScreen(
 }
 
 @Composable
-private fun SplitScreenShortcuts(
+private fun HomeItemSplitScreenShortcuts(
     apps: Collection<LauncherApp>,
     shortcuts: List<LauncherSplitScreenShortcut>,
     shortcutSeparator: String,

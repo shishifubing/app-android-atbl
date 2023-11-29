@@ -2,12 +2,12 @@ package com.shishifubing.atbl.ui
 
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -33,7 +33,7 @@ import androidx.compose.ui.window.Dialog
 import com.shishifubing.atbl.R
 
 @Composable
-fun LauncherDialog(
+fun HomeDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     actionButtons: List<Pair<String, () -> Unit>>? = null,
@@ -47,7 +47,7 @@ fun LauncherDialog(
         ) {
             if (header != null) {
                 header()
-                Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
             }
             if (actionButtons.isNullOrEmpty()) {
                 return@Column
@@ -66,7 +66,7 @@ fun LauncherDialog(
                         key = { actionButtons[it].hashCode() },
                     ) {
                         val item = actionButtons[it]
-                        LauncherDialogButton(
+                        HomeDialogButton(
                             text = item.first,
                             textAlign = TextAlign.Start,
                             onClick = {
@@ -82,7 +82,7 @@ fun LauncherDialog(
 }
 
 @Composable
-fun LauncherDialogHeader(
+fun HomeDialogHeader(
     packageName: String,
     label: String,
     isHidden: Boolean,
@@ -126,14 +126,14 @@ fun LauncherDialogHeader(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.Center
             ) {
-                LauncherDialogButton(
+                HomeDialogButton(
                     text = stringResource(R.string.drawer_app_info),
                     onClick = {
                         actions.launchAppInfo(packageName)
                         onDismissRequest()
                     }
                 )
-                LauncherDialogButton(
+                HomeDialogButton(
                     text = stringResource(
                         if (isHidden) R.string.drawer_app_show else R.string.drawer_app_hide
                     ),
@@ -142,7 +142,7 @@ fun LauncherDialogHeader(
                         onDismissRequest()
                     }
                 )
-                LauncherDialogButton(
+                HomeDialogButton(
                     text = stringResource(R.string.drawer_app_uninstall),
                     onClick = {
                         actions.launchAppUninstall(packageName)
@@ -155,7 +155,7 @@ fun LauncherDialogHeader(
 }
 
 @Composable
-private fun LauncherDialogButton(
+private fun HomeDialogButton(
     text: String,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
@@ -176,8 +176,8 @@ private fun LauncherDialogButton(
 
 @Preview
 @Composable
-private fun LauncherDialogButtonPreview() {
+private fun HomeDialogButtonPreview() {
     LauncherTheme {
-        LauncherDialogButton(text = "button", onClick = { })
+        HomeDialogButton(text = "button", onClick = { })
     }
 }

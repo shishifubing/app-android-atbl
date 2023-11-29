@@ -12,7 +12,6 @@ import com.shishifubing.atbl.LauncherHorizontalArrangement
 import com.shishifubing.atbl.LauncherManager
 import com.shishifubing.atbl.LauncherScreenItemComplex
 import com.shishifubing.atbl.LauncherSettings
-import com.shishifubing.atbl.LauncherSettingsRepository
 import com.shishifubing.atbl.LauncherSortBy
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.LauncherStateRepository
@@ -34,15 +33,13 @@ import kotlinx.coroutines.launch
 typealias LaunchShortcut = (shortcut: LauncherAppShortcut) -> Unit
 typealias GetAppIcon = (packageName: String) -> ImageBitmap
 
-class LauncherViewModel(
-    settingsRepo: LauncherSettingsRepository,
+class HomeViewModel(
     private val stateRepo: LauncherStateRepository,
     private val manager: LauncherManager
 ) : ViewModel() {
     companion object {
         val Factory = launcherViewModelFactory {
-            LauncherViewModel(
-                settingsRepo = settingsRepo,
+            HomeViewModel(
                 manager = manager,
                 stateRepo = stateRepo
             )
@@ -64,10 +61,10 @@ class LauncherViewModel(
     }
 
     val uiState = combine(
-        settingsRepo.settingsFlow,
-        stateRepo.stateFlow,
+        stateRepo.observeState(),
         _showHiddenAppsFlow
-    ) { settings, state, showHiddenApps ->
+    ) { state, showHiddenApps ->
+        val settings = state.settings
         val apps = transformApps(
             state.appsMap.values, showHiddenApps, settings
         )

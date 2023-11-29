@@ -19,7 +19,7 @@ class MainActivity : ComponentActivity() {
         app = (application as LauncherApplication).init(this)
 
         lifecycleScope.launch {
-            app.stateRepo.updateState()
+            app.stateRepo.reloadState()
         }
         app.manager.addCallback(
             onChanged = {

@@ -12,7 +12,7 @@ import androidx.compose.ui.unit.dp
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun LauncherRow(
+fun HomeRow(
     rowSettings: LauncherRowSettings,
     modifier: Modifier = Modifier,
     content: @Composable FlowRowScope.() -> Unit
