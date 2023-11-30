@@ -7,6 +7,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
@@ -33,7 +34,10 @@ sealed class LauncherNav(
     )
 }
 
-fun NavController.navigate(route: LauncherNav) = navigate(route.route)
+fun NavController.navigate(route: LauncherNav) = navigate(route.route) {
+    popUpTo(graph.findStartDestination().id)
+    launchSingleTop = true
+}
 
 @Composable
 fun UI(modifier: Modifier = Modifier) {

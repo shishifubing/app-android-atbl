@@ -2,6 +2,7 @@ package com.shishifubing.atbl.ui
 
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
+import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
@@ -93,12 +94,14 @@ private fun HomeScreen(
     var showLauncherDialog by remember { mutableStateOf(false) }
     val pagerState = rememberPagerState(pageCount = { uiState.screens.size })
 
-    Box {
-        HorizontalPager(modifier = modifier, state = pagerState) {
+    Box(modifier = modifier) {
+        HorizontalPager(state = pagerState) {
             HomePage(
                 modifier = Modifier
                     .fillMaxSize()
                     .combinedClickable(
+                        interactionSource = remember { MutableInteractionSource() },
+                        indication = null,
                         onLongClick = { showLauncherDialog = true },
                         onClick = { }
                     ),
@@ -112,6 +115,7 @@ private fun HomeScreen(
             pageCount = pagerState.pageCount
         )
     }
+    
     if (showLauncherDialog) {
         HomeLauncherDialogActions(
             navigate = navigate,

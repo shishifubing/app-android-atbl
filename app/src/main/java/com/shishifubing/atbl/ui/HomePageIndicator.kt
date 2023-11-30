@@ -8,7 +8,6 @@ import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.Card
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
@@ -19,7 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
@@ -33,7 +31,10 @@ fun BoxScope.HomePageIndicatorFloating(
     modifier: Modifier = Modifier,
     delayMillis: Long = 1000
 ) {
-    var show by remember(currentPage, pageCount) { mutableStateOf(true) }
+    var show by remember { mutableStateOf(false) }
+    LaunchedEffect(currentPage, pageCount) {
+        show = true
+    }
     LaunchedEffect(show) {
         delay(delayMillis)
         show = false
@@ -42,7 +43,7 @@ fun BoxScope.HomePageIndicatorFloating(
         HomePageIndicator(
             modifier = modifier
                 .align(Alignment.BottomCenter)
-                .padding(0.dp, dimensionResource(R.dimen.padding_small)),
+                .padding(0.dp, dimensionResource(R.dimen.padding_medium)),
             curPage = currentPage,
             pageCount = pageCount
         )
@@ -69,10 +70,9 @@ private fun HomePageIndicator(
                 }
                 Box(
                     modifier = Modifier
-                        .padding(dimensionResource(R.dimen.padding_small))
-                        .clip(CircleShape)
                         .background(color)
                         .size(dimensionResource(R.dimen.padding_medium))
+                        .padding(dimensionResource(R.dimen.padding_small))
                 )
             }
         }
