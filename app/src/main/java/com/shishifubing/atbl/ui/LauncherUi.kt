@@ -40,14 +40,10 @@ fun NavController.navigate(route: LauncherNav) = navigate(route.route) {
 }
 
 @Composable
-fun UI(modifier: Modifier = Modifier) {
+fun LauncherUi(modifier: Modifier = Modifier) {
     LauncherTheme {
-        Surface(
-            modifier = modifier
-                .fillMaxSize()
-                .safeDrawingPadding(),
-        ) {
-            LauncherNavGraph()
+        Surface(modifier = modifier.fillMaxSize()) {
+            LauncherNavGraph(modifier = Modifier.safeDrawingPadding())
         }
     }
 }

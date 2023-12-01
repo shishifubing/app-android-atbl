@@ -1,6 +1,7 @@
 package com.shishifubing.atbl.ui
 
 
+import androidx.compose.runtime.Stable
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.ImageBitmapConfig
 import androidx.lifecycle.ViewModel
@@ -184,6 +185,7 @@ class HomeViewModel(
 }
 
 
+@Stable
 sealed interface LauncherUiState {
     data class Success(
         val screens: List<LauncherScreenUiState>,
@@ -192,6 +194,7 @@ sealed interface LauncherUiState {
     object Loading : LauncherUiState
 }
 
+@Stable
 sealed interface LauncherUiItem {
     data class Apps(val apps: List<LauncherApp>) : LauncherUiItem
     data class Shortcuts(
@@ -199,6 +202,7 @@ sealed interface LauncherUiItem {
     ) : LauncherUiItem
 }
 
+@Stable
 interface AppActions {
     fun launchAppUninstall(packageName: String)
     fun setIsHidden(packageName: String, isHidden: Boolean)
@@ -212,11 +216,13 @@ interface AppActions {
     ): String
 }
 
+@Stable
 interface SplitScreenShortcutActions {
     fun launchSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
     fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
 }
 
+@Stable
 interface LauncherActions {
     fun setShowHiddenApps(showHiddenApps: Boolean)
     fun addScreenAfter(screen: Int)

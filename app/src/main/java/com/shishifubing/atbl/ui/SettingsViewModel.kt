@@ -1,12 +1,19 @@
 package com.shishifubing.atbl.ui
 
 
+import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherApp
+import com.shishifubing.atbl.LauncherFontFamily
+import com.shishifubing.atbl.LauncherHorizontalArrangement
 import com.shishifubing.atbl.LauncherSettings
+import com.shishifubing.atbl.LauncherSortBy
 import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.LauncherStateRepository
+import com.shishifubing.atbl.LauncherTextColor
+import com.shishifubing.atbl.LauncherTextStyle
+import com.shishifubing.atbl.LauncherVerticalArrangement
 import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -47,30 +54,79 @@ class SettingsViewModel(
         initialValue = SettingsScreenUiState.Loading
     )
 
-    val settingsActions = object : SettingsActions {
-        override fun updateSettings(
-            action: LauncherSettings.Builder.() -> Unit
-        ) = stateAction { updateSettings(action) }
 
-        override fun updateSettingsFromBytes(
-            bytes: ByteArray
-        ) = stateAction { updateSettings { mergeFrom(bytes) } }
+    fun updateSettingsFromBytes(bytes: ByteArray) {
+        stateAction { updateSettings { mergeFrom(bytes) } }
+    }
 
-        override fun backupReset() = launch { stateRepo.resetSettings() }
+    fun backupReset() {
+        launch { stateRepo.resetSettings() }
+    }
 
-        override fun setHiddenApps(packageNames: List<String>) = stateAction {
-            setHiddenApps(packageNames)
-        }
+    fun setHiddenApps(packageNames: List<String>) {
+        stateAction { setHiddenApps(packageNames) }
+    }
 
-        override fun addSplitScreenShortcut(
-            appTop: LauncherApp, appBottom: LauncherApp
-        ) = stateAction {
+    fun setSplitScreenShortcutSeparator(value: String) {
+        updateSettings { appCardSplitScreenSeparator = value }
+    }
+
+    fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
+        stateAction { removeSplitScreenShortcut(shortcut) }
+    }
+
+    fun addSplitScreenShortcut(appTop: LauncherApp, appBottom: LauncherApp) {
+        stateAction {
             addSplitScreenShortcut(appTop.packageName, appBottom.packageName)
         }
+    }
 
-        override fun removeSplitScreenShortcut(
-            shortcut: LauncherSplitScreenShortcut
-        ) = stateAction { removeSplitScreenShortcut(shortcut) }
+    fun setAppLayoutReverseOrder(value: Boolean) {
+        updateSettings { appLayoutReverseOrder = value }
+    }
+
+    fun setAppLayoutHorizontalPadding(value: Int) {
+        updateSettings { appLayoutHorizontalPadding = value }
+    }
+
+    fun setAppLayoutVerticalPadding(value: Int) {
+        updateSettings { appLayoutVerticalPadding = value }
+    }
+
+    fun setAppLayoutHorizontalArrangement(value: LauncherHorizontalArrangement) {
+        updateSettings { appLayoutHorizontalArrangement = value }
+    }
+
+    fun setAppLayoutVerticalArrangement(value: LauncherVerticalArrangement) {
+        updateSettings { appLayoutVerticalArrangement = value }
+    }
+
+    fun setAppLayoutSortBy(value: LauncherSortBy) {
+        updateSettings { appLayoutSortBy = value }
+    }
+
+    fun setAppCardRemoveSpaces(value: Boolean) {
+        updateSettings { appCardLabelRemoveSpaces = value }
+    }
+
+    fun setAppCardLabelLowercase(value: Boolean) {
+        updateSettings { appCardLabelRemoveSpaces = value }
+    }
+
+    fun setAppCardFontFamily(value: LauncherFontFamily) {
+        updateSettings { appCardFontFamily = value }
+    }
+
+    fun setAppCardTextStyle(value: LauncherTextStyle) {
+        updateSettings { appCardTextStyle = value }
+    }
+
+    fun setAppCardTextColor(value: LauncherTextColor) {
+        updateSettings { appCardTextColor = value }
+    }
+
+    fun setAppCardPadding(value: Int) {
+        updateSettings { appCardPadding = value }
     }
 
     private fun launch(action: suspend CoroutineScope.() -> Unit) {
@@ -80,8 +136,15 @@ class SettingsViewModel(
     private fun stateAction(action: suspend LauncherStateRepository.() -> Unit) {
         launch { action.invoke(stateRepo) }
     }
+
+    private fun updateSettings(action: LauncherSettings.Builder.() -> Unit) {
+        stateAction {
+            updateSettings(action)
+        }
+    }
 }
 
+@Stable
 sealed interface SettingsScreenUiState {
     data class Success(
         val settings: LauncherSettings,
@@ -90,17 +153,4 @@ sealed interface SettingsScreenUiState {
     ) : SettingsScreenUiState
 
     object Loading : SettingsScreenUiState
-}
-
-interface SettingsActions {
-    fun updateSettings(action: LauncherSettings.Builder.() -> Unit)
-
-    fun updateSettingsFromBytes(bytes: ByteArray)
-
-    fun backupReset()
-
-    fun setHiddenApps(packageNames: List<String>)
-
-    fun addSplitScreenShortcut(appTop: LauncherApp, appBottom: LauncherApp)
-    fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut)
 }

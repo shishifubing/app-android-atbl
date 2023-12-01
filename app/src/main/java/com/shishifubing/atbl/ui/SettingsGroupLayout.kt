@@ -17,57 +17,43 @@ private val choices = object {
 
 @Composable
 fun SettingsGroupLayout(
-    uiState: SettingsScreenUiState.Success,
-    actions: SettingsActions
+    reverseOrder: Boolean,
+    setReverseOrder: (Boolean) -> Unit,
+    horizontalPadding: Int,
+    setHorizontalPadding: (Int) -> Unit,
+    verticalPadding: Int,
+    setVerticalPadding: (Int) -> Unit,
+    horizontalArrangement: LauncherHorizontalArrangement,
+    setHorizontalArrangement: (LauncherHorizontalArrangement) -> Unit,
+    verticalArrangement: LauncherVerticalArrangement,
+    setVerticalArrangement: (LauncherVerticalArrangement) -> Unit,
+    sortBy: LauncherSortBy,
+    setSortBy: (LauncherSortBy) -> Unit
 ) {
     SettingsGroup(R.string.settings_group_layout) {
         LayoutReverseOrder(
-            reverse = uiState.settings.appLayoutReverseOrder,
-            setReverse = {
-                actions.updateSettings {
-                    appLayoutReverseOrder = it
-                }
-            }
+            reverse = reverseOrder,
+            setReverse = setReverseOrder
         )
         LayoutHorizontalPadding(
-            padding = uiState.settings.appLayoutHorizontalPadding,
-            setPadding = {
-                actions.updateSettings {
-                    appLayoutHorizontalPadding = it
-                }
-            }
+            padding = horizontalPadding,
+            setPadding = setHorizontalPadding
         )
         LayoutVerticalPadding(
-            padding = uiState.settings.appLayoutVerticalPadding,
-            setPadding = {
-                actions.updateSettings {
-                    appLayoutVerticalPadding = it
-                }
-            }
+            padding = verticalPadding,
+            setPadding = setVerticalPadding
         )
         LayoutHorizontalArrangement(
-            arrangement = uiState.settings.appLayoutHorizontalArrangement,
-            setArrangement = {
-                actions.updateSettings {
-                    appLayoutHorizontalArrangement = it
-                }
-            }
+            arrangement = horizontalArrangement,
+            setArrangement = setHorizontalArrangement
         )
         LayoutVerticalArrangement(
-            arrangement = uiState.settings.appLayoutVerticalArrangement,
-            setArrangement = {
-                actions.updateSettings {
-                    appLayoutVerticalArrangement = it
-                }
-            }
+            arrangement = verticalArrangement,
+            setArrangement = setVerticalArrangement
         )
         LayoutSortBy(
-            sortBy = uiState.settings.appLayoutSortBy,
-            setSortBy = {
-                actions.updateSettings {
-                    appLayoutSortBy = it
-                }
-            }
+            sortBy = sortBy,
+            setSortBy = setSortBy
         )
     }
 }

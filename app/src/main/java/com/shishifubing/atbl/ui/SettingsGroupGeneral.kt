@@ -18,26 +18,19 @@ import java.io.FileOutputStream
 
 @Composable
 fun SettingsGroupGeneral(
-    uiState: SettingsScreenUiState.Success,
-    actions: SettingsActions
+    settings: LauncherSettings,
+    updateSettingsFromBytes: (ByteArray) -> Unit,
+    backupReset: () -> Unit,
 ) {
     SettingsGroup(R.string.settings_group_general) {
-        BackupExport(
-            settings = uiState.settings
-        )
-        BackupImport(
-            updateFromBytes = actions::updateSettingsFromBytes
-        )
-        BackupReset(
-            resetSettings = actions::backupReset
-        )
+        BackupExport(settings = settings)
+        BackupImport(updateFromBytes = updateSettingsFromBytes)
+        BackupReset(resetSettings = backupReset)
     }
 }
 
 @Composable
-private fun BackupReset(
-    resetSettings: () -> Unit
-) {
+private fun BackupReset(resetSettings: () -> Unit) {
     var showDialog by remember { mutableStateOf(false) }
     SettingsField(
         name = R.string.settings_backup_reset,
@@ -62,9 +55,7 @@ private fun BackupReset(
 }
 
 @Composable
-private fun BackupImport(
-    updateFromBytes: (ByteArray) -> Unit
-) {
+private fun BackupImport(updateFromBytes: (ByteArray) -> Unit) {
     var result by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -83,9 +74,7 @@ private fun BackupImport(
 }
 
 @Composable
-private fun BackupExport(
-    settings: LauncherSettings
-) {
+private fun BackupExport(settings: LauncherSettings) {
     var result by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/binpb")

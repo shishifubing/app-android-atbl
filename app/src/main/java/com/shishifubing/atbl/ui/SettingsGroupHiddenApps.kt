@@ -7,13 +7,13 @@ import com.shishifubing.atbl.R
 
 @Composable
 fun SettingsGroupHiddenApps(
-    uiState: SettingsScreenUiState.Success,
-    actions: SettingsActions
+    apps: Collection<LauncherApp>,
+    setHiddenApps: (List<String>) -> Unit
 ) {
     SettingsGroup(R.string.settings_group_hidden_apps) {
         HiddenApps(
-            apps = uiState.apps,
-            setHiddenApps = actions::setHiddenApps
+            apps = apps,
+            setHiddenApps = setHiddenApps
         )
     }
 }
