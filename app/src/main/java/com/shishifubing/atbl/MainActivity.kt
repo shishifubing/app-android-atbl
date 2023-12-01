@@ -4,7 +4,7 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.lifecycle.lifecycleScope
-import com.shishifubing.atbl.ui.UI
+import com.shishifubing.atbl.ui.LauncherUi
 import kotlinx.coroutines.launch
 
 private val tag = MainActivity::class.simpleName
@@ -35,7 +35,7 @@ class MainActivity : ComponentActivity() {
         )
 
         setContent {
-            UI()
+            LauncherUi()
         }
     }
 

@@ -14,57 +14,43 @@ import com.shishifubing.atbl.R
 
 @Composable
 fun SettingsGroupAppCard(
-    uiState: SettingsScreenUiState.Success,
-    actions: SettingsActions
+    removeSpaces: Boolean,
+    setRemoveSpaces: (Boolean) -> Unit,
+    labelLowercase: Boolean,
+    setLabelLowercase: (Boolean) -> Unit,
+    fontFamily: LauncherFontFamily,
+    setFontFamily: (LauncherFontFamily) -> Unit,
+    textStyle: LauncherTextStyle,
+    setTextStyle: (LauncherTextStyle) -> Unit,
+    textColor: LauncherTextColor,
+    setTextColor: (LauncherTextColor) -> Unit,
+    padding: Int,
+    setPadding: (Int) -> Unit
 ) {
     SettingsGroup(R.string.settings_group_app_card) {
         AppCardRemoveSpaces(
-            removeSpaces = uiState.settings.appCardLabelRemoveSpaces,
-            setRemoveSpaces = {
-                actions.updateSettings {
-                    appCardLabelRemoveSpaces = it
-                }
-            }
+            removeSpaces = removeSpaces,
+            setRemoveSpaces = setRemoveSpaces
         )
         AppCardLowercase(
-            lowercase = uiState.settings.appCardLabelLowercase,
-            setLowercase = {
-                actions.updateSettings {
-                    appCardLabelLowercase = it
-                }
-            }
+            lowercase = labelLowercase,
+            setLowercase = setLabelLowercase
         )
         AppCardFontFamily(
-            fontFamily = uiState.settings.appCardFontFamily,
-            setFontFamily = {
-                actions.updateSettings {
-                    appCardFontFamily = it
-                }
-            }
+            fontFamily = fontFamily,
+            setFontFamily = setFontFamily
         )
         AppCardTextStyle(
-            textStyle = uiState.settings.appCardTextStyle,
-            setTextStyle = {
-                actions.updateSettings {
-                    appCardTextStyle = it
-                }
-            }
+            textStyle = textStyle,
+            setTextStyle = setTextStyle
         )
         AppCardTextColor(
-            color = uiState.settings.appCardTextColor,
-            setColor = {
-                actions.updateSettings {
-                    appCardTextColor = it
-                }
-            }
+            color = textColor,
+            setColor = setTextColor
         )
         AppCardPadding(
-            padding = uiState.settings.appCardPadding,
-            setPadding = {
-                actions.updateSettings {
-                    appCardPadding = it
-                }
-            }
+            padding = padding,
+            setPadding = setPadding
         )
     }
 }

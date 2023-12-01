@@ -19,24 +19,24 @@ import com.shishifubing.atbl.R
 
 @Composable
 fun SettingsGroupSplitScreen(
-    uiState: SettingsScreenUiState.Success,
-    actions: SettingsActions
+    apps: Collection<LauncherApp>,
+    splitScreenShortcuts: List<LauncherSplitScreenShortcut>,
+    shortcutSeparator: String,
+    addShortcut: (LauncherApp, LauncherApp) -> Unit,
+    removeShortcut: (LauncherSplitScreenShortcut) -> Unit,
+    setSeparator: (String) -> Unit
 ) {
     SettingsGroup(R.string.settings_group_split_screen) {
         HomeItemSplitScreenShortcuts(
-            apps = uiState.apps,
-            shortcuts = uiState.splitScreenShortcuts,
-            addShortcut = actions::addSplitScreenShortcut,
-            removeShortcut = actions::removeSplitScreenShortcut,
-            shortcutSeparator = uiState.settings.appCardSplitScreenSeparator
+            apps = apps,
+            shortcuts = splitScreenShortcuts,
+            addShortcut = addShortcut,
+            removeShortcut = removeShortcut,
+            shortcutSeparator = shortcutSeparator
         )
         SplitScreenShortcutSeparator(
-            separator = uiState.settings.appCardSplitScreenSeparator,
-            setSeparator = {
-                actions.updateSettings {
-                    appCardSplitScreenSeparator = it
-                }
-            }
+            separator = shortcutSeparator,
+            setSeparator = setSeparator
         )
     }
 }

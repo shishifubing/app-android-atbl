@@ -3,16 +3,16 @@ package com.shishifubing.atbl.ui
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.defaultMinSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.role
 import androidx.compose.ui.semantics.semantics
@@ -22,7 +22,7 @@ import com.shishifubing.atbl.LauncherStateRepository
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HomeAppCard(
+fun HomeItemCard(
     label: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -30,17 +30,17 @@ fun HomeAppCard(
     actions: AppActions,
     modifier: Modifier = Modifier,
 ) {
-    Surface(
+    Box(
         modifier = modifier
             .semantics { role = Role.Button }
-            .combinedClickable(
-                onLongClick = onLongClick,
-                onClick = onClick
-            ),
-        shape = ButtonDefaults.textShape,
+            .clip(ButtonDefaults.textShape)
     ) {
         Row(
             modifier = Modifier
+                .combinedClickable(
+                    onLongClick = onLongClick,
+                    onClick = onClick
+                )
                 .defaultMinSize(
                     minWidth = ButtonDefaults.MinWidth,
                     minHeight = ButtonDefaults.MinHeight
@@ -62,9 +62,9 @@ fun HomeAppCard(
 
 @Preview
 @Composable
-private fun AppCardPreview() {
+private fun HomeItemCardPreview() {
     LauncherTheme(darkTheme = true) {
-        HomeAppCard(
+        HomeItemCard(
             modifier = Modifier.padding(30.dp),
             label = "app",
             onClick = { /*TODO*/ },

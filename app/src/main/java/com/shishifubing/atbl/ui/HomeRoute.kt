@@ -25,6 +25,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -115,7 +116,7 @@ private fun HomeScreen(
             pageCount = pagerState.pageCount
         )
     }
-    
+
     if (showLauncherDialog) {
         HomeLauncherDialogActions(
             navigate = navigate,
@@ -130,10 +131,10 @@ private fun HomeScreen(
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 private fun HomePage(
-    modifier: Modifier = Modifier,
     screenState: LauncherScreenUiState,
     appActions: AppActions,
-    splitScreenShortcutActions: SplitScreenShortcutActions
+    splitScreenShortcutActions: SplitScreenShortcutActions,
+    modifier: Modifier = Modifier,
 ) {
     HomeRow(
         modifier = modifier,
@@ -143,13 +144,15 @@ private fun HomePage(
             NotAHomeAppBanner()
         }
         screenState.items.forEach {
-            HomeItem(
-                item = it,
-                appActions = appActions,
-                splitScreenShortcutActions = splitScreenShortcutActions,
-                isHomeApp = screenState.isHomeApp,
-                appCardSettings = screenState.appCardSettings
-            )
+            key(it.hashCode()) {
+                HomeItem(
+                    item = it,
+                    appActions = appActions,
+                    splitScreenShortcutActions = splitScreenShortcutActions,
+                    isHomeApp = screenState.isHomeApp,
+                    appCardSettings = screenState.appCardSettings
+                )
+            }
         }
     }
 }
@@ -166,9 +169,8 @@ fun HomeItem(
         is LauncherUiItem.Apps ->
             HomeItemApps(
                 apps = item.apps,
-                actions = appActions,
+                appActions = appActions,
                 showShortcuts = isHomeApp,
-                launchShortcut = appActions::launchShortcut,
                 appCardSettings = appCardSettings
             )
 

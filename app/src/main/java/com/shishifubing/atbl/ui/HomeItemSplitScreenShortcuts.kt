@@ -22,7 +22,7 @@ fun HomeItemSplitScreenShortcuts(
 ) {
     var dialogShortcutIndex by remember { mutableIntStateOf(-1) }
     shortcuts.forEachIndexed { i, shortcut ->
-        HomeAppCard(
+        HomeItemCard(
             label = shortcut.label(appCardSettings),
             onClick = { shortcutActions.launchSplitScreenShortcut(shortcut) },
             onLongClick = { dialogShortcutIndex = i },
