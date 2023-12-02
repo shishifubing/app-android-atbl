@@ -4,20 +4,24 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.data.UIHomeDialogActionButtons
 
 @Composable
 fun HomeLauncherDialogActions(
     navigate: (route: LauncherNav) -> Unit,
     showHiddenApps: Boolean,
     currentPage: Int,
-    actions: LauncherActions,
+    setShowHiddenApps: (Boolean) -> Unit,
+    addScreenBefore: (Int) -> Unit,
+    addScreenAfter: (Int) -> Unit,
+    removeScreen: (Int) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
     HomeDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
-        actionButtons = listOf(
+        actionButtons = UIHomeDialogActionButtons(listOf(
             stringResource(R.string.launcher_dialog_settings) to {
                 navigate(LauncherNav.Settings)
             },
@@ -28,16 +32,16 @@ fun HomeLauncherDialogActions(
                 stringResource(R.string.launcher_dialog_hide_hidden_apps)
             } else {
                 stringResource(R.string.launcher_dialog_show_hidden_apps)
-            } to { actions.setShowHiddenApps(showHiddenApps.not()) },
+            } to { setShowHiddenApps(showHiddenApps.not()) },
             stringResource(R.string.launcher_dialog_add_screen_before) to {
-                actions.addScreenBefore(currentPage)
+                addScreenBefore(currentPage)
             },
             stringResource(R.string.launcher_dialog_add_screen_after) to {
-                actions.addScreenAfter(currentPage)
+                addScreenAfter(currentPage)
             },
             stringResource(R.string.launcher_dialog_remove_screen) to {
-                actions.removeScreen(currentPage)
+                removeScreen(currentPage)
             }
-        )
+        ))
     )
 }

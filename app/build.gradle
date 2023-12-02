@@ -54,6 +54,7 @@ android {
                 task.builtins {
                     java {
                         option 'lite'
+                        option 'annotate_code'
                     }
                 }
             }
