@@ -35,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -49,8 +50,9 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.shishifubing.atbl.LauncherApp
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.data.UIApp
+import com.shishifubing.atbl.data.UIApps
 import kotlinx.coroutines.flow.StateFlow
 
 private fun <T : Enum<*>> Class<T>.names() = enumConstants!!.mapNotNull {
@@ -259,17 +261,17 @@ fun SettingsFieldCustomItemWithAdd(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsDropDownSelectApp(
-    apps: List<LauncherApp>,
-    onValueChange: (LauncherApp) -> Unit
+    apps: UIApps,
+    onValueChange: (UIApp) -> Unit
 ) {
     var expanded by remember { mutableStateOf(false) }
-    var selected by remember { mutableStateOf<LauncherApp?>(null) }
+    var selected by remember { mutableStateOf<UIApp?>(null) }
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
     ) {
         TextField(
-            value = selected?.label ?: "",
+            value = selected?.model?.label ?: "",
             onValueChange = {},
             readOnly = true,
             trailingIcon = {
@@ -281,15 +283,17 @@ fun SettingsDropDownSelectApp(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            apps.forEach { app ->
-                DropdownMenuItem(
-                    text = { Text(text = app.label) },
-                    onClick = {
-                        selected = app
-                        expanded = false
-                        onValueChange(app)
-                    }
-                )
+            apps.model.forEach { app ->
+                key(app.hashCode()) {
+                    DropdownMenuItem(
+                        text = { Text(text = app.model.label) },
+                        onClick = {
+                            selected = app
+                            expanded = false
+                            onValueChange(app)
+                        }
+                    )
+                }
             }
         }
     }

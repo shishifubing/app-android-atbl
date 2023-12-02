@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
@@ -14,6 +15,7 @@ import androidx.navigation.compose.rememberNavController
 import com.shishifubing.atbl.R
 
 
+@Immutable
 sealed class LauncherNav(
     val route: String,
     @StringRes val label: Int

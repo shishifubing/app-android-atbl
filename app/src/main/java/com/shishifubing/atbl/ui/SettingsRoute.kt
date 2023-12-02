@@ -39,37 +39,27 @@ fun SettingsRoute(
                     SettingsGroupSplitScreen(
                         apps = it.apps,
                         splitScreenShortcuts = it.splitScreenShortcuts,
-                        shortcutSeparator = it.settings.appCardSplitScreenSeparator,
+                        shortcutSeparator = it.settings.appCard.model.splitScreenSeparator,
                         removeShortcut = vm::removeSplitScreenShortcut,
                         addShortcut = vm::addSplitScreenShortcut,
-                        setSeparator = vm::setSplitScreenShortcutSeparator
+                        setSeparator = vm::setAppCardSplitScreenShortcutSeparator
                     )
                     SettingsGroupLayout(
-                        reverseOrder = it.settings.appLayoutReverseOrder,
+                        settings = it.settings.layout,
                         setReverseOrder = vm::setAppLayoutReverseOrder,
-                        horizontalPadding = it.settings.appLayoutHorizontalPadding,
                         setHorizontalPadding = vm::setAppLayoutHorizontalPadding,
-                        verticalPadding = it.settings.appLayoutVerticalPadding,
                         setVerticalPadding = vm::setAppLayoutVerticalPadding,
-                        horizontalArrangement = it.settings.appLayoutHorizontalArrangement,
                         setHorizontalArrangement = vm::setAppLayoutHorizontalArrangement,
-                        verticalArrangement = it.settings.appLayoutVerticalArrangement,
                         setVerticalArrangement = vm::setAppLayoutVerticalArrangement,
-                        sortBy = it.settings.appLayoutSortBy,
                         setSortBy = vm::setAppLayoutSortBy
                     )
                     SettingsGroupAppCard(
-                        removeSpaces = it.settings.appCardLabelRemoveSpaces,
-                        setRemoveSpaces = vm::setAppCardRemoveSpaces,
-                        labelLowercase = it.settings.appCardLabelLowercase,
+                        settings = it.settings.appCard,
                         setLabelLowercase = vm::setAppCardLabelLowercase,
-                        fontFamily = it.settings.appCardFontFamily,
+                        setLabelRemoveSpaces = vm::setAppCardLabelRemoveSpaces,
                         setFontFamily = vm::setAppCardFontFamily,
-                        textStyle = it.settings.appCardTextStyle,
                         setTextStyle = vm::setAppCardTextStyle,
-                        textColor = it.settings.appCardTextColor,
                         setTextColor = vm::setAppCardTextColor,
-                        padding = it.settings.appCardPadding,
                         setPadding = vm::setAppCardPadding
                     )
                 }

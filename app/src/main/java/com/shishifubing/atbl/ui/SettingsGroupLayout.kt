@@ -5,10 +5,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.shishifubing.atbl.LauncherHorizontalArrangement
-import com.shishifubing.atbl.LauncherSortBy
-import com.shishifubing.atbl.LauncherVerticalArrangement
+import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.data.UISettingsLayout
 
 private val choices = object {
     val layoutHorizontalPadding = (0..150 step 10).map { it.toString() }
@@ -17,42 +16,38 @@ private val choices = object {
 
 @Composable
 fun SettingsGroupLayout(
-    reverseOrder: Boolean,
+    settings: UISettingsLayout,
     setReverseOrder: (Boolean) -> Unit,
-    horizontalPadding: Int,
     setHorizontalPadding: (Int) -> Unit,
-    verticalPadding: Int,
     setVerticalPadding: (Int) -> Unit,
-    horizontalArrangement: LauncherHorizontalArrangement,
-    setHorizontalArrangement: (LauncherHorizontalArrangement) -> Unit,
-    verticalArrangement: LauncherVerticalArrangement,
-    setVerticalArrangement: (LauncherVerticalArrangement) -> Unit,
-    sortBy: LauncherSortBy,
-    setSortBy: (LauncherSortBy) -> Unit
+    setHorizontalArrangement: (Model.Settings.HorizontalArrangement) -> Unit,
+    setVerticalArrangement: (Model.Settings.VerticalArrangement) -> Unit,
+    setSortBy: (Model.Settings.SortBy) -> Unit
 ) {
+    val model = settings.model
     SettingsGroup(R.string.settings_group_layout) {
         LayoutReverseOrder(
-            reverse = reverseOrder,
+            reverse = model.reverseOrder,
             setReverse = setReverseOrder
         )
         LayoutHorizontalPadding(
-            padding = horizontalPadding,
+            padding = model.horizontalPadding,
             setPadding = setHorizontalPadding
         )
         LayoutVerticalPadding(
-            padding = verticalPadding,
+            padding = model.verticalPadding,
             setPadding = setVerticalPadding
         )
         LayoutHorizontalArrangement(
-            arrangement = horizontalArrangement,
+            arrangement = model.horizontalArrangement,
             setArrangement = setHorizontalArrangement
         )
         LayoutVerticalArrangement(
-            arrangement = verticalArrangement,
+            arrangement = model.verticalArrangement,
             setArrangement = setVerticalArrangement
         )
         LayoutSortBy(
-            sortBy = sortBy,
+            sortBy = model.sortBy,
             setSortBy = setSortBy
         )
     }
@@ -102,8 +97,8 @@ private fun LayoutHorizontalPadding(
 
 @Composable
 private fun LayoutSortBy(
-    sortBy: LauncherSortBy,
-    setSortBy: (LauncherSortBy) -> Unit
+    sortBy: Model.Settings.SortBy,
+    setSortBy: (Model.Settings.SortBy) -> Unit
 ) {
     SettingsFieldSingleChoiceEnum(
         name = R.string.settings_layout_sort_by,
@@ -127,8 +122,8 @@ private fun LayoutReverseOrder(
 
 @Composable
 private fun LayoutVerticalArrangement(
-    arrangement: LauncherVerticalArrangement,
-    setArrangement: (LauncherVerticalArrangement) -> Unit
+    arrangement: Model.Settings.VerticalArrangement,
+    setArrangement: (Model.Settings.VerticalArrangement) -> Unit
 ) {
     SettingsFieldSingleChoiceEnum(
         name = R.string.settings_layout_vertical_arrangement,
@@ -140,8 +135,8 @@ private fun LayoutVerticalArrangement(
 
 @Composable
 private fun LayoutHorizontalArrangement(
-    arrangement: LauncherHorizontalArrangement,
-    setArrangement: (LauncherHorizontalArrangement) -> Unit
+    arrangement: Model.Settings.HorizontalArrangement,
+    setArrangement: (Model.Settings.HorizontalArrangement) -> Unit
 ) {
     SettingsFieldSingleChoiceEnum(
         name = R.string.settings_layout_horizontal_arrangement,

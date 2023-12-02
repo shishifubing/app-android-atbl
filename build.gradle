@@ -15,7 +15,7 @@ ext {
     lifecycleExtensionsVersion = '2.2.0'
     composeUiVersion = '1.5.4'
     datastoreVersion = '1.0.0'
-    activityVersion = '1.8.0'
+    activityVersion = '1.8.1'
     coreVersion = '1.12.0'
 }
 

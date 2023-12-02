@@ -12,6 +12,8 @@ import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
+import android.graphics.drawable.BitmapDrawable
+import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
 import android.os.UserHandle
@@ -23,6 +25,8 @@ import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import com.google.protobuf.ByteString
+import java.io.ByteArrayOutputStream
 
 
 private val tag = LauncherManager::class.simpleName
@@ -82,7 +86,7 @@ class LauncherManager(
         )
     }
 
-    fun launchAppShortcut(shortcut: LauncherAppShortcut) {
+    fun launchAppShortcut(shortcut: Model.AppShortcut) {
         launcherAppsService.startShortcut(
             shortcut.packageName, shortcut.shortcutId, null, null,
             android.os.Process.myUserHandle()
@@ -109,7 +113,7 @@ class LauncherManager(
         }
     }
 
-    private fun getAppShortcuts(packageName: String): List<LauncherAppShortcut> {
+    private fun getAppShortcuts(packageName: String): List<Model.AppShortcut> {
         val userHandle = android.os.Process.myUserHandle()
         val query = LauncherApps.ShortcutQuery()
             .setPackage(packageName)
@@ -126,7 +130,7 @@ class LauncherManager(
         }
         return shortcuts.map { info ->
             val label = info.longLabel ?: info.shortLabel ?: info.`package`
-            LauncherAppShortcut.newBuilder()
+            Model.AppShortcut.newBuilder()
                 .setShortcutId(info.id)
                 .setPackageName(info.`package`)
                 .setLabel(label.toString())
@@ -134,7 +138,7 @@ class LauncherManager(
         }
     }
 
-    fun getApp(packageName: String): LauncherApp {
+    fun getApp(packageName: String): Model.App {
         val queryResults = queryPackageManager(
             Intent(ACTION_MAIN, null)
                 .addCategory(Intent.CATEGORY_LAUNCHER)
@@ -146,27 +150,36 @@ class LauncherManager(
             )
         }
         val info = queryResults[0].activityInfo
-        return LauncherApp.newBuilder()
+        return Model.App.newBuilder()
             .setLabel(info.loadLabel(packageManager).toString())
             .setPackageName(info.packageName)
             .addAllShortcuts(getAppShortcuts(info.packageName))
+            .setIcon(compressIcon(info.loadIcon(packageManager)))
             .build()
     }
 
-    fun fetchAllApps(): Map<String, LauncherApp> {
+    private fun compressIcon(icon: Drawable): ByteString {
+        val stream = ByteArrayOutputStream()
+        val bitmap = (icon as BitmapDrawable).bitmap
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        return ByteString.copyFrom(stream.toByteArray())
+    }
+
+    fun fetchAllApps(): Model.Apps {
         val queryResults = queryPackageManager(
             Intent(ACTION_MAIN, null)
                 .addCategory(Intent.CATEGORY_LAUNCHER)
         )
-        return queryResults.associate { info ->
+        val apps = queryResults.associate { info ->
             val activity = info.activityInfo
             val name = activity.packageName
-            name to LauncherApp.newBuilder()
+            name to Model.App.newBuilder()
                 .setLabel(activity.loadLabel(packageManager).toString())
                 .setPackageName(name)
                 .addAllShortcuts(getAppShortcuts(name))
                 .build()
         }
+        return Model.Apps.newBuilder().putAllApps(apps).build()
     }
 
     fun getAppIcon(packageName: String): ImageBitmap {
@@ -210,7 +223,7 @@ class LauncherManager(
         ) = Unit
     })
 
-    fun launchSplitScreen(shortcut: LauncherSplitScreenShortcut) {
+    fun launchSplitScreen(shortcut: Model.SplitScreenShortcut) {
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 lifecycle.removeObserver(this)

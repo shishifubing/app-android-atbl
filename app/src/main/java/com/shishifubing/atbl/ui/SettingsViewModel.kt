@@ -4,16 +4,15 @@ package com.shishifubing.atbl.ui
 import androidx.compose.runtime.Stable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.shishifubing.atbl.LauncherApp
-import com.shishifubing.atbl.LauncherFontFamily
-import com.shishifubing.atbl.LauncherHorizontalArrangement
-import com.shishifubing.atbl.LauncherSettings
-import com.shishifubing.atbl.LauncherSortBy
-import com.shishifubing.atbl.LauncherSplitScreenShortcut
 import com.shishifubing.atbl.LauncherStateRepository
-import com.shishifubing.atbl.LauncherTextColor
-import com.shishifubing.atbl.LauncherTextStyle
-import com.shishifubing.atbl.LauncherVerticalArrangement
+import com.shishifubing.atbl.Model
+import com.shishifubing.atbl.data.UIApp
+import com.shishifubing.atbl.data.UIApps
+import com.shishifubing.atbl.data.UISettings
+import com.shishifubing.atbl.data.UISettingsAppCard
+import com.shishifubing.atbl.data.UISettingsLayout
+import com.shishifubing.atbl.data.UISplitScreenShortcut
+import com.shishifubing.atbl.data.UISplitScreenShortcuts
 import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -44,9 +43,20 @@ class SettingsViewModel(
 
     val uiState = stateRepo.observeState().map { state ->
         SettingsScreenUiState.Success(
-            apps = state.appsMap.values,
-            splitScreenShortcuts = state.splitScreenShortcutsMap.values.sortedBy { it.appTop.packageName },
-            settings = state.settings
+            apps = UIApps(
+                model = state.apps.appsMap.values
+                    .sortedBy { it.label }
+                    .map { UIApp(model = it) }
+            ),
+            splitScreenShortcuts = UISplitScreenShortcuts(
+                model = state.splitScreenShortcuts.shortcutsMap.values
+                    .sortedBy { it.key }
+                    .map { UISplitScreenShortcut(model = it) }
+            ),
+            settings = UISettings(
+                layout = UISettingsLayout(state.settings.layout),
+                appCard = UISettingsAppCard(state.settings.appCard)
+            )
         )
     }.stateIn(
         scope = viewModelScope,
@@ -67,66 +77,66 @@ class SettingsViewModel(
         stateAction { setHiddenApps(packageNames) }
     }
 
-    fun setSplitScreenShortcutSeparator(value: String) {
-        updateSettings { appCardSplitScreenSeparator = value }
+    fun removeSplitScreenShortcut(shortcut: Model.SplitScreenShortcut) {
+        stateAction { removeSplitScreenShortcut(shortcut.key) }
     }
 
-    fun removeSplitScreenShortcut(shortcut: LauncherSplitScreenShortcut) {
-        stateAction { removeSplitScreenShortcut(shortcut) }
-    }
-
-    fun addSplitScreenShortcut(appTop: LauncherApp, appBottom: LauncherApp) {
+    fun addSplitScreenShortcut(firstApp: Model.App, secondApp: Model.App) {
         stateAction {
-            addSplitScreenShortcut(appTop.packageName, appBottom.packageName)
+            addSplitScreenShortcut(firstApp.packageName, secondApp.packageName)
         }
     }
 
     fun setAppLayoutReverseOrder(value: Boolean) {
-        updateSettings { appLayoutReverseOrder = value }
+        updateLayout { reverseOrder = value }
     }
 
     fun setAppLayoutHorizontalPadding(value: Int) {
-        updateSettings { appLayoutHorizontalPadding = value }
+        updateLayout { horizontalPadding = value }
     }
 
     fun setAppLayoutVerticalPadding(value: Int) {
-        updateSettings { appLayoutVerticalPadding = value }
+        updateLayout { verticalPadding = value }
     }
 
-    fun setAppLayoutHorizontalArrangement(value: LauncherHorizontalArrangement) {
-        updateSettings { appLayoutHorizontalArrangement = value }
+    fun setAppLayoutHorizontalArrangement(value: Model.Settings.HorizontalArrangement) {
+        updateLayout { horizontalArrangement = value }
     }
 
-    fun setAppLayoutVerticalArrangement(value: LauncherVerticalArrangement) {
-        updateSettings { appLayoutVerticalArrangement = value }
+    fun setAppLayoutVerticalArrangement(value: Model.Settings.VerticalArrangement) {
+        updateLayout { verticalArrangement = value }
     }
 
-    fun setAppLayoutSortBy(value: LauncherSortBy) {
-        updateSettings { appLayoutSortBy = value }
+    fun setAppLayoutSortBy(value: Model.Settings.SortBy) {
+        updateLayout { sortBy = value }
     }
 
-    fun setAppCardRemoveSpaces(value: Boolean) {
-        updateSettings { appCardLabelRemoveSpaces = value }
+    fun setAppCardLabelRemoveSpaces(value: Boolean) {
+        updateAppCard { labelRemoveSpaces = value }
     }
 
     fun setAppCardLabelLowercase(value: Boolean) {
-        updateSettings { appCardLabelRemoveSpaces = value }
+        updateAppCard { labelRemoveSpaces = value }
     }
 
-    fun setAppCardFontFamily(value: LauncherFontFamily) {
-        updateSettings { appCardFontFamily = value }
+    fun setAppCardFontFamily(value: Model.Settings.FontFamily) {
+        updateAppCard { fontFamily = value }
     }
 
-    fun setAppCardTextStyle(value: LauncherTextStyle) {
-        updateSettings { appCardTextStyle = value }
+    fun setAppCardTextStyle(value: Model.Settings.TextStyle) {
+        updateAppCard { textStyle = value }
     }
 
-    fun setAppCardTextColor(value: LauncherTextColor) {
-        updateSettings { appCardTextColor = value }
+    fun setAppCardTextColor(value: Model.Settings.TextColor) {
+        updateAppCard { textColor = value }
     }
 
     fun setAppCardPadding(value: Int) {
-        updateSettings { appCardPadding = value }
+        updateAppCard { padding = value }
+    }
+
+    fun setAppCardSplitScreenShortcutSeparator(value: String) {
+        updateAppCard { splitScreenSeparator = value }
     }
 
     private fun launch(action: suspend CoroutineScope.() -> Unit) {
@@ -137,9 +147,21 @@ class SettingsViewModel(
         launch { action.invoke(stateRepo) }
     }
 
-    private fun updateSettings(action: LauncherSettings.Builder.() -> Unit) {
+    private fun updateSettings(action: Model.Settings.Builder.() -> Unit) {
         stateAction {
             updateSettings(action)
+        }
+    }
+
+    private fun updateAppCard(action: Model.Settings.AppCard.Builder.() -> Unit) {
+        updateSettings {
+            appCard = appCard.toBuilder().apply(action).build()
+        }
+    }
+
+    private fun updateLayout(action: Model.Settings.Layout.Builder.() -> Unit) {
+        updateSettings {
+            layout = layout.toBuilder().apply(action).build()
         }
     }
 }
@@ -147,9 +169,9 @@ class SettingsViewModel(
 @Stable
 sealed interface SettingsScreenUiState {
     data class Success(
-        val settings: LauncherSettings,
-        val apps: Collection<LauncherApp>,
-        val splitScreenShortcuts: List<LauncherSplitScreenShortcut>
+        val settings: UISettings,
+        val apps: UIApps,
+        val splitScreenShortcuts: UISplitScreenShortcuts
     ) : SettingsScreenUiState
 
     object Loading : SettingsScreenUiState

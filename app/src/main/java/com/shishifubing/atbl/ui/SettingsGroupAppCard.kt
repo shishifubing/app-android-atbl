@@ -6,50 +6,45 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import com.shishifubing.atbl.LauncherFontFamily
-import com.shishifubing.atbl.LauncherTextColor
-import com.shishifubing.atbl.LauncherTextStyle
+import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.data.UISettingsAppCard
 
 
 @Composable
 fun SettingsGroupAppCard(
-    removeSpaces: Boolean,
-    setRemoveSpaces: (Boolean) -> Unit,
-    labelLowercase: Boolean,
+    settings: UISettingsAppCard,
+    setLabelRemoveSpaces: (Boolean) -> Unit,
     setLabelLowercase: (Boolean) -> Unit,
-    fontFamily: LauncherFontFamily,
-    setFontFamily: (LauncherFontFamily) -> Unit,
-    textStyle: LauncherTextStyle,
-    setTextStyle: (LauncherTextStyle) -> Unit,
-    textColor: LauncherTextColor,
-    setTextColor: (LauncherTextColor) -> Unit,
-    padding: Int,
+    setFontFamily: (Model.Settings.FontFamily) -> Unit,
+    setTextStyle: (Model.Settings.TextStyle) -> Unit,
+    setTextColor: (Model.Settings.TextColor) -> Unit,
     setPadding: (Int) -> Unit
 ) {
+    val model = settings.model
     SettingsGroup(R.string.settings_group_app_card) {
         AppCardRemoveSpaces(
-            removeSpaces = removeSpaces,
-            setRemoveSpaces = setRemoveSpaces
+            removeSpaces = model.labelRemoveSpaces,
+            setRemoveSpaces = setLabelRemoveSpaces
         )
         AppCardLowercase(
-            lowercase = labelLowercase,
+            lowercase = model.labelLowercase,
             setLowercase = setLabelLowercase
         )
         AppCardFontFamily(
-            fontFamily = fontFamily,
+            fontFamily = model.fontFamily,
             setFontFamily = setFontFamily
         )
         AppCardTextStyle(
-            textStyle = textStyle,
+            textStyle = model.textStyle,
             setTextStyle = setTextStyle
         )
         AppCardTextColor(
-            color = textColor,
+            color = model.textColor,
             setColor = setTextColor
         )
         AppCardPadding(
-            padding = padding,
+            padding = model.padding,
             setPadding = setPadding
         )
     }
@@ -57,8 +52,8 @@ fun SettingsGroupAppCard(
 
 @Composable
 private fun AppCardFontFamily(
-    fontFamily: LauncherFontFamily,
-    setFontFamily: (LauncherFontFamily) -> Unit
+    fontFamily: Model.Settings.FontFamily,
+    setFontFamily: (Model.Settings.FontFamily) -> Unit
 ) {
     SettingsFieldSingleChoiceEnum(
         name = R.string.settings_app_card_font_family,
@@ -69,8 +64,8 @@ private fun AppCardFontFamily(
 
 @Composable
 private fun AppCardTextStyle(
-    textStyle: LauncherTextStyle,
-    setTextStyle: (LauncherTextStyle) -> Unit
+    textStyle: Model.Settings.TextStyle,
+    setTextStyle: (Model.Settings.TextStyle) -> Unit
 ) {
     SettingsFieldSingleChoiceEnum(
         name = R.string.settings_app_card_text_style,
@@ -107,8 +102,8 @@ private fun AppCardLowercase(
 
 @Composable
 private fun AppCardTextColor(
-    color: LauncherTextColor,
-    setColor: (LauncherTextColor) -> Unit
+    color: Model.Settings.TextColor,
+    setColor: (Model.Settings.TextColor) -> Unit
 ) {
     SettingsFieldSingleChoiceEnum(
         name = R.string.settings_app_card_text_color,
