@@ -1,18 +1,11 @@
 package com.shishifubing.atbl.ui
 
 
-import androidx.compose.runtime.Stable
+import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
-import com.shishifubing.atbl.data.UIApp
-import com.shishifubing.atbl.data.UIApps
-import com.shishifubing.atbl.data.UISettings
-import com.shishifubing.atbl.data.UISettingsAppCard
-import com.shishifubing.atbl.data.UISettingsLayout
-import com.shishifubing.atbl.data.UISplitScreenShortcut
-import com.shishifubing.atbl.data.UISplitScreenShortcuts
 import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -23,7 +16,17 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.FileOutputStream
 
+
+@Immutable
+sealed interface SettingsScreenUIState {
+    @Immutable
+    data class Success(val state: Model.State) : SettingsScreenUIState
+
+    @Immutable
+    data object Loading : SettingsScreenUIState
+}
 
 class SettingsViewModel(
     private val stateRepo: LauncherStateRepository
@@ -41,28 +44,13 @@ class SettingsViewModel(
         _error.update { e }
     }
 
-    val uiState = stateRepo.observeState().map { state ->
-        SettingsScreenUiState.Success(
-            apps = UIApps(
-                model = state.apps.appsMap.values
-                    .sortedBy { it.label }
-                    .map { UIApp(model = it) }
-            ),
-            splitScreenShortcuts = UISplitScreenShortcuts(
-                model = state.splitScreenShortcuts.shortcutsMap.values
-                    .sortedBy { it.key }
-                    .map { UISplitScreenShortcut(model = it) }
-            ),
-            settings = UISettings(
-                layout = UISettingsLayout(state.settings.layout),
-                appCard = UISettingsAppCard(state.settings.appCard)
-            )
+    val uiState = stateRepo.observeState()
+        .map { SettingsScreenUIState.Success(state = it) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = SettingsScreenUIState.Loading
         )
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = SettingsScreenUiState.Loading
-    )
 
 
     fun updateSettingsFromBytes(bytes: ByteArray) {
@@ -78,7 +66,7 @@ class SettingsViewModel(
     }
 
     fun removeSplitScreenShortcut(shortcut: Model.SplitScreenShortcut) {
-        stateAction { removeSplitScreenShortcut(shortcut.key) }
+        stateAction { removeSplitScreenShortcut(shortcut) }
     }
 
     fun addSplitScreenShortcut(firstApp: Model.App, secondApp: Model.App) {
@@ -139,6 +127,10 @@ class SettingsViewModel(
         updateAppCard { splitScreenSeparator = value }
     }
 
+    fun writeSettings(stream: FileOutputStream) {
+        stateAction { writeSettings(stream) }
+    }
+
     private fun launch(action: suspend CoroutineScope.() -> Unit) {
         viewModelScope.launch(exceptionHandler) { action() }
     }
@@ -164,15 +156,4 @@ class SettingsViewModel(
             layout = layout.toBuilder().apply(action).build()
         }
     }
-}
-
-@Stable
-sealed interface SettingsScreenUiState {
-    data class Success(
-        val settings: UISettings,
-        val apps: UIApps,
-        val splitScreenShortcuts: UISplitScreenShortcuts
-    ) : SettingsScreenUiState
-
-    object Loading : SettingsScreenUiState
 }

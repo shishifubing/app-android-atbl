@@ -22,9 +22,8 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
+import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.Model
-import com.shishifubing.atbl.data.UISettingsAppCard
-import com.shishifubing.atbl.data.defaultUISettingsAppCard
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -32,11 +31,9 @@ fun HomeItemCard(
     label: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    transformLabel: (String, Model.Settings.AppCard) -> String,
-    settings: UISettingsAppCard,
+    settings: Model.Settings.AppCard,
     modifier: Modifier = Modifier,
 ) {
-    val model = settings.model
     Box(
         modifier = modifier
             .semantics { role = Role.Button }
@@ -57,11 +54,11 @@ fun HomeItemCard(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
-                modifier = Modifier.padding(model.padding.dp),
-                style = model.textStyle.toTextStyle(),
-                fontFamily = model.fontFamily.toFontFamily(),
-                color = model.textColor.toColor(),
-                text = transformLabel(label, settings.model)
+                modifier = Modifier.padding(settings.padding.dp),
+                style = settings.textStyle.toTextStyle(),
+                fontFamily = settings.fontFamily.toFontFamily(),
+                color = settings.textColor.toColor(),
+                text = label
             )
         }
     }
@@ -133,8 +130,7 @@ private fun HomeItemCardPreview() {
             label = "app",
             onClick = { /*TODO*/ },
             onLongClick = { /*TODO*/ },
-            settings = defaultUISettingsAppCard,
-            transformLabel = { label, _ -> label }
+            settings = Defaults.AppCardSettings
         )
     }
 }

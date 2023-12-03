@@ -11,29 +11,30 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.shishifubing.atbl.Model
-import com.shishifubing.atbl.data.UISettingsLayout
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeRow(
-    settings: UISettingsLayout,
+    settings: Model.Settings.Layout,
     modifier: Modifier = Modifier,
     content: @Composable FlowRowScope.() -> Unit
 ) {
-    val model = settings.model
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
-            .padding(model.horizontalPadding.dp, model.verticalPadding.dp),
-        horizontalArrangement = model.horizontalArrangement.toArrangement(),
-        verticalArrangement = model.verticalArrangement.toArrangement(),
+            .padding(
+                settings.horizontalPadding.dp,
+                settings.verticalPadding.dp
+            ),
+        horizontalArrangement = settings.horizontalArrangement.toArrangement(),
+        verticalArrangement = settings.verticalArrangement.toArrangement(),
         content = content
     )
 }
 
 
-private fun Model.Settings.HorizontalArrangement.toArrangement(): Arrangement.Horizontal =
-    when (this) {
+private fun Model.Settings.HorizontalArrangement.toArrangement(): Arrangement.Horizontal {
+    return when (this) {
         Model.Settings.HorizontalArrangement.HorizontalStart -> Arrangement.Start
         Model.Settings.HorizontalArrangement.HorizontalEnd -> Arrangement.End
         Model.Settings.HorizontalArrangement.HorizontalCenter -> Arrangement.Center
@@ -42,9 +43,10 @@ private fun Model.Settings.HorizontalArrangement.toArrangement(): Arrangement.Ho
         Model.Settings.HorizontalArrangement.HorizontalSpaceAround -> Arrangement.SpaceAround
         else -> Arrangement.Center
     }
+}
 
-private fun Model.Settings.VerticalArrangement.toArrangement(): Arrangement.Vertical =
-    when (this) {
+private fun Model.Settings.VerticalArrangement.toArrangement(): Arrangement.Vertical {
+    return when (this) {
         Model.Settings.VerticalArrangement.VerticalTop -> Arrangement.Top
         Model.Settings.VerticalArrangement.VerticalBottom -> Arrangement.Bottom
         Model.Settings.VerticalArrangement.VerticalCenter -> Arrangement.Center
@@ -53,4 +55,5 @@ private fun Model.Settings.VerticalArrangement.toArrangement(): Arrangement.Vert
         Model.Settings.VerticalArrangement.VerticalSpaceAround -> Arrangement.SpaceAround
         else -> Arrangement.Center
     }
+}
 

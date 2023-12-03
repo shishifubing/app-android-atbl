@@ -4,7 +4,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.UIHomeDialogActionButtons
+
 
 @Composable
 fun HomeLauncherDialogActions(
@@ -21,7 +21,7 @@ fun HomeLauncherDialogActions(
     HomeDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
-        actionButtons = UIHomeDialogActionButtons(listOf(
+        actionButtons = HomeDialogButtons(listOf(
             stringResource(R.string.launcher_dialog_settings) to {
                 navigate(LauncherNav.Settings)
             },

@@ -1,62 +1,63 @@
 package com.shishifubing.atbl.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.shishifubing.atbl.Model
-import com.shishifubing.atbl.data.UIApp
-import com.shishifubing.atbl.data.UIApps
-import com.shishifubing.atbl.data.UIHomeDialogActionButtons
-import com.shishifubing.atbl.data.UIHomeDialogHeaders
-import com.shishifubing.atbl.data.UISettingsAppCard
+
+@Immutable
+data class HomeItemAppsState(
+    val apps: List<Model.App>,
+    val launchApp: (Model.App) -> Unit,
+    val launchShortcut: (Model.AppShortcut) -> Unit,
+    val transformLabel: (String, Model.Settings.AppCard) -> String,
+    val launchAppInfo: (Model.App) -> Unit,
+    val launchAppUninstall: (Model.App) -> Unit,
+    val setIsHidden: (Model.App, Boolean) -> Unit,
+    val showShortcuts: Boolean,
+    val showHiddenApps: Boolean,
+    val settings: Model.Settings.AppCard
+)
 
 @Composable
-fun HomeItemApps(
-    apps: UIApps,
-    launchApp: (Model.App) -> Unit,
-    launchShortcut: (Model.AppShortcut) -> Unit,
-    transformLabel: (String, Model.Settings.AppCard) -> String,
-    launchAppInfo: (Model.App) -> Unit,
-    launchAppUninstall: (Model.App) -> Unit,
-    setIsHidden: (Model.App, Boolean) -> Unit,
-    showShortcuts: Boolean,
-    appCardSettings: UISettingsAppCard
-) {
-    var dialogApp by remember(apps) { mutableStateOf<UIApp?>(null) }
-    apps.model.forEach { app ->
+fun HomeItemApps(state: HomeItemAppsState) {
+    var dialogApp by remember { mutableStateOf<Model.App?>(null) }
+    state.apps.forEach { app ->
         key(app.hashCode()) {
-            HomeItemCard(
-                label = app.model.label,
-                onClick = { launchApp(app.model) },
-                onLongClick = { dialogApp = app },
-                settings = appCardSettings,
-                transformLabel = transformLabel
-            )
+            if (state.showHiddenApps || !app.isHidden) {
+                HomeItemCard(
+                    label = state.transformLabel(app.label, state.settings),
+                    onClick = { state.launchApp(app) },
+                    onLongClick = { dialogApp = app },
+                    settings = state.settings,
+                )
+            }
         }
     }
     dialogApp?.let { app ->
         HomeDialog(
             onDismissRequest = { dialogApp = null },
-            actionButtons = app.uiShortcuts.model
-                .map {
-                    it.model.label to {
-                        launchShortcut(it.model)
+            actionButtons = app.shortcutsList
+                .takeIf { state.showShortcuts }
+                ?.map {
+                    it.label to {
+                        state.launchShortcut(it)
                         dialogApp = app
                     }
                 }
-                .let { UIHomeDialogActionButtons(it) }
-                .takeIf { showShortcuts }
-                ?: UIHomeDialogActionButtons(listOf()),
-            headers = UIHomeDialogHeaders(listOf {
+                ?.let { HomeDialogButtons(it) }
+                ?: HomeDialogButtons(listOf()),
+            headers = HomeDialogHeaders(listOf {
                 HomeDialogHeader(
                     app = app,
                     onDismissRequest = { dialogApp = null },
-                    launchAppInfo = launchAppInfo,
-                    launchAppUninstall = launchAppUninstall,
-                    setIsHidden = setIsHidden
+                    launchAppInfo = state.launchAppInfo,
+                    launchAppUninstall = state.launchAppUninstall,
+                    setIsHidden = state.setIsHidden
                 )
             })
         )

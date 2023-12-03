@@ -8,12 +8,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.UISettingsAppCard
 
 
 @Composable
 fun SettingsGroupAppCard(
-    settings: UISettingsAppCard,
+    settings: Model.Settings.AppCard,
     setLabelRemoveSpaces: (Boolean) -> Unit,
     setLabelLowercase: (Boolean) -> Unit,
     setFontFamily: (Model.Settings.FontFamily) -> Unit,
@@ -21,30 +20,29 @@ fun SettingsGroupAppCard(
     setTextColor: (Model.Settings.TextColor) -> Unit,
     setPadding: (Int) -> Unit
 ) {
-    val model = settings.model
     SettingsGroup(R.string.settings_group_app_card) {
         AppCardRemoveSpaces(
-            removeSpaces = model.labelRemoveSpaces,
+            removeSpaces = settings.labelRemoveSpaces,
             setRemoveSpaces = setLabelRemoveSpaces
         )
         AppCardLowercase(
-            lowercase = model.labelLowercase,
+            lowercase = settings.labelLowercase,
             setLowercase = setLabelLowercase
         )
         AppCardFontFamily(
-            fontFamily = model.fontFamily,
+            fontFamily = settings.fontFamily,
             setFontFamily = setFontFamily
         )
         AppCardTextStyle(
-            textStyle = model.textStyle,
+            textStyle = settings.textStyle,
             setTextStyle = setTextStyle
         )
         AppCardTextColor(
-            color = model.textColor,
+            color = settings.textColor,
             setColor = setTextColor
         )
         AppCardPadding(
-            padding = model.padding,
+            padding = settings.padding,
             setPadding = setPadding
         )
     }

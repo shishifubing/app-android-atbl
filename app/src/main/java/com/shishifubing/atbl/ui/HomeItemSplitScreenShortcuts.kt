@@ -1,6 +1,7 @@
 package com.shishifubing.atbl.ui
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -8,51 +9,48 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import com.shishifubing.atbl.Model
+import com.shishifubing.atbl.Model.SplitScreenShortcut
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.UIHomeDialogActionButtons
-import com.shishifubing.atbl.data.UIHomeDialogHeaders
-import com.shishifubing.atbl.data.UISettingsAppCard
-import com.shishifubing.atbl.data.UISplitScreenShortcut
-import com.shishifubing.atbl.data.UISplitScreenShortcuts
+
+@Immutable
+data class HomeItemSplitScreenShortcutsState(
+    val shortcuts: List<SplitScreenShortcut>,
+    val getLabel: (SplitScreenShortcut, Model.Settings.AppCard) -> String,
+    val launchSplitScreenShortcut: (SplitScreenShortcut) -> Unit,
+    val removeSplitScreenShortcut: (SplitScreenShortcut) -> Unit,
+    val launchAppInfo: (Model.App) -> Unit,
+    val launchAppUninstall: (Model.App) -> Unit,
+    val setIsHidden: (Model.App, Boolean) -> Unit,
+    val settings: Model.Settings.AppCard,
+)
 
 @Composable
-fun HomeItemSplitScreenShortcuts(
-    shortcuts: UISplitScreenShortcuts,
-    getShortcutLabel: (Model.SplitScreenShortcut) -> String,
-    launchSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
-    removeSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
-    transformLabel: (String, Model.Settings.AppCard) -> String,
-    launchAppInfo: (Model.App) -> Unit,
-    launchAppUninstall: (Model.App) -> Unit,
-    setIsHidden: (Model.App, Boolean) -> Unit,
-    settings: UISettingsAppCard,
-) {
+fun HomeItemSplitScreenShortcuts(state: HomeItemSplitScreenShortcutsState) {
     var dialogShortcutIndex by remember { mutableIntStateOf(-1) }
-    shortcuts.model.forEachIndexed { i, shortcut ->
+    state.shortcuts.forEachIndexed { i, shortcut ->
         HomeItemCard(
-            label = getShortcutLabel(shortcut.model),
-            onClick = { launchSplitScreenShortcut(shortcut.model) },
+            label = state.getLabel(shortcut, state.settings),
+            onClick = { state.launchSplitScreenShortcut(shortcut) },
             onLongClick = { dialogShortcutIndex = i },
-            settings = settings,
-            transformLabel = transformLabel
+            settings = state.settings
         )
     }
     if (dialogShortcutIndex != -1) {
         SplitScreenShortcutDialog(
-            shortcut = shortcuts.model[dialogShortcutIndex],
-            removeSplitScreenShortcut = removeSplitScreenShortcut,
+            shortcut = state.shortcuts[dialogShortcutIndex],
+            removeSplitScreenShortcut = state.removeSplitScreenShortcut,
             onDismissRequest = { dialogShortcutIndex = -1 },
-            launchAppInfo = launchAppInfo,
-            launchAppUninstall = launchAppUninstall,
-            setIsHidden = setIsHidden
+            launchAppInfo = state.launchAppInfo,
+            launchAppUninstall = state.launchAppUninstall,
+            setIsHidden = state.setIsHidden
         )
     }
 }
 
 @Composable
 private fun SplitScreenShortcutDialog(
-    shortcut: UISplitScreenShortcut,
-    removeSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
+    shortcut: SplitScreenShortcut,
+    removeSplitScreenShortcut: (SplitScreenShortcut) -> Unit,
     launchAppInfo: (Model.App) -> Unit,
     launchAppUninstall: (Model.App) -> Unit,
     setIsHidden: (Model.App, Boolean) -> Unit,
@@ -62,16 +60,16 @@ private fun SplitScreenShortcutDialog(
     HomeDialog(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
-        actionButtons = UIHomeDialogActionButtons(listOf(
+        actionButtons = HomeDialogButtons(listOf(
             stringResource(R.string.drawer_app_delete_split_screen_shortcut) to {
-                removeSplitScreenShortcut(shortcut.model)
+                removeSplitScreenShortcut(shortcut)
                 onDismissRequest()
             }
         )),
-        headers = UIHomeDialogHeaders(listOf(
+        headers = HomeDialogHeaders(listOf(
             {
                 HomeDialogHeader(
-                    app = shortcut.uiAppFirst,
+                    app = shortcut.appSecond,
                     launchAppInfo = launchAppInfo,
                     launchAppUninstall = launchAppUninstall,
                     setIsHidden = setIsHidden,
@@ -80,7 +78,7 @@ private fun SplitScreenShortcutDialog(
             },
             {
                 HomeDialogHeader(
-                    app = shortcut.uiAppSecond,
+                    app = shortcut.appFirst,
                     launchAppInfo = launchAppInfo,
                     launchAppUninstall = launchAppUninstall,
                     setIsHidden = setIsHidden,

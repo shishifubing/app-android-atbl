@@ -5,8 +5,12 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.Immutable
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLifecycleOwner
+import androidx.lifecycle.DefaultLifecycleObserver
+import androidx.lifecycle.LifecycleOwner
 import androidx.navigation.NavController
 import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.compose.NavHost
@@ -20,25 +24,27 @@ sealed class LauncherNav(
     val route: String,
     @StringRes val label: Int
 ) {
-    object Home : LauncherNav(
+    data object Home : LauncherNav(
         route = "home_screen",
         label = R.string.navigation_home
     )
 
-    object Settings : LauncherNav(
+    data object Settings : LauncherNav(
         route = "settings_screen",
         label = R.string.navigation_settings
     )
 
-    object AddWidget : LauncherNav(
+    data object AddWidget : LauncherNav(
         route = "add_widget_screen",
         label = R.string.navigation_add_widget
     )
 }
 
-fun NavController.navigate(route: LauncherNav) = navigate(route.route) {
-    popUpTo(graph.findStartDestination().id)
-    launchSingleTop = true
+fun NavController.navigate(route: LauncherNav) {
+    navigate(route.route) {
+        popUpTo(id = graph.findStartDestination().id)
+        launchSingleTop = true
+    }
 }
 
 @Composable
@@ -53,6 +59,7 @@ fun LauncherUi(modifier: Modifier = Modifier) {
 @Composable
 private fun LauncherNavGraph(modifier: Modifier = Modifier) {
     val navController = rememberNavController()
+    GoToHomeOnPause(navigate = navController::navigate)
     NavHost(
         modifier = modifier,
         navController = navController,
@@ -74,6 +81,23 @@ private fun LauncherNavGraph(modifier: Modifier = Modifier) {
                 navController = navController,
                 nav = LauncherNav.AddWidget
             )
+        }
+    }
+}
+
+@Composable
+private fun GoToHomeOnPause(navigate: (LauncherNav) -> Unit) {
+    val lifecycleOwner = LocalLifecycleOwner.current
+    DisposableEffect(lifecycleOwner) {
+        val observer = object : DefaultLifecycleObserver {
+            override fun onStop(owner: LifecycleOwner) {
+                super.onStop(owner)
+                navigate(LauncherNav.Home)
+            }
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
         }
     }
 }

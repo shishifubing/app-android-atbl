@@ -12,19 +12,17 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
-import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.UISettings
 import java.io.FileOutputStream
 
 @Composable
 fun SettingsGroupGeneral(
-    settings: UISettings,
+    writeSettings: (FileOutputStream) -> Unit,
     updateSettingsFromBytes: (ByteArray) -> Unit,
     backupReset: () -> Unit,
 ) {
     SettingsGroup(R.string.settings_group_general) {
-        BackupExport(settings = settings)
+        BackupExport(writeSettings = writeSettings)
         BackupImport(updateFromBytes = updateSettingsFromBytes)
         BackupReset(resetSettings = backupReset)
     }
@@ -75,7 +73,7 @@ private fun BackupImport(updateFromBytes: (ByteArray) -> Unit) {
 }
 
 @Composable
-private fun BackupExport(settings: UISettings) {
+private fun BackupExport(writeSettings: (FileOutputStream) -> Unit) {
     var result by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/binpb")
@@ -90,13 +88,7 @@ private fun BackupExport(settings: UISettings) {
     )
     LauncherEffectURI(uri = result) {
         openFileDescriptor(it, "w")?.use { file ->
-            FileOutputStream(file.fileDescriptor).use { stream ->
-                Model.Settings.newBuilder()
-                    .setAppCard(settings.appCard.model)
-                    .setLayout(settings.layout.model)
-                    .build()
-                    .writeTo(stream)
-            }
+            FileOutputStream(file.fileDescriptor).use(block = writeSettings)
         }
     }
 }

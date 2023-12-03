@@ -7,12 +7,12 @@ import android.content.Intent
 import android.content.Intent.ACTION_MAIN
 import android.content.Intent.CATEGORY_HOME
 import android.content.IntentFilter
+import android.content.pm.ActivityInfo
 import android.content.pm.LauncherApps
 import android.content.pm.PackageManager
 import android.content.pm.ResolveInfo
 import android.content.pm.ShortcutInfo
 import android.graphics.Bitmap
-import android.graphics.drawable.BitmapDrawable
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
@@ -149,7 +149,10 @@ class LauncherManager(
                 "could not fetch $packageName - empty queryResults"
             )
         }
-        val info = queryResults[0].activityInfo
+        return infoToApp(queryResults[0].activityInfo)
+    }
+
+    private fun infoToApp(info: ActivityInfo): Model.App {
         return Model.App.newBuilder()
             .setLabel(info.loadLabel(packageManager).toString())
             .setPackageName(info.packageName)
@@ -160,8 +163,8 @@ class LauncherManager(
 
     private fun compressIcon(icon: Drawable): ByteString {
         val stream = ByteArrayOutputStream()
-        val bitmap = (icon as BitmapDrawable).bitmap
-        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream)
+        icon.toBitmap(config = Bitmap.Config.ARGB_8888)
+            .compress(Bitmap.CompressFormat.PNG, 100, stream)
         return ByteString.copyFrom(stream.toByteArray())
     }
 
@@ -172,12 +175,7 @@ class LauncherManager(
         )
         val apps = queryResults.associate { info ->
             val activity = info.activityInfo
-            val name = activity.packageName
-            name to Model.App.newBuilder()
-                .setLabel(activity.loadLabel(packageManager).toString())
-                .setPackageName(name)
-                .addAllShortcuts(getAppShortcuts(name))
-                .build()
+            activity.packageName to infoToApp(activity)
         }
         return Model.Apps.newBuilder().putAllApps(apps).build()
     }
@@ -223,12 +221,12 @@ class LauncherManager(
         ) = Unit
     })
 
-    fun launchSplitScreen(shortcut: Model.SplitScreenShortcut) {
+    fun launchSplitScreen(appFirst: String, appSecond: String) {
         lifecycle.addObserver(object : DefaultLifecycleObserver {
             override fun onStop(owner: LifecycleOwner) {
                 lifecycle.removeObserver(this)
                 launchApp(
-                    packageName = shortcut.appTop.packageName,
+                    packageName = appSecond,
                     flags = Intent.FLAG_ACTIVITY_NEW_TASK
                             or Intent.FLAG_ACTIVITY_LAUNCH_ADJACENT
                             or Intent.FLAG_ACTIVITY_CLEAR_TOP
@@ -236,7 +234,7 @@ class LauncherManager(
             }
         })
         launchApp(
-            packageName = shortcut.appBottom.packageName,
+            packageName = appFirst,
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP
         )
     }

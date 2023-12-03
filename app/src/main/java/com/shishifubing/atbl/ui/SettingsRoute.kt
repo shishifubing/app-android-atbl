@@ -21,31 +21,34 @@ fun SettingsRoute(
     ErrorToast(errorFlow = vm.error)
     LauncherScaffold(nav = nav, goBack = { navController.popBackStack() }) {
         when (uiState) {
-            SettingsScreenUiState.Loading -> {
+            SettingsScreenUIState.Loading -> {
                 PageLoadingIndicator(modifier = modifier)
             }
 
-            is SettingsScreenUiState.Success -> (uiState as SettingsScreenUiState.Success).let {
+            is SettingsScreenUIState.Success -> (uiState as SettingsScreenUIState.Success).let {
+                val apps = it.state.apps
+                val settings = it.state.settings
+                val shortcuts = it.state.splitScreenShortcuts
                 Column(modifier = modifier.verticalScroll(rememberScrollState())) {
                     SettingsGroupGeneral(
-                        settings = it.settings,
+                        writeSettings = vm::writeSettings,
                         backupReset = vm::backupReset,
                         updateSettingsFromBytes = vm::updateSettingsFromBytes
                     )
                     SettingsGroupHiddenApps(
-                        apps = it.apps,
+                        apps = apps,
                         setHiddenApps = vm::setHiddenApps
                     )
                     SettingsGroupSplitScreen(
-                        apps = it.apps,
-                        splitScreenShortcuts = it.splitScreenShortcuts,
-                        shortcutSeparator = it.settings.appCard.model.splitScreenSeparator,
+                        apps = apps,
+                        splitScreenShortcuts = shortcuts,
+                        shortcutSeparator = settings.appCard.splitScreenSeparator,
                         removeShortcut = vm::removeSplitScreenShortcut,
                         addShortcut = vm::addSplitScreenShortcut,
                         setSeparator = vm::setAppCardSplitScreenShortcutSeparator
                     )
                     SettingsGroupLayout(
-                        settings = it.settings.layout,
+                        settings = settings.layout,
                         setReverseOrder = vm::setAppLayoutReverseOrder,
                         setHorizontalPadding = vm::setAppLayoutHorizontalPadding,
                         setVerticalPadding = vm::setAppLayoutVerticalPadding,
@@ -54,7 +57,7 @@ fun SettingsRoute(
                         setSortBy = vm::setAppLayoutSortBy
                     )
                     SettingsGroupAppCard(
-                        settings = it.settings.appCard,
+                        settings = settings.appCard,
                         setLabelLowercase = vm::setAppCardLabelLowercase,
                         setLabelRemoveSpaces = vm::setAppCardLabelRemoveSpaces,
                         setFontFamily = vm::setAppCardFontFamily,
