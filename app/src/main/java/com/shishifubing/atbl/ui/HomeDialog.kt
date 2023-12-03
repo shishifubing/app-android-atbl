@@ -24,16 +24,28 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.UIHomeDialogActionButtons
-import com.shishifubing.atbl.data.UIHomeDialogHeaders
+import com.shishifubing.atbl.data.UIModel
+
+typealias HomeDialogButtons = UIModel<List<Pair<String, () -> Unit>>>
+typealias HomeDialogHeaders = UIModel<List<@Composable () -> Unit>>
+
+@Composable
+fun Check(
+    state: Model.State,
+    settings: Model.Settings,
+    sfs: Model.App
+) {
+
+}
 
 @Composable
 fun HomeDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
-    actionButtons: UIHomeDialogActionButtons = UIHomeDialogActionButtons(listOf()),
-    headers: UIHomeDialogHeaders = UIHomeDialogHeaders(listOf()),
+    actionButtons: HomeDialogButtons = HomeDialogButtons(listOf()),
+    headers: HomeDialogHeaders = HomeDialogHeaders(listOf()),
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         Column(

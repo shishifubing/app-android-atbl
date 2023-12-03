@@ -49,8 +49,8 @@ message AppShortcut {
 }
 
 message SplitScreenShortcut {
-  App appBottom = 1;
-  App appTop = 2;
+  App appFirst = 1;
+  App appSecond = 2;
   string key = 3;
 }
 
@@ -61,7 +61,7 @@ message SplitScreenShortcuts {
 message Settings {
   AppCard app_card = 1;
   Layout layout = 2;
-  
+
   enum SortBy {
     SortByLabel = 0;
   }

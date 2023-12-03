@@ -7,7 +7,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.UISettingsLayout
 
 private val choices = object {
     val layoutHorizontalPadding = (0..150 step 10).map { it.toString() }
@@ -16,7 +15,7 @@ private val choices = object {
 
 @Composable
 fun SettingsGroupLayout(
-    settings: UISettingsLayout,
+    settings: Model.Settings.Layout,
     setReverseOrder: (Boolean) -> Unit,
     setHorizontalPadding: (Int) -> Unit,
     setVerticalPadding: (Int) -> Unit,
@@ -24,30 +23,29 @@ fun SettingsGroupLayout(
     setVerticalArrangement: (Model.Settings.VerticalArrangement) -> Unit,
     setSortBy: (Model.Settings.SortBy) -> Unit
 ) {
-    val model = settings.model
     SettingsGroup(R.string.settings_group_layout) {
         LayoutReverseOrder(
-            reverse = model.reverseOrder,
+            reverse = settings.reverseOrder,
             setReverse = setReverseOrder
         )
         LayoutHorizontalPadding(
-            padding = model.horizontalPadding,
+            padding = settings.horizontalPadding,
             setPadding = setHorizontalPadding
         )
         LayoutVerticalPadding(
-            padding = model.verticalPadding,
+            padding = settings.verticalPadding,
             setPadding = setVerticalPadding
         )
         LayoutHorizontalArrangement(
-            arrangement = model.horizontalArrangement,
+            arrangement = settings.horizontalArrangement,
             setArrangement = setHorizontalArrangement
         )
         LayoutVerticalArrangement(
-            arrangement = model.verticalArrangement,
+            arrangement = settings.verticalArrangement,
             setArrangement = setVerticalArrangement
         )
         LayoutSortBy(
-            sortBy = model.sortBy,
+            sortBy = settings.sortBy,
             setSortBy = setSortBy
         )
     }

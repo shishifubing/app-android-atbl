@@ -11,6 +11,7 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
+import kotlinx.coroutines.flow.first
 import java.io.InputStream
 import java.io.OutputStream
 
@@ -58,12 +59,25 @@ class LauncherStateRepository(
         }
     }
 
-    private suspend fun addScreen(screen: Model.Screen) {
-        update { addScreens(screen) }
+    suspend fun addScreenAfter(screen: Int) {
+        update {
+            val before = screensList.filterIndexed { i, _ -> i <= screen }
+            val new = Model.Screen.newBuilder().build()
+            val after = screensList.filterIndexed { i, _ -> i > screen }
+            clearScreens()
+            addAllScreens(before + new + after)
+        }
     }
 
-    suspend fun addEmptyScreen() {
-        addScreen(Model.Screen.getDefaultInstance())
+
+    suspend fun addScreenBefore(screen: Int) {
+        update {
+            val before = screensList.filterIndexed { i, _ -> i < screen }
+            val new = Model.Screen.newBuilder().build()
+            val after = screensList.filterIndexed { i, _ -> i >= screen }
+            clearScreens()
+            addAllScreens(before + new + after)
+        }
     }
 
     suspend fun removeScreen(screen: Int) {
@@ -103,8 +117,8 @@ class LauncherStateRepository(
         update {
             val newShortcut = Model.SplitScreenShortcut.getDefaultInstance()
                 .toBuilder()
-                .setAppBottom(apps.getAppsOrThrow(secondApp))
-                .setAppTop(apps.getAppsOrThrow(firstApp))
+                .setAppSecond(apps.getAppsOrThrow(secondApp))
+                .setAppFirst(apps.getAppsOrThrow(firstApp))
                 .setKey("$firstApp/$secondApp")
                 .build()
             val newShortcuts = splitScreenShortcuts
@@ -146,6 +160,10 @@ class LauncherStateRepository(
                 .mergeFrom(Defaults.Settings)
                 .build()
         }
+    }
+
+    suspend fun writeSettings(stream: OutputStream) {
+        context.dataStore.data.first().settings.writeTo(stream)
     }
 
     suspend fun reloadState() {

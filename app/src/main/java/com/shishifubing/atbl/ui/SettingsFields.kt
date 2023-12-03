@@ -50,9 +50,8 @@ import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.UIApp
-import com.shishifubing.atbl.data.UIApps
 import kotlinx.coroutines.flow.StateFlow
 
 private fun <T : Enum<*>> Class<T>.names() = enumConstants!!.mapNotNull {
@@ -261,17 +260,18 @@ fun SettingsFieldCustomItemWithAdd(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun SettingsDropDownSelectApp(
-    apps: UIApps,
-    onValueChange: (UIApp) -> Unit
+    apps: Model.Apps,
+    onValueChange: (Model.App) -> Unit
 ) {
+    val appsSorted = apps.appsMap.values.sortedBy { it.label }
     var expanded by remember { mutableStateOf(false) }
-    var selected by remember { mutableStateOf<UIApp?>(null) }
+    var selected by remember { mutableStateOf<Model.App?>(null) }
     ExposedDropdownMenuBox(
         expanded = expanded,
         onExpandedChange = { expanded = !expanded }
     ) {
         TextField(
-            value = selected?.model?.label ?: "",
+            value = selected?.label ?: "",
             onValueChange = {},
             readOnly = true,
             trailingIcon = {
@@ -283,10 +283,10 @@ fun SettingsDropDownSelectApp(
             expanded = expanded,
             onDismissRequest = { expanded = false }
         ) {
-            apps.model.forEach { app ->
+            appsSorted.forEach { app ->
                 key(app.hashCode()) {
                     DropdownMenuItem(
-                        text = { Text(text = app.model.label) },
+                        text = { Text(text = app.label) },
                         onClick = {
                             selected = app
                             expanded = false

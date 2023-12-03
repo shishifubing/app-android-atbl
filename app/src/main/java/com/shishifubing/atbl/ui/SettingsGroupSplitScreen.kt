@@ -15,14 +15,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.UIApp
-import com.shishifubing.atbl.data.UIApps
-import com.shishifubing.atbl.data.UISplitScreenShortcuts
 
 @Composable
 fun SettingsGroupSplitScreen(
-    apps: UIApps,
-    splitScreenShortcuts: UISplitScreenShortcuts,
+    apps: Model.Apps,
+    splitScreenShortcuts: Model.SplitScreenShortcuts,
     shortcutSeparator: String,
     addShortcut: (Model.App, Model.App) -> Unit,
     removeShortcut: (Model.SplitScreenShortcut) -> Unit,
@@ -45,18 +42,19 @@ fun SettingsGroupSplitScreen(
 
 @Composable
 private fun HomeItemSplitScreenShortcuts(
-    apps: UIApps,
-    shortcuts: UISplitScreenShortcuts,
+    apps: Model.Apps,
+    shortcuts: Model.SplitScreenShortcuts,
     shortcutSeparator: String,
     addShortcut: (Model.App, Model.App) -> Unit,
     removeShortcut: (Model.SplitScreenShortcut) -> Unit,
 ) {
-    var selectedTop by remember { mutableStateOf<UIApp?>(null) }
-    var selectedBottom by remember { mutableStateOf<UIApp?>(null) }
+    var selectedTop by remember { mutableStateOf<Model.App?>(null) }
+    var selectedBottom by remember { mutableStateOf<Model.App?>(null) }
+    val shortcutsList = shortcuts.shortcutsMap.values.sortedBy { it.key }
     SettingsFieldCustomItemWithAdd(
         name = R.string.settings_split_screen_shortcuts,
-        itemsCount = shortcuts.model.size,
-        itemsKey = { i -> shortcuts.model[i].hashCode() },
+        itemsCount = shortcuts.shortcutsMap.size,
+        itemsKey = { i -> shortcutsList[i].hashCode() },
         addItemContent = {
             Column(modifier = Modifier.weight(1f)) {
                 SettingsDropDownSelectApp(
@@ -71,20 +69,19 @@ private fun HomeItemSplitScreenShortcuts(
         },
         onAddItemConfirm = {
             if (selectedTop != null && selectedBottom != null) {
-                addShortcut(selectedTop!!.model, selectedBottom!!.model)
+                addShortcut(selectedTop!!, selectedBottom!!)
             }
         },
         onAddItemDismiss = { selectedTop = null; selectedBottom = null }
     ) { i ->
-        val shortcut = shortcuts.model[i]
+        val shortcut = shortcutsList[i]
         Text(
-            listOf(
-                shortcut.model.appTop.label,
-                shortcut.model.appBottom.label
-            ).joinToString(shortcutSeparator)
+            text = shortcut.appSecond.label
+                    + shortcutSeparator
+                    + shortcut.appFirst.label
         )
         Spacer(modifier = Modifier.weight(1f))
-        IconButton(onClick = { removeShortcut(shortcut.model) }) {
+        IconButton(onClick = { removeShortcut(shortcut) }) {
             Icon(
                 imageVector = Icons.Filled.Delete,
                 contentDescription = "Delete entry",
