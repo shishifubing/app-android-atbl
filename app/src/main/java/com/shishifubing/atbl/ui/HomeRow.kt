@@ -11,6 +11,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.shishifubing.atbl.Model
+import com.shishifubing.atbl.Model.Settings.HorizontalArrangement
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -26,27 +27,27 @@ fun HomeRow(
                 settings.horizontalPadding.dp,
                 settings.verticalPadding.dp
             ),
-        horizontalArrangement = settings.horizontalArrangement.toArrangement(),
-        verticalArrangement = settings.verticalArrangement.toArrangement(),
+        horizontalArrangement = getArrangement(settings.horizontalArrangement),
+        verticalArrangement = getArrangement(settings.verticalArrangement),
         content = content
     )
 }
 
 
-private fun Model.Settings.HorizontalArrangement.toArrangement(): Arrangement.Horizontal {
-    return when (this) {
-        Model.Settings.HorizontalArrangement.HorizontalStart -> Arrangement.Start
-        Model.Settings.HorizontalArrangement.HorizontalEnd -> Arrangement.End
-        Model.Settings.HorizontalArrangement.HorizontalCenter -> Arrangement.Center
-        Model.Settings.HorizontalArrangement.HorizontalSpaceEvenly -> Arrangement.SpaceEvenly
-        Model.Settings.HorizontalArrangement.HorizontalSpaceBetween -> Arrangement.SpaceBetween
-        Model.Settings.HorizontalArrangement.HorizontalSpaceAround -> Arrangement.SpaceAround
+private fun getArrangement(arrangement: HorizontalArrangement): Arrangement.Horizontal {
+    return when (arrangement) {
+        HorizontalArrangement.HorizontalStart -> Arrangement.Start
+        HorizontalArrangement.HorizontalEnd -> Arrangement.End
+        HorizontalArrangement.HorizontalCenter -> Arrangement.Center
+        HorizontalArrangement.HorizontalSpaceEvenly -> Arrangement.SpaceEvenly
+        HorizontalArrangement.HorizontalSpaceBetween -> Arrangement.SpaceBetween
+        HorizontalArrangement.HorizontalSpaceAround -> Arrangement.SpaceAround
         else -> Arrangement.Center
     }
 }
 
-private fun Model.Settings.VerticalArrangement.toArrangement(): Arrangement.Vertical {
-    return when (this) {
+private fun getArrangement(arrangement: Model.Settings.VerticalArrangement): Arrangement.Vertical {
+    return when (arrangement) {
         Model.Settings.VerticalArrangement.VerticalTop -> Arrangement.Top
         Model.Settings.VerticalArrangement.VerticalBottom -> Arrangement.Bottom
         Model.Settings.VerticalArrangement.VerticalCenter -> Arrangement.Center

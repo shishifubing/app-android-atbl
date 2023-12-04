@@ -64,21 +64,18 @@ fun HomeRoute(
             val pagerState = rememberPagerState(
                 pageCount = { state.screens.size }
             )
-
             Box(modifier = modifier) {
-                HorizontalPager(state = pagerState) {
+                HorizontalPager(state = pagerState) { page ->
                     HomePage(
                         modifier = Modifier
                             .fillMaxSize()
                             .combinedClickable(
                                 interactionSource = remember { MutableInteractionSource() },
                                 indication = null,
-                                onLongClick = {
-                                    launcherDialogPage = pagerState.currentPage
-                                },
+                                onLongClick = { launcherDialogPage = page },
                                 onClick = { }
                             ),
-                        screenState = state.screens[it],
+                        screenState = state.screens[page],
                     )
                 }
                 HomePageIndicatorFloating(

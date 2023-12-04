@@ -24,6 +24,7 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.Model
+import com.shishifubing.atbl.Model.Settings.TextColor
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -55,19 +56,24 @@ fun HomeItemCard(
         ) {
             Text(
                 modifier = Modifier.padding(settings.padding.dp),
-                style = settings.textStyle.toTextStyle(),
-                fontFamily = settings.fontFamily.toFontFamily(),
-                color = settings.textColor.toColor(),
+                style = getTextStyle(
+                    settings.textStyle,
+                    MaterialTheme.typography
+                ),
+                fontFamily = getFontFamily(settings.fontFamily),
+                color = getTextColor(settings.textColor),
                 text = label
             )
         }
     }
 }
 
-@Composable
-private fun Model.Settings.TextStyle.toTextStyle(): TextStyle {
-    return MaterialTheme.typography.let {
-        when (this) {
+private fun getTextStyle(
+    textStyle: Model.Settings.TextStyle,
+    typography: androidx.compose.material3.Typography
+): TextStyle {
+    return typography.let {
+        when (textStyle) {
             Model.Settings.TextStyle.DisplayLarge -> it.displayLarge
             Model.Settings.TextStyle.DisplayMedium -> it.displayMedium
             Model.Settings.TextStyle.DisplaySmall -> it.displaySmall
@@ -88,30 +94,27 @@ private fun Model.Settings.TextStyle.toTextStyle(): TextStyle {
     }
 }
 
-@Composable
-private fun Model.Settings.TextColor.toColor(): Color {
-    return when (this) {
-        Model.Settings.TextColor.Unspecified -> Color.Unspecified
-        Model.Settings.TextColor.Black -> Color.Black
-        Model.Settings.TextColor.DarkGray -> Color.DarkGray
-        Model.Settings.TextColor.Gray -> Color.Gray
-        Model.Settings.TextColor.LightGray -> Color.LightGray
-        Model.Settings.TextColor.White -> Color.White
-        Model.Settings.TextColor.Red -> Color.Red
-        Model.Settings.TextColor.Green -> Color.Green
-        Model.Settings.TextColor.Blue -> Color.Blue
-        Model.Settings.TextColor.Yellow -> Color.Yellow
-        Model.Settings.TextColor.Cyan -> Color.Cyan
-        Model.Settings.TextColor.Magenta -> Color.Magenta
-        Model.Settings.TextColor.Transparent -> Color.Transparent
+private fun getTextColor(textColor: TextColor): Color {
+    return when (textColor) {
+        TextColor.Unspecified -> Color.Unspecified
+        TextColor.Black -> Color.Black
+        TextColor.DarkGray -> Color.DarkGray
+        TextColor.Gray -> Color.Gray
+        TextColor.LightGray -> Color.LightGray
+        TextColor.White -> Color.White
+        TextColor.Red -> Color.Red
+        TextColor.Green -> Color.Green
+        TextColor.Blue -> Color.Blue
+        TextColor.Yellow -> Color.Yellow
+        TextColor.Cyan -> Color.Cyan
+        TextColor.Magenta -> Color.Magenta
+        TextColor.Transparent -> Color.Transparent
         else -> Color.Unspecified
     }
 }
 
-
-@Composable
-private fun Model.Settings.FontFamily.toFontFamily(): FontFamily {
-    return when (this) {
+private fun getFontFamily(fontFamily: Model.Settings.FontFamily): FontFamily {
+    return when (fontFamily) {
         Model.Settings.FontFamily.Default -> FontFamily.Default
         Model.Settings.FontFamily.Cursive -> FontFamily.Cursive
         Model.Settings.FontFamily.Monospace -> FontFamily.Monospace

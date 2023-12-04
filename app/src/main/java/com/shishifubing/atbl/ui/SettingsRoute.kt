@@ -19,17 +19,20 @@ fun SettingsRoute(
 ) {
     val uiState by vm.uiState.collectAsState()
     ErrorToast(errorFlow = vm.error)
-    LauncherScaffold(nav = nav, goBack = { navController.popBackStack() }) {
+    LauncherScaffold(
+        modifier = modifier,
+        nav = nav,
+        goBack = { navController.popBackStack() }
+    ) {
         when (uiState) {
-            SettingsScreenUIState.Loading -> {
-                PageLoadingIndicator(modifier = modifier)
-            }
+            SettingsScreenUIState.Loading -> PageLoadingIndicator()
 
-            is SettingsScreenUIState.Success -> (uiState as SettingsScreenUIState.Success).let {
-                val apps = it.state.apps
-                val settings = it.state.settings
-                val shortcuts = it.state.splitScreenShortcuts
-                Column(modifier = modifier.verticalScroll(rememberScrollState())) {
+            is SettingsScreenUIState.Success -> {
+                val state = (uiState as SettingsScreenUIState.Success).state
+                val apps = state.apps
+                val settings = state.settings
+                val shortcuts = state.splitScreenShortcuts
+                Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     SettingsGroupGeneral(
                         writeSettings = vm::writeSettings,
                         backupReset = vm::backupReset,
