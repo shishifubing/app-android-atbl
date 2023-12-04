@@ -32,15 +32,6 @@ typealias HomeDialogButtons = UIModel<List<Pair<String, () -> Unit>>>
 typealias HomeDialogHeaders = UIModel<List<@Composable () -> Unit>>
 
 @Composable
-fun Check(
-    state: Model.State,
-    settings: Model.Settings,
-    sfs: Model.App
-) {
-
-}
-
-@Composable
 fun HomeDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,

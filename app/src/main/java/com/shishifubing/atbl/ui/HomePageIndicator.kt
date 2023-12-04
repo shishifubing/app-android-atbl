@@ -1,5 +1,6 @@
 package com.shishifubing.atbl.ui
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -56,7 +57,10 @@ private fun HomePageIndicator(
     pageCount: Int,
     modifier: Modifier = Modifier
 ) {
-    Card(modifier = modifier) {
+    Card(
+        modifier = modifier,
+        border = BorderStroke(2.dp, MaterialTheme.colorScheme.inversePrimary)
+    ) {
         FlowRow(
             horizontalArrangement = Arrangement.Center,
             verticalArrangement = Arrangement.Center

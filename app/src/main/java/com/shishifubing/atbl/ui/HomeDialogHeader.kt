@@ -23,6 +23,7 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.google.protobuf.ByteString
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
 
@@ -35,7 +36,7 @@ fun HomeDialogHeader(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val icon = rememberIcon(app = app)
+    val icon = rememberIcon(icon = app.icon)
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -100,15 +101,9 @@ fun HomeDialogHeader(
 }
 
 @Composable
-private fun rememberIcon(app: Model.App): ImageBitmap {
-    val byteArray = app.icon.toByteArray()
-    val icon = BitmapFactory
-        .decodeByteArray(
-            byteArray,
-            0,
-            byteArray.size,
-            BitmapFactory.Options().also { it.inMutable = true }
-        )
-        .asImageBitmap()
-    return remember(app) { icon }
+private fun rememberIcon(icon: ByteString): ImageBitmap {
+    return remember {
+        val array = icon.toByteArray()
+        BitmapFactory.decodeByteArray(array, 0, array.size).asImageBitmap()
+    }
 }

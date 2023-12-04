@@ -103,7 +103,7 @@ class HomeViewModel(
     }
 
     private fun removeSplitScreenShortcut(shortcut: SplitScreenShortcut) {
-        stateAction { removeSplitScreenShortcut(shortcut) }
+        stateAction { removeSplitScreenShortcut(shortcut.key) }
     }
 
     private fun launchAppUninstall(app: Model.App) {
