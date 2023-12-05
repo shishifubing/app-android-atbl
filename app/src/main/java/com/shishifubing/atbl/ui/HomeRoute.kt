@@ -5,7 +5,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -24,8 +23,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -48,7 +47,11 @@ fun HomeRoute(
 ) {
     val uiState by vm.uiState.collectAsState()
     val showHiddenApps by vm.showHiddenApps.collectAsState()
-    var launcherDialogPage by remember { mutableIntStateOf(-1) }
+    var showLauncherDialog by remember { mutableIntStateOf(-1) }
+    var showAppDialog by remember { mutableStateOf<Model.App?>(null) }
+    var showShortcutDialog by remember {
+        mutableStateOf<Model.SplitScreenShortcut?>(null)
+    }
 
     ErrorToast(errorFlow = vm.error)
 
@@ -62,20 +65,44 @@ fun HomeRoute(
         is HomeState.Success -> {
             val state = uiState as HomeState.Success
             val pagerState = rememberPagerState(
+                initialPage = state.screens.size / 2,
                 pageCount = { state.screens.size }
             )
+            val interactionSource = remember { MutableInteractionSource() }
             Box(modifier = modifier) {
                 HorizontalPager(state = pagerState) { page ->
-                    HomePage(
+                    HomeRow(
                         modifier = Modifier
                             .fillMaxSize()
                             .combinedClickable(
-                                interactionSource = remember { MutableInteractionSource() },
+                                interactionSource = interactionSource,
                                 indication = null,
-                                onLongClick = { launcherDialogPage = page },
+                                onLongClick = { showLauncherDialog = page },
                                 onClick = { }
                             ),
-                        screenState = state.screens[page],
+                        settings = state.settings,
+                        items = state.items[page],
+                        onClick = {
+                            when (it) {
+                                is HomeState.RowItem.App -> {
+                                    vm.launchApp(it.app)
+                                }
+                                is HomeState.RowItem.SplitScreenShortcut -> {
+                                    vm.launchSplitScreenShortcut(it.shortcut)
+                                }
+                            }
+                        },
+                        onLongClick = {
+                            when (it) {
+                                is HomeState.RowItem.App -> {
+                                    showAppDialog = it.app
+                                }
+                                is HomeState.RowItem.SplitScreenShortcut -> {
+                                    showShortcutDialog = it.shortcut
+                                }
+                            }
+                        },
+                        getLabel =
                     )
                 }
                 HomePageIndicatorFloating(
@@ -85,7 +112,7 @@ fun HomeRoute(
             }
         }
     }
-    if (launcherDialogPage != -1) {
+    if (showLauncherDialog != -1) {
         HomeLauncherDialogActions(
             navigate = navController::navigate,
             showHiddenApps = showHiddenApps,
@@ -93,37 +120,9 @@ fun HomeRoute(
             addScreenAfter = vm::addScreenAfter,
             removeScreen = vm::removeScreen,
             addScreenBefore = vm::addScreenBefore,
-            currentPage = launcherDialogPage,
-            onDismissRequest = { launcherDialogPage = -1 }
+            currentPage = showLauncherDialog,
+            onDismissRequest = { showLauncherDialog = -1 }
         )
-    }
-}
-
-
-@OptIn(ExperimentalLayoutApi::class)
-@Composable
-private fun HomePage(
-    screenState: HomeState.ScreenState,
-    modifier: Modifier = Modifier,
-) {
-    HomeRow(
-        modifier = modifier,
-        settings = screenState.settings.layout
-    ) {
-        if (!screenState.isHomeApp) {
-            NotAHomeAppBanner()
-        }
-        screenState.items.forEach {
-            key(it.hashCode()) {
-                when (it) {
-                    is HomeState.ItemState.Apps ->
-                        HomeItemApps(it.state)
-
-                    is HomeState.ItemState.Shortcuts ->
-                        HomeItemSplitScreenShortcuts(it.state)
-                }
-            }
-        }
     }
 }
 

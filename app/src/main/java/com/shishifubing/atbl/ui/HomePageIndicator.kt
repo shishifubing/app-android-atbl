@@ -32,12 +32,11 @@ fun BoxScope.HomePageIndicatorFloating(
     modifier: Modifier = Modifier,
     delayMillis: Long = 1000
 ) {
-    var show by remember(currentPage, pageCount) { mutableStateOf(true) }
-    LaunchedEffect(show) {
-        if (show) {
-            delay(delayMillis)
-            show = false
-        }
+    var show by remember { mutableStateOf(false) }
+    LaunchedEffect(currentPage, pageCount) {
+        show = true
+        delay(delayMillis)
+        show = false
     }
     if (show) {
         HomePageIndicator(

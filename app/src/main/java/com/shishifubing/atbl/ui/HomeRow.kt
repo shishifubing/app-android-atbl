@@ -3,34 +3,47 @@ package com.shishifubing.atbl.ui
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
-import androidx.compose.foundation.layout.FlowRowScope
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.Model.Settings.HorizontalArrangement
 
+
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun HomeRow(
-    settings: Model.Settings.Layout,
+    items: HomeState.RowItems,
+    onClick: (HomeState.RowItem) -> Unit,
+    onLongClick: (HomeState.RowItem) -> Unit,
+    settings: Model.Settings,
     modifier: Modifier = Modifier,
-    content: @Composable FlowRowScope.() -> Unit
 ) {
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
             .padding(
-                settings.horizontalPadding.dp,
-                settings.verticalPadding.dp
+                settings.layout.horizontalPadding.dp,
+                settings.layout.verticalPadding.dp
             ),
-        horizontalArrangement = getArrangement(settings.horizontalArrangement),
-        verticalArrangement = getArrangement(settings.verticalArrangement),
-        content = content
-    )
+        horizontalArrangement = getArrangement(settings.layout.horizontalArrangement),
+        verticalArrangement = getArrangement(settings.layout.verticalArrangement),
+    ) {
+        items.items.forEach {
+            key(it.hashCode()) {
+                HomeRowItemCard(
+                    label = it.label,
+                    onClick = { onClick(it) },
+                    onLongClick = { onLongClick(it) },
+                    settings = settings.appCard
+                )
+            }
+        }
+    }
 }
 
 
