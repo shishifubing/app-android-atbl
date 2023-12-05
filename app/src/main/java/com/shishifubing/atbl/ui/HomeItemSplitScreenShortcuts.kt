@@ -28,7 +28,7 @@ data class HomeItemSplitScreenShortcutsState(
 fun HomeItemSplitScreenShortcuts(state: HomeItemSplitScreenShortcutsState) {
     var dialogShortcutIndex by remember { mutableIntStateOf(-1) }
     state.shortcuts.forEachIndexed { i, shortcut ->
-        HomeItemCard(
+        HomeRowItemCard(
             label = state.getLabel(shortcut, state.settings),
             onClick = { state.launchSplitScreenShortcut(shortcut) },
             onLongClick = { dialogShortcutIndex = i },

@@ -7,6 +7,7 @@ import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherManager
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
+import com.shishifubing.atbl.Model.Settings
 import com.shishifubing.atbl.Model.Settings.AppCard
 import com.shishifubing.atbl.Model.SplitScreenShortcut
 import com.shishifubing.atbl.launcherViewModelFactory
@@ -24,28 +25,31 @@ import kotlinx.coroutines.launch
 sealed interface HomeState {
     @Immutable
     data class Success(
-        val screens: List<ScreenState>,
+        val items: List<RowItems>,
+        val settings: Settings,
     ) : HomeState
 
     @Immutable
     data object Loading : HomeState
 
     @Immutable
-    data class ScreenState(
-        val items: List<ItemState>,
-        val isHomeApp: Boolean,
-        val settings: Model.Settings
-    )
+    data class RowItems(val items: List<RowItem>)
 
     @Immutable
-    sealed interface ItemState {
-        @Immutable
-        data class Apps(val state: HomeItemAppsState) : ItemState
+    sealed interface RowItem {
+        val label: String
 
         @Immutable
-        data class Shortcuts(
-            val state: HomeItemSplitScreenShortcutsState
-        ) : ItemState
+        data class App(
+            val app: Model.App,
+            override val label: String
+        ) : RowItem
+
+        @Immutable
+        data class SplitScreenShortcut(
+            val shortcut: Model.SplitScreenShortcut,
+            override val label: String
+        ) : RowItem
     }
 }
 
@@ -81,13 +85,11 @@ class HomeViewModel(
         _showHiddenAppsFlow
     ) { state, showHiddenApps ->
         HomeState.Success(
-            screens = state.screensList.map { screen ->
-                HomeState.ScreenState(
-                    isHomeApp = state.isHomeApp,
-                    items = getHomeItems(state, screen, showHiddenApps),
-                    settings = state.settings
-                )
+            settings = state.settings,
+            items = state.screensList.map { screen ->
+                
             }
+
         )
     }.stateIn(
         scope = viewModelScope,
@@ -95,35 +97,18 @@ class HomeViewModel(
         initialValue = HomeState.Loading
     )
 
-    private fun launchSplitScreenShortcut(shortcut: SplitScreenShortcut) {
-        manager.launchSplitScreen(
-            shortcut.appFirst.packageName,
-            shortcut.appSecond.packageName
+    fun transformLabel(app: Model.App, settings: AppCard): String {
+        return transformLabel(app.label, settings)
+    }
+
+    fun transformLabel(
+        shortcut: SplitScreenShortcut,
+        settings: AppCard
+    ): String {
+        return transformLabel(
+            shortcut.appSecond.label + settings.splitScreenSeparator + shortcut.appFirst.label,
+            settings
         )
-    }
-
-    private fun removeSplitScreenShortcut(shortcut: SplitScreenShortcut) {
-        stateAction { removeSplitScreenShortcut(shortcut.key) }
-    }
-
-    private fun launchAppUninstall(app: Model.App) {
-        manager.launchAppUninstall(app.packageName)
-    }
-
-    private fun setIsHidden(app: Model.App, isHidden: Boolean) {
-        stateAction { setIsHidden(app.packageName, isHidden) }
-    }
-
-    private fun launchAppInfo(app: Model.App) {
-        manager.launchAppInfo(app.packageName)
-    }
-
-    private fun launchApp(app: Model.App) {
-        manager.launchApp(app.packageName)
-    }
-
-    private fun launchShortcut(shortcut: Model.AppShortcut) {
-        manager.launchAppShortcut(shortcut)
     }
 
     private fun transformLabel(
@@ -139,6 +124,37 @@ class HomeViewModel(
                 }
             }
             .let { if (settings.labelLowercase) it.lowercase() else it }
+    }
+
+    fun launchSplitScreenShortcut(shortcut: SplitScreenShortcut) {
+        manager.launchSplitScreen(
+            shortcut.appFirst.packageName,
+            shortcut.appSecond.packageName
+        )
+    }
+
+    fun removeSplitScreenShortcut(shortcut: SplitScreenShortcut) {
+        stateAction { removeSplitScreenShortcut(shortcut.key) }
+    }
+
+    fun launchAppUninstall(app: Model.App) {
+        manager.launchAppUninstall(app.packageName)
+    }
+
+    fun setIsHidden(app: Model.App, isHidden: Boolean) {
+        stateAction { setIsHidden(app.packageName, isHidden) }
+    }
+
+    fun launchAppInfo(app: Model.App) {
+        manager.launchAppInfo(app.packageName)
+    }
+
+    fun launchApp(app: Model.App) {
+        manager.launchApp(app.packageName)
+    }
+
+    fun launchShortcut(shortcut: Model.AppShortcut) {
+        manager.launchAppShortcut(shortcut)
     }
 
     fun setShowHiddenApps(showHiddenApps: Boolean) {
@@ -159,18 +175,6 @@ class HomeViewModel(
 
     private fun stateAction(action: suspend LauncherStateRepository.() -> Unit) {
         launch { action.invoke(stateRepo) }
-    }
-
-    private fun getSplitScreenShortcutLabel(
-        shortcut: SplitScreenShortcut,
-        settings: AppCard
-    ): String {
-        return transformLabel(
-            shortcut.appSecond.label
-                    + settings.splitScreenSeparator
-                    + shortcut.appFirst.label,
-            settings
-        )
     }
 
     private fun getHomeItems(
@@ -226,13 +230,13 @@ class HomeViewModel(
     private fun getHomeItemAppsState(
         apps: Model.Apps,
         isHomeApp: Boolean,
-        settings: Model.Settings,
+        settings: Settings,
         showHiddenApps: Boolean,
     ): HomeItemAppsState {
         val appList = apps.appsMap.values
             .let {
                 when (settings.layout.sortBy) {
-                    Model.Settings.SortBy.SortByLabel ->
+                    Settings.SortBy.SortByLabel ->
                         it.sortedBy { app -> app.label }
 
                     else -> it.sortedBy { app -> app.label }

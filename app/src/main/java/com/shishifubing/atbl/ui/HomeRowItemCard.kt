@@ -28,7 +28,7 @@ import com.shishifubing.atbl.Model.Settings.TextColor
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-fun HomeItemCard(
+fun HomeRowItemCard(
     label: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
@@ -128,7 +128,7 @@ private fun getFontFamily(fontFamily: Model.Settings.FontFamily): FontFamily {
 @Composable
 private fun HomeItemCardPreview() {
     LauncherTheme(darkTheme = true) {
-        HomeItemCard(
+        HomeRowItemCard(
             modifier = Modifier.padding(30.dp),
             label = "app",
             onClick = { /*TODO*/ },

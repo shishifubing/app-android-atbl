@@ -29,7 +29,7 @@ fun HomeItemApps(state: HomeItemAppsState) {
     state.apps.forEach { app ->
         key(app.hashCode()) {
             if (state.showHiddenApps || !app.isHidden) {
-                HomeItemCard(
+                HomeRowItemCard(
                     label = state.transformLabel(app.label, state.settings),
                     onClick = { state.launchApp(app) },
                     onLongClick = { dialogApp = app },
