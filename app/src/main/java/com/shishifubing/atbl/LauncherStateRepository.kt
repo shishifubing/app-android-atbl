@@ -215,13 +215,13 @@ object Defaults {
         .addItems(
             Model.ScreenItem
                 .newBuilder()
-                .setComplex(Model.ItemComplex.APPS)
+                .setApps(Model.ScreenItem.Apps.getDefaultInstance())
                 .build()
         )
         .addItems(
             Model.ScreenItem
                 .newBuilder()
-                .setComplex(Model.ItemComplex.SPLIT_SCREEN_SHORTCUTS)
+                .setShortcuts(Model.ScreenItem.SplitScreenShortcuts.getDefaultInstance())
                 .build()
         )
         .build()

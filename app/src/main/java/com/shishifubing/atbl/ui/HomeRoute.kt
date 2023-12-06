@@ -5,6 +5,8 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
@@ -38,7 +40,6 @@ import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
 
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
 fun HomeRoute(
     navController: NavController,
@@ -46,12 +47,6 @@ fun HomeRoute(
     vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
 ) {
     val uiState by vm.uiState.collectAsState()
-    val showHiddenApps by vm.showHiddenApps.collectAsState()
-    var showLauncherDialog by remember { mutableIntStateOf(-1) }
-    var showAppDialog by remember { mutableStateOf<Model.App?>(null) }
-    var showShortcutDialog by remember {
-        mutableStateOf<Model.SplitScreenShortcut?>(null)
-    }
 
     ErrorToast(errorFlow = vm.error)
 
@@ -63,65 +58,162 @@ fun HomeRoute(
         }
 
         is HomeState.Success -> {
-            val state = uiState as HomeState.Success
-            val pagerState = rememberPagerState(
-                initialPage = state.screens.size / 2,
-                pageCount = { state.screens.size }
-            )
-            val interactionSource = remember { MutableInteractionSource() }
-            Box(modifier = modifier) {
-                HorizontalPager(state = pagerState) { page ->
-                    HomeRow(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .combinedClickable(
-                                interactionSource = interactionSource,
-                                indication = null,
-                                onLongClick = { showLauncherDialog = page },
-                                onClick = { }
-                            ),
-                        settings = state.settings,
-                        items = state.items[page],
-                        onClick = {
-                            when (it) {
-                                is HomeState.RowItem.App -> {
-                                    vm.launchApp(it.app)
-                                }
-                                is HomeState.RowItem.SplitScreenShortcut -> {
-                                    vm.launchSplitScreenShortcut(it.shortcut)
-                                }
-                            }
-                        },
-                        onLongClick = {
-                            when (it) {
-                                is HomeState.RowItem.App -> {
-                                    showAppDialog = it.app
-                                }
-                                is HomeState.RowItem.SplitScreenShortcut -> {
-                                    showShortcutDialog = it.shortcut
-                                }
-                            }
-                        },
-                        getLabel =
-                    )
-                }
-                HomePageIndicatorFloating(
-                    currentPage = pagerState.currentPage,
-                    pageCount = pagerState.pageCount
+            Box {
+                HomeScreen(
+                    modifier = modifier,
+                    state = uiState as HomeState.Success,
+                    navigate = navController::navigate,
+                    launchApp = vm::launchApp,
+                    launchSplitScreenShortcut = vm::launchSplitScreenShortcut,
+                    removeSplitScreenShortcut = vm::removeSplitScreenShortcut,
+                    setShowHiddenApps = vm::setShowHiddenApps,
+                    addScreenBefore = vm::addScreenBefore,
+                    addScreenAfter = vm::addScreenAfter,
+                    removeScreen = vm::removeScreen,
+                    launchAppInfo = vm::launchAppInfo,
+                    launchAppUninstall = vm::launchAppUninstall,
+                    setIsHidden = vm::setIsHidden,
                 )
             }
         }
     }
+}
+
+@OptIn(ExperimentalFoundationApi::class)
+@Composable
+private fun BoxScope.HomeScreen(
+    state: HomeState.Success,
+    navigate: (LauncherNav) -> Unit,
+    launchApp: (Model.App) -> Unit,
+    launchSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
+    removeSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
+    setShowHiddenApps: (Boolean) -> Unit,
+    addScreenBefore: (Int) -> Unit,
+    addScreenAfter: (Int) -> Unit,
+    removeScreen: (Int) -> Unit,
+    launchAppInfo: (Model.App) -> Unit,
+    launchAppUninstall: (Model.App) -> Unit,
+    setIsHidden: (Model.App, Boolean) -> Unit,
+    modifier: Modifier = Modifier
+) {
+    var showLauncherDialog by remember { mutableIntStateOf(-1) }
+    var showAppDialog by remember { mutableStateOf<Model.App?>(null) }
+    var showShortcutDialog by remember {
+        mutableStateOf<Model.SplitScreenShortcut?>(null)
+    }
+    val pagerState = rememberPagerState(
+        initialPage = state.items.size / 2,
+        pageCount = { state.items.size }
+    )
+    val interactionSource = remember { MutableInteractionSource() }
+    Column {
+        if (!state.isHomeApp) {
+            NotAHomeAppBanner()
+        }
+        HorizontalPager(state = pagerState, modifier = modifier) { page ->
+            HomeRow(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .combinedClickable(
+                        interactionSource = interactionSource,
+                        indication = null,
+                        onLongClick = { showLauncherDialog = page },
+                        onClick = { }
+                    ),
+                settings = state.settings,
+                items = state.items[page],
+                showHiddenApps = state.showHiddenApps,
+                onClick = {
+                    when (it) {
+                        is HomeState.RowItem.App -> {
+                            launchApp(it.app)
+                        }
+
+                        is HomeState.RowItem.SplitScreenShortcut -> {
+                            launchSplitScreenShortcut(it.shortcut)
+                        }
+                    }
+                },
+                onLongClick = {
+                    when (it) {
+                        is HomeState.RowItem.App -> {
+                            showAppDialog = it.app
+                        }
+
+                        is HomeState.RowItem.SplitScreenShortcut -> {
+                            showShortcutDialog = it.shortcut
+                        }
+                    }
+                },
+            )
+        }
+    }
+    HomePageIndicatorFloating(
+        currentPage = pagerState.currentPage,
+        pageCount = pagerState.pageCount
+    )
     if (showLauncherDialog != -1) {
-        HomeLauncherDialogActions(
-            navigate = navController::navigate,
-            showHiddenApps = showHiddenApps,
-            setShowHiddenApps = vm::setShowHiddenApps,
-            addScreenAfter = vm::addScreenAfter,
-            removeScreen = vm::removeScreen,
-            addScreenBefore = vm::addScreenBefore,
+        HomeDialogLauncherActions(
+            navigate = navigate,
+            showHiddenApps = state.showHiddenApps,
+            setShowHiddenApps = setShowHiddenApps,
+            addScreenAfter = addScreenAfter,
+            removeScreen = removeScreen,
+            addScreenBefore = addScreenBefore,
             currentPage = showLauncherDialog,
             onDismissRequest = { showLauncherDialog = -1 }
+        )
+    }
+    if (showAppDialog != null) {
+        val app = showAppDialog!!
+        HomeDialog(
+            onDismissRequest = { showAppDialog = null },
+            actionButtons = state.appShortcutButtons[app.packageName]!!,
+            headers = HomeDialogHeaders(listOf {
+                HomeDialogHeader(
+                    app = app,
+                    onDismissRequest = { showAppDialog = null },
+                    launchAppInfo = launchAppInfo,
+                    launchAppUninstall = launchAppUninstall,
+                    setIsHidden = setIsHidden
+                )
+            })
+        )
+    }
+    if (showShortcutDialog != null) {
+        val shortcut = showShortcutDialog!!
+        HomeDialog(
+            onDismissRequest = { showShortcutDialog = null },
+            modifier = modifier,
+            actionButtons = HomeDialogButtons(listOf(
+                stringResource(R.string.drawer_app_delete_split_screen_shortcut) to {
+                    removeSplitScreenShortcut(shortcut)
+                }
+            )),
+            headers = HomeDialogHeaders(listOf(
+                {
+                    HomeDialogHeader(
+                        app = shortcut.appSecond,
+                        launchAppInfo = launchAppInfo,
+                        launchAppUninstall = launchAppUninstall,
+                        setIsHidden = setIsHidden,
+                        onDismissRequest = {
+                            showShortcutDialog = null
+                        }
+                    )
+                },
+                {
+                    HomeDialogHeader(
+                        app = shortcut.appFirst,
+                        launchAppInfo = launchAppInfo,
+                        launchAppUninstall = launchAppUninstall,
+                        setIsHidden = setIsHidden,
+                        onDismissRequest = {
+                            showShortcutDialog = null
+                        }
+                    )
+                }
+            ))
         )
     }
 }
@@ -180,42 +272,31 @@ private fun HomePagePreview() {
             .setAppSecond(apps[1])
             .build()
     )
+    val state = HomeState.Success(
+        showHiddenApps = false,
+        settings = Defaults.Settings,
+        isHomeApp = true,
+        appShortcutButtons = mapOf(),
+        items = listOf()
+    )
     LauncherTheme(darkTheme = true) {
-        HomePage(
-            modifier = Modifier.fillMaxSize(),
-            screenState = HomeState.ScreenState(
-                isHomeApp = true,
-                settings = Defaults.Settings,
-                items = listOf(
-                    HomeState.ItemState.Apps(
-                        state = HomeItemAppsState(
-                            apps = apps,
-                            showHiddenApps = false,
-                            showShortcuts = true,
-                            settings = Defaults.AppCardSettings,
-                            setIsHidden = { _, _ -> },
-                            launchAppUninstall = {},
-                            launchAppInfo = {},
-                            transformLabel = { txt, _ -> txt },
-                            launchShortcut = {},
-                            launchApp = {},
-                        )
-                    ),
-                    HomeState.ItemState.Shortcuts(
-                        state = HomeItemSplitScreenShortcutsState(
-                            shortcuts = shortcuts,
-                            launchAppInfo = {},
-                            launchAppUninstall = {},
-                            setIsHidden = { _, _ -> },
-                            settings = Defaults.AppCardSettings,
-                            getLabel = { shortcut, _ -> shortcut.key },
-                            launchSplitScreenShortcut = {},
-                            removeSplitScreenShortcut = {}
-                        )
-                    )
-                )
+        Box {
+            HomeScreen(
+                modifier = Modifier,
+                state = state,
+                navigate = {},
+                launchApp = { },
+                launchSplitScreenShortcut = { },
+                removeSplitScreenShortcut = {},
+                setShowHiddenApps = {},
+                addScreenBefore = {},
+                addScreenAfter = {},
+                removeScreen = {},
+                launchAppInfo = {},
+                launchAppUninstall = {},
+                setIsHidden = { _, _ -> },
             )
-        )
+        }
     }
 }
 

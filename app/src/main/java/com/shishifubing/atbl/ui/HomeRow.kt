@@ -18,6 +18,7 @@ import com.shishifubing.atbl.Model.Settings.HorizontalArrangement
 @Composable
 fun HomeRow(
     items: HomeState.RowItems,
+    showHiddenApps: Boolean,
     onClick: (HomeState.RowItem) -> Unit,
     onLongClick: (HomeState.RowItem) -> Unit,
     settings: Model.Settings,
@@ -35,12 +36,17 @@ fun HomeRow(
     ) {
         items.items.forEach {
             key(it.hashCode()) {
-                HomeRowItemCard(
-                    label = it.label,
-                    onClick = { onClick(it) },
-                    onLongClick = { onLongClick(it) },
-                    settings = settings.appCard
-                )
+                val hide = it is HomeState.RowItem.App
+                        && it.app.isHidden
+                        && !showHiddenApps
+                if (!hide) {
+                    HomeRowItemCard(
+                        label = it.label,
+                        onClick = { onClick(it) },
+                        onLongClick = { onLongClick(it) },
+                        settings = settings.appCard
+                    )
+                }
             }
         }
     }

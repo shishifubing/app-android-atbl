@@ -7,7 +7,7 @@ import com.shishifubing.atbl.R
 
 
 @Composable
-fun HomeLauncherDialogActions(
+fun HomeDialogLauncherActions(
     navigate: (route: LauncherNav) -> Unit,
     showHiddenApps: Boolean,
     currentPage: Int,
