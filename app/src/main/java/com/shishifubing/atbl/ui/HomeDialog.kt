@@ -24,7 +24,6 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
 import com.shishifubing.atbl.data.UIModel
 
@@ -35,6 +34,7 @@ typealias HomeDialogHeaders = UIModel<List<@Composable () -> Unit>>
 fun HomeDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
+    showButtons: Boolean = true,
     actionButtons: HomeDialogButtons = HomeDialogButtons(listOf()),
     headers: HomeDialogHeaders = HomeDialogHeaders(listOf()),
 ) {
@@ -52,7 +52,7 @@ fun HomeDialog(
                 }
                 Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
             }
-            if (actionButtons.model.isEmpty()) {
+            if (actionButtons.model.isEmpty() || !showButtons) {
                 return@Column
             }
             ElevatedCard {

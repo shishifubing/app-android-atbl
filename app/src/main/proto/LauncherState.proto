@@ -16,14 +16,20 @@ message Screen {
 }
 
 message ScreenItem {
-  oneof item {
-    ItemComplex complex = 1;
+  message App {
+    string packageName = 1;
+  };
+  message Apps {};
+  message SplitScreenShortcut {
+    string key = 1;
   }
-}
-
-enum ItemComplex {
-  APPS = 0;
-  SPLIT_SCREEN_SHORTCUTS = 1;
+  message SplitScreenShortcuts {};
+  oneof item {
+    App app = 1;
+    Apps apps = 2;
+    SplitScreenShortcut shortcut = 3;
+    SplitScreenShortcuts shortcuts = 4;
+  }
 }
 
 message App {
