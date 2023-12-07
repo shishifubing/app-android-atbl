@@ -19,8 +19,6 @@ import android.os.Build
 import android.os.UserHandle
 import android.provider.Settings
 import android.util.Log
-import androidx.compose.ui.graphics.ImageBitmap
-import androidx.compose.ui.graphics.asImageBitmap
 import androidx.core.graphics.drawable.toBitmap
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.Lifecycle
@@ -180,15 +178,9 @@ class LauncherManager(
         return Model.Apps.newBuilder().putAllApps(apps).build()
     }
 
-    fun getAppIcon(packageName: String): ImageBitmap {
-        return packageManager.getApplicationIcon(packageName)
-            .toBitmap(config = Bitmap.Config.ARGB_8888)
-            .asImageBitmap()
-    }
-
     fun addCallback(
-        onRemoved: (String) -> Unit,
-        onChanged: (String) -> Unit
+        onRemoved: (packageName: String) -> Unit,
+        onChanged: (packageName: String) -> Unit
     ) = launcherAppsService.registerCallback(object : LauncherApps.Callback() {
         override fun onPackageRemoved(
             packageName: String, user: UserHandle

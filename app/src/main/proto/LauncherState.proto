@@ -9,6 +9,7 @@ message State {
   SplitScreenShortcuts splitScreenShortcuts = 3;
   Settings settings = 5;
   bool isHomeApp = 4;
+  bool showHiddenApps = 6;
 }
 
 message Screen {

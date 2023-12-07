@@ -2,12 +2,19 @@ package com.shishifubing.atbl
 
 import android.app.Application
 import android.appwidget.AppWidgetHost
+import android.content.Context
 import androidx.activity.ComponentActivity
+import androidx.datastore.dataStore
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.ViewModelProvider.AndroidViewModelFactory.Companion.APPLICATION_KEY
 import androidx.lifecycle.viewmodel.initializer
 import androidx.lifecycle.viewmodel.viewModelFactory
+
+private val Context.dataStore by dataStore(
+    fileName = "launcherApps.pb",
+    serializer = LauncherStateSerializer,
+)
 
 class LauncherApplication : Application() {
     lateinit var manager: LauncherManager
@@ -16,7 +23,7 @@ class LauncherApplication : Application() {
 
     fun init(activity: ComponentActivity): LauncherApplication {
         manager = LauncherManager(activity, activity.lifecycle)
-        stateRepo = LauncherStateRepository(manager, activity)
+        stateRepo = LauncherStateRepository(dataStore)
         appWidgetHost = AppWidgetHost(activity, 0)
         return this
     }

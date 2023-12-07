@@ -1,9 +1,11 @@
 package com.shishifubing.atbl.ui
 
 
+import android.os.ParcelFileDescriptor
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.launcherViewModelFactory
@@ -17,6 +19,7 @@ import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import java.io.FileOutputStream
+import java.io.InputStream
 
 
 @Immutable
@@ -37,25 +40,34 @@ class SettingsViewModel(
         }
     }
 
-    private val _error = MutableStateFlow<Throwable?>(null)
-    val error = _error.asStateFlow()
+    private val _errorFlow = MutableStateFlow<Throwable?>(null)
+    val errorFlow = _errorFlow.asStateFlow()
 
     private val exceptionHandler = CoroutineExceptionHandler { _, e ->
-        _error.update { e }
+        _errorFlow.update { e }
     }
+    private var prevState = Defaults.State
 
     val uiState = stateRepo.observeState()
-        .map { SettingsScreenUIState.Success(state = it) }
+        .map { stateResult ->
+            val state = stateResult.fold(
+                onSuccess = {
+                    prevState = it
+                    it
+                },
+                onFailure = {
+                    _errorFlow.update { it }
+                    prevState
+                }
+            )
+            SettingsScreenUIState.Success(state = state)
+        }
         .stateIn(
             scope = viewModelScope,
             started = SharingStarted.Eagerly,
             initialValue = SettingsScreenUIState.Loading
         )
 
-
-    fun updateSettingsFromBytes(bytes: ByteArray) {
-        stateAction { updateSettings { mergeFrom(bytes) } }
-    }
 
     fun backupReset() {
         launch { stateRepo.resetSettings() }
@@ -127,8 +139,22 @@ class SettingsViewModel(
         updateAppCard { splitScreenSeparator = value }
     }
 
-    fun writeSettings(stream: FileOutputStream) {
-        stateAction { writeSettings(stream) }
+    fun updateSettingsFromStream(getStream: () -> InputStream?) {
+        stateAction {
+            getStream()?.use { stream ->
+                this.updateSettingsFromInputStream(stream)
+            }
+        }
+    }
+
+    fun writeSettingsToFile(getFile: () -> ParcelFileDescriptor?) {
+        stateAction {
+            getFile()?.use { file ->
+                FileOutputStream(file.fileDescriptor).use { stream ->
+                    this.writeSettingsToOutputStream(stream)
+                }
+            }
+        }
     }
 
     private fun launch(action: suspend CoroutineScope.() -> Unit) {
@@ -139,21 +165,19 @@ class SettingsViewModel(
         launch { action.invoke(stateRepo) }
     }
 
-    private fun updateSettings(action: Model.Settings.Builder.() -> Unit) {
-        stateAction {
-            updateSettings(action)
-        }
-    }
-
     private fun updateAppCard(action: Model.Settings.AppCard.Builder.() -> Unit) {
-        updateSettings {
-            appCard = appCard.toBuilder().apply(action).build()
+        stateAction {
+            updateSettings {
+                appCard = appCard.toBuilder().apply(action).build()
+            }
         }
     }
 
     private fun updateLayout(action: Model.Settings.Layout.Builder.() -> Unit) {
-        updateSettings {
-            layout = layout.toBuilder().apply(action).build()
+        stateAction {
+            updateSettings {
+                layout = layout.toBuilder().apply(action).build()
+            }
         }
     }
 }
