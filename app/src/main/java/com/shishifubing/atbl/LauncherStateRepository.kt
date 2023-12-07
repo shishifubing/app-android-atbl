@@ -1,49 +1,34 @@
 package com.shishifubing.atbl
 
-import android.content.Context
-import android.util.Log
+import androidx.datastore.core.CorruptionException
+import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
-import androidx.datastore.dataStore
-import com.google.protobuf.InvalidProtocolBufferException
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import java.io.InputStream
 import java.io.OutputStream
 
-
 private val tag = LauncherStateRepository::class.simpleName
 
-private val handler = CoroutineExceptionHandler { ctx, exception ->
-    Log.d(tag, "got repo exception: $exception")
-}
-
-private val scope = CoroutineScope(Dispatchers.IO + SupervisorJob() + handler)
-
-
-private val Context.dataStore by dataStore(
-    fileName = "launcherApps.pb",
-    serializer = LauncherStateSerializer,
-    scope = scope
-)
-
-class LauncherStateRepository(
-    private val manager: LauncherManager,
-    private val context: Context
-) {
+class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
 
     private val tag = LauncherStateRepository::class.simpleName
 
-    fun observeState(): Flow<Model.State> {
-        return context.dataStore.data.catch { emit(Defaults.State) }
+    fun observeState(): Flow<Result<Model.State>> {
+        return dataStore.data
+            .map { Result.success(it) }
+            .catch { emit(Result.failure(it)) }
+
     }
 
     private suspend fun update(action: Model.State.Builder.() -> Unit) {
-        context.dataStore.updateData { it.toBuilder().apply(action).build() }
+        dataStore.updateData { it.toBuilder().apply(action).build() }
+    }
+
+    suspend fun updateSettings(action: Model.Settings.Builder.() -> Unit) {
+        update { settings = settings.toBuilder().apply(action).build() }
     }
 
     private suspend fun updateScreen(
@@ -97,8 +82,8 @@ class LauncherStateRepository(
         }
     }
 
-    suspend fun updateIsHomeApp() {
-        update { isHomeApp = manager.isHomeApp() }
+    suspend fun updateIsHomeApp(value: Boolean) {
+        update { isHomeApp = value }
     }
 
     suspend fun setIsHidden(packageName: String, isHidden: Boolean) {
@@ -129,6 +114,10 @@ class LauncherStateRepository(
         }
     }
 
+    suspend fun setShowHiddenApps(showHiddenApps: Boolean) {
+        update { this.showHiddenApps = showHiddenApps }
+    }
+
     suspend fun removeSplitScreenShortcut(shortcut: String) {
         update {
             val newShortcuts = splitScreenShortcuts.toBuilder()
@@ -138,8 +127,8 @@ class LauncherStateRepository(
         }
     }
 
-    suspend fun reloadApp(packageName: String) {
-        updateApp(packageName) { mergeFrom(manager.getApp(packageName)) }
+    suspend fun reloadApp(app: Model.App) {
+        updateApp(app.packageName) { mergeFrom(app) }
     }
 
     suspend fun setHiddenApps(packageNames: List<String>) {
@@ -154,22 +143,22 @@ class LauncherStateRepository(
     }
 
     suspend fun resetSettings() {
-        update {
-            settings = settings
-                .toBuilder()
-                .mergeFrom(Defaults.Settings)
-                .build()
-        }
+        updateSettings { mergeFrom(Defaults.Settings) }
     }
 
-    suspend fun writeSettings(stream: OutputStream) {
-        context.dataStore.data.first().settings.writeTo(stream)
+    suspend fun updateSettingsFromInputStream(stream: InputStream) {
+        updateSettings { mergeFrom(stream) }
     }
 
-    suspend fun reloadState() {
+
+    suspend fun writeSettingsToOutputStream(stream: OutputStream) {
+        dataStore.data.first().settings.writeTo(stream)
+    }
+
+    suspend fun reloadState(apps: Model.Apps, isHomeApp: Boolean) {
         update {
-            val newApps = manager.fetchAllApps().appsMap.map { (name, app) ->
-                val isHidden = apps.getAppsOrDefault(name, app).isHidden
+            val newApps = apps.appsMap.map { (name, app) ->
+                val isHidden = this.apps.getAppsOrDefault(name, app).isHidden
                 name to app.toBuilder().setIsHidden(isHidden).build()
             }.toMap()
             clearApps()
@@ -177,8 +166,29 @@ class LauncherStateRepository(
             if (screensCount == 0) {
                 addScreens(Defaults.Screen)
             }
-            isHomeApp = manager.isHomeApp()
+            this.isHomeApp = isHomeApp
         }
+    }
+}
+
+object LauncherStateSerializer : Serializer<Model.State> {
+    override val defaultValue = Defaults.State
+
+    override suspend fun readFrom(input: InputStream): Model.State {
+        try {
+            return Model.State.parseFrom(input)
+        } catch (e: Throwable) {
+            throw CorruptionException("Could not parse input stream", e)
+        }
+    }
+
+    override suspend fun writeTo(t: Model.State, output: OutputStream) {
+        try {
+            t.writeTo(output)
+        } catch (e: Throwable) {
+            throw CorruptionException("Could write to output", e)
+        }
+
     }
 }
 
@@ -232,20 +242,4 @@ object Defaults {
         .setSettings(Settings)
         .setIsHomeApp(false)
         .build()
-}
-
-object LauncherStateSerializer : Serializer<Model.State> {
-    override val defaultValue = Defaults.State
-
-    override suspend fun readFrom(input: InputStream): Model.State {
-        return try {
-            Model.State.parseFrom(input)
-        } catch (exception: InvalidProtocolBufferException) {
-            defaultValue
-        }
-    }
-
-    override suspend fun writeTo(t: Model.State, output: OutputStream) {
-        t.writeTo(output)
-    }
 }

@@ -48,7 +48,7 @@ fun HomeRoute(
 ) {
     val uiState by vm.uiState.collectAsState()
 
-    ErrorToast(errorFlow = vm.error)
+    ErrorToast(errorFlow = vm.errorFlow)
 
     when (uiState) {
         HomeState.Loading -> {
@@ -161,6 +161,7 @@ private fun BoxScope.HomeScreen(
             removeScreen = removeScreen,
             addScreenBefore = addScreenBefore,
             currentPage = showLauncherDialog,
+            pageCount = pagerState.pageCount,
             onDismissRequest = { showLauncherDialog = -1 }
         )
     }
@@ -169,7 +170,7 @@ private fun BoxScope.HomeScreen(
         HomeDialog(
             onDismissRequest = { showAppDialog = null },
             actionButtons = state.appShortcutButtons[app.packageName]!!,
-            headers = HomeDialogHeaders(listOf {
+            headers = HomeDialogHeaders {
                 HomeDialogHeader(
                     app = app,
                     onDismissRequest = { showAppDialog = null },
@@ -177,7 +178,7 @@ private fun BoxScope.HomeScreen(
                     launchAppUninstall = launchAppUninstall,
                     setIsHidden = setIsHidden
                 )
-            })
+            }
         )
     }
     if (showShortcutDialog != null) {
@@ -185,11 +186,12 @@ private fun BoxScope.HomeScreen(
         HomeDialog(
             onDismissRequest = { showShortcutDialog = null },
             modifier = modifier,
-            actionButtons = HomeDialogButtons(listOf(
-                stringResource(R.string.drawer_app_delete_split_screen_shortcut) to {
-                    removeSplitScreenShortcut(shortcut)
-                }
-            )),
+            actionButtons = HomeDialogButtons(
+                HomeDialogButton(
+                    label = R.string.drawer_app_delete_split_screen_shortcut,
+                    onClick = { removeSplitScreenShortcut(shortcut) }
+                )
+            ),
             headers = HomeDialogHeaders(listOf(
                 {
                     HomeDialogHeader(

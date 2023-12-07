@@ -11,6 +11,7 @@ fun HomeDialogLauncherActions(
     navigate: (route: LauncherNav) -> Unit,
     showHiddenApps: Boolean,
     currentPage: Int,
+    pageCount: Int,
     setShowHiddenApps: (Boolean) -> Unit,
     addScreenBefore: (Int) -> Unit,
     addScreenAfter: (Int) -> Unit,
@@ -22,26 +23,38 @@ fun HomeDialogLauncherActions(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         actionButtons = HomeDialogButtons(listOf(
-            stringResource(R.string.launcher_dialog_settings) to {
-                navigate(LauncherNav.Settings)
-            },
-            stringResource(R.string.launcher_dialog_add_widget) to {
-                navigate(LauncherNav.AddWidget)
-            },
-            if (showHiddenApps) {
-                stringResource(R.string.launcher_dialog_hide_hidden_apps)
-            } else {
-                stringResource(R.string.launcher_dialog_show_hidden_apps)
-            } to { setShowHiddenApps(showHiddenApps.not()) },
-            stringResource(R.string.launcher_dialog_add_screen_before) to {
-                addScreenBefore(currentPage)
-            },
-            stringResource(R.string.launcher_dialog_add_screen_after) to {
-                addScreenAfter(currentPage)
-            },
-            stringResource(R.string.launcher_dialog_remove_screen) to {
-                removeScreen(currentPage)
-            }
-        ))
+            HomeDialogButton(
+                label = R.string.launcher_dialog_settings,
+                onClick = { navigate(LauncherNav.Settings) },
+            ),
+            HomeDialogButton(
+                label = R.string.launcher_dialog_add_widget,
+                onClick = { navigate(LauncherNav.AddWidget) }
+            ),
+            HomeDialogButton(
+                label = {
+                    if (showHiddenApps) {
+                        stringResource(R.string.launcher_dialog_hide_hidden_apps)
+                    } else {
+                        stringResource(R.string.launcher_dialog_show_hidden_apps)
+                    }
+                },
+                onClick = { setShowHiddenApps(showHiddenApps.not()) }
+            ),
+            HomeDialogButton(
+                label = R.string.launcher_dialog_add_screen_before,
+                onClick = { addScreenBefore(currentPage) }
+            ),
+            HomeDialogButton(
+                label = R.string.launcher_dialog_add_screen_after,
+                onClick = { addScreenAfter(currentPage) }
+            ),
+            HomeDialogButton(
+                label = R.string.launcher_dialog_remove_screen,
+                onClick = { removeScreen(currentPage) },
+                show = pageCount > 1
+            )
+        )
+        )
     )
 }

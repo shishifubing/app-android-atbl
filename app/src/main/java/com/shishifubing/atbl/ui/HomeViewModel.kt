@@ -1,9 +1,11 @@
 package com.shishifubing.atbl.ui
 
 
+import android.util.Log
 import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.LauncherManager
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
@@ -11,13 +13,14 @@ import com.shishifubing.atbl.Model.Screen
 import com.shishifubing.atbl.Model.Settings
 import com.shishifubing.atbl.Model.Settings.AppCard
 import com.shishifubing.atbl.Model.SplitScreenShortcut
+import com.shishifubing.atbl.Model.SplitScreenShortcuts
 import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -72,26 +75,29 @@ class HomeViewModel(
         }
     }
 
-    private fun launch(action: suspend CoroutineScope.() -> Unit) {
-        viewModelScope.launch(exceptionHandler) { action() }
-    }
-
-    private val _showHiddenAppsFlow = MutableStateFlow(false)
-
-    private val _error = MutableStateFlow<Throwable?>(null)
-    val error = _error.asStateFlow()
+    private val _errorFlow = MutableStateFlow<Throwable?>(null)
+    val errorFlow = _errorFlow.asStateFlow()
 
     private val exceptionHandler = CoroutineExceptionHandler { _, e ->
-        _error.update { e }
+        _errorFlow.update { e }
     }
 
-    val uiState = combine(
-        stateRepo.observeState(),
-        _showHiddenAppsFlow
-    ) { state, showHiddenApps ->
+    private var prevState = Defaults.State
+
+    val uiState = stateRepo.observeState().map { stateResult ->
+        val state = stateResult.fold(
+            onSuccess = {
+                prevState = it
+                it
+            },
+            onFailure = {
+                _errorFlow.update { it }
+                prevState
+            }
+        )
         HomeState.Success(
             settings = state.settings,
-            showHiddenApps = showHiddenApps,
+            showHiddenApps = state.showHiddenApps,
             isHomeApp = state.isHomeApp,
             items = state.screensList.map { screen ->
                 screenToHomeRowItems(screen, state)
@@ -108,8 +114,11 @@ class HomeViewModel(
         return apps.appsMap
             .map { (packageName, app) ->
                 packageName to HomeDialogButtons(
-                    model = app.shortcutsList.map { shortcut ->
-                        shortcut.label to { launchShortcut(shortcut) }
+                    buttons = app.shortcutsList.map { shortcut ->
+                        HomeDialogButton(
+                            label = shortcut.label,
+                            onClick = { launchShortcut(shortcut) }
+                        )
                     }
                 )
             }
@@ -120,77 +129,87 @@ class HomeViewModel(
         screen: Screen,
         state: Model.State
     ): HomeState.RowItems {
-        val items = mutableListOf<HomeState.RowItem>()
-        screen.itemsList.forEach { item ->
-            when (item.itemCase) {
-                Model.ScreenItem.ItemCase.APP -> {
-                    val model = state.apps.getAppsOrThrow(item.app.packageName)
-                    val app = HomeState.RowItem.App(
-                        app = model,
-                        label = transformLabel(model, state.settings.appCard)
-                    )
-                    items.add(app)
-                }
+        val items = screen.itemsList
+            .flatMap { itemModel ->
+                itemToHomeRowItems(
+                    apps = state.apps,
+                    splitScreenShortcuts = state.splitScreenShortcuts,
+                    item = itemModel,
+                    settings = state.settings.appCard
+                )
+            }
+            .let { items ->
+                when (val sort = state.settings.layout.sortBy) {
+                    Settings.SortBy.SortByLabel -> items.sortedBy { it.label }
 
-                Model.ScreenItem.ItemCase.APPS -> {
-                    val apps = state.apps.appsMap.values.map { app ->
-                        HomeState.RowItem.App(
-                            app = app,
-                            label = transformLabel(app, state.settings.appCard)
-                        )
-                    }
-                    items.addAll(apps)
-                }
-
-                Model.ScreenItem.ItemCase.SHORTCUT -> {
-                    val model = state.splitScreenShortcuts
-                        .getShortcutsOrThrow(item.shortcut.key)
-                    val shortcut = HomeState.RowItem.SplitScreenShortcut(
-                        shortcut = model,
-                        label = transformLabel(model, state.settings.appCard)
-                    )
-                    items.add(shortcut)
-                }
-
-                Model.ScreenItem.ItemCase.SHORTCUTS -> {
-                    val shortcuts =
-                        state.splitScreenShortcuts.shortcutsMap.map {
-                            HomeState.RowItem.SplitScreenShortcut(
-                                shortcut = it.value,
-                                label = transformLabel(
-                                    it.value,
-                                    state.settings.appCard
-                                )
-                            )
-                        }
-                    items.addAll(shortcuts)
-                }
-
-                Model.ScreenItem.ItemCase.ITEM_NOT_SET -> {
-                    throw IllegalArgumentException("item is not set")
-                }
-
-                else -> {
-                    throw NotImplementedError("not implemented item: $item")
+                    else -> throw NotImplementedError("not implemented sort - $sort")
                 }
             }
-        }
-        return transformItems(items, state.settings.layout)
+            .let { items ->
+                if (state.settings.layout.reverseOrder) {
+                    items.reversed()
+                } else {
+                    items
+                }
+            }
+        return HomeState.RowItems(items = items)
     }
 
-    private fun transformItems(
-        items: MutableList<HomeState.RowItem>,
-        settings: Settings.Layout
-    ): HomeState.RowItems {
-        when (settings.sortBy) {
-            Settings.SortBy.SortByLabel -> items.sortBy { it.label }
+    private fun itemToHomeRowItems(
+        apps: Model.Apps,
+        splitScreenShortcuts: SplitScreenShortcuts,
+        item: Model.ScreenItem,
+        settings: AppCard
+    ): List<HomeState.RowItem> {
+        return when (item.itemCase) {
+            Model.ScreenItem.ItemCase.APP -> {
+                val model = apps.getAppsOrThrow(item.app.packageName)
+                listOf(
+                    HomeState.RowItem.App(
+                        app = model,
+                        label = transformLabel(model, settings)
+                    )
+                )
+            }
 
-            else -> throw NotImplementedError("not implemented sort - ${settings.sortBy}")
+            Model.ScreenItem.ItemCase.APPS -> {
+                apps.appsMap.values.map { app ->
+                    HomeState.RowItem.App(
+                        app = app,
+                        label = transformLabel(app, settings)
+                    )
+                }
+            }
+
+            Model.ScreenItem.ItemCase.SHORTCUT -> {
+                val model =
+                    splitScreenShortcuts.getShortcutsOrThrow(item.shortcut.key)
+                listOf(
+                    HomeState.RowItem.SplitScreenShortcut(
+                        shortcut = model,
+                        label = transformLabel(model, settings)
+                    )
+                )
+            }
+
+            Model.ScreenItem.ItemCase.SHORTCUTS -> {
+                splitScreenShortcuts.shortcutsMap.map {
+                    HomeState.RowItem.SplitScreenShortcut(
+                        shortcut = it.value,
+                        label = transformLabel(it.value, settings)
+                    )
+                }
+            }
+
+            Model.ScreenItem.ItemCase.ITEM_NOT_SET -> {
+                Log.d(tag, "item is not set for some reason?")
+                listOf()
+            }
+
+            else -> {
+                throw NotImplementedError("not implemented item: $item")
+            }
         }
-        if (settings.reverseOrder) {
-            items.reverse()
-        }
-        return HomeState.RowItems(items = items)
     }
 
     private fun transformLabel(app: Model.App, settings: AppCard): String {
@@ -223,10 +242,12 @@ class HomeViewModel(
     }
 
     fun launchSplitScreenShortcut(shortcut: SplitScreenShortcut) {
-        manager.launchSplitScreen(
-            shortcut.appFirst.packageName,
-            shortcut.appSecond.packageName
-        )
+        managerAction {
+            launchSplitScreen(
+                shortcut.appFirst.packageName,
+                shortcut.appSecond.packageName
+            )
+        }
     }
 
     fun removeSplitScreenShortcut(shortcut: SplitScreenShortcut) {
@@ -234,7 +255,7 @@ class HomeViewModel(
     }
 
     fun launchAppUninstall(app: Model.App) {
-        manager.launchAppUninstall(app.packageName)
+        managerAction { this.launchAppUninstall(app.packageName) }
     }
 
     fun setIsHidden(app: Model.App, isHidden: Boolean) {
@@ -242,35 +263,43 @@ class HomeViewModel(
     }
 
     fun launchAppInfo(app: Model.App) {
-        manager.launchAppInfo(app.packageName)
+        managerAction { this.launchAppInfo(app.packageName) }
     }
 
     fun launchApp(app: Model.App) {
-        manager.launchApp(app.packageName)
+        managerAction { this.launchApp(app.packageName) }
     }
 
-    fun launchShortcut(shortcut: Model.AppShortcut) {
-        manager.launchAppShortcut(shortcut)
+    private fun launchShortcut(shortcut: Model.AppShortcut) {
+        managerAction { this.launchAppShortcut(shortcut) }
     }
 
     fun setShowHiddenApps(showHiddenApps: Boolean) {
-        _showHiddenAppsFlow.value = showHiddenApps
+        stateAction { this.setShowHiddenApps(showHiddenApps) }
     }
 
     fun addScreenAfter(screen: Int) {
-        stateAction { addScreenAfter(screen) }
+        stateAction { this.addScreenAfter(screen) }
     }
 
     fun addScreenBefore(screen: Int) {
-        stateAction { addScreenBefore(screen) }
+        stateAction { this.addScreenBefore(screen) }
     }
 
     fun removeScreen(screen: Int) {
-        stateAction { removeScreen(screen) }
+        stateAction { this.removeScreen(screen) }
+    }
+
+    private fun managerAction(action: suspend LauncherManager.() -> Unit) {
+        launch { action.invoke(manager) }
     }
 
     private fun stateAction(action: suspend LauncherStateRepository.() -> Unit) {
         launch { action.invoke(stateRepo) }
+    }
+
+    private fun launch(action: suspend CoroutineScope.() -> Unit) {
+        viewModelScope.launch(exceptionHandler) { action() }
     }
 }
 

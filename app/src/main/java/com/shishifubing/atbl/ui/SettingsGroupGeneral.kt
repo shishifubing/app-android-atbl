@@ -1,7 +1,7 @@
 package com.shishifubing.atbl.ui
 
-import android.content.ContentResolver
 import android.net.Uri
+import android.os.ParcelFileDescriptor
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
@@ -13,17 +13,17 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import com.shishifubing.atbl.R
-import java.io.FileOutputStream
+import java.io.InputStream
 
 @Composable
 fun SettingsGroupGeneral(
-    writeSettings: (FileOutputStream) -> Unit,
-    updateSettingsFromBytes: (ByteArray) -> Unit,
+    updateSettingsFromStream: (() -> InputStream?) -> Unit,
+    writeSettingsToFile: (() -> ParcelFileDescriptor?) -> Unit,
     backupReset: () -> Unit,
 ) {
     SettingsGroup(R.string.settings_group_general) {
-        BackupExport(writeSettings = writeSettings)
-        BackupImport(updateFromBytes = updateSettingsFromBytes)
+        BackupExport(writeSettingsToFile = writeSettingsToFile)
+        BackupImport(updateSettingsFromStream = updateSettingsFromStream)
         BackupReset(resetSettings = backupReset)
     }
 }
@@ -54,7 +54,9 @@ private fun BackupReset(resetSettings: () -> Unit) {
 }
 
 @Composable
-private fun BackupImport(updateFromBytes: (ByteArray) -> Unit) {
+private fun BackupImport(
+    updateSettingsFromStream: (() -> InputStream?) -> Unit
+) {
     var result by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         contract = ActivityResultContracts.OpenDocument()
@@ -64,16 +66,19 @@ private fun BackupImport(updateFromBytes: (ByteArray) -> Unit) {
         label = stringResource(R.string.settings_backup_import_label),
         onClick = { launcher.launch(arrayOf("application/*")) }
     )
-    LauncherEffectURI(uri = result) { uri ->
-        openInputStream(uri)?.use { stream ->
-            updateFromBytes(stream.readBytes())
+    val contentResolver = LocalContext.current.contentResolver
+    LaunchedEffect(result) {
+        result?.let { uri ->
+            updateSettingsFromStream { contentResolver.openInputStream(uri) }
             result = null
         }
     }
 }
 
 @Composable
-private fun BackupExport(writeSettings: (FileOutputStream) -> Unit) {
+private fun BackupExport(
+    writeSettingsToFile: (() -> ParcelFileDescriptor?) -> Unit
+) {
     var result by remember { mutableStateOf<Uri?>(null) }
     val launcher = rememberLauncherForActivityResult(
         ActivityResultContracts.CreateDocument("application/binpb")
@@ -86,22 +91,13 @@ private fun BackupExport(writeSettings: (FileOutputStream) -> Unit) {
         label = stringResource(R.string.settings_backup_export_label),
         onClick = { launcher.launch(filename) }
     )
-    LauncherEffectURI(uri = result) {
-        openFileDescriptor(it, "w")?.use { file ->
-            FileOutputStream(file.fileDescriptor).use(block = writeSettings)
-        }
-    }
-}
-
-@Composable
-private fun LauncherEffectURI(
-    uri: Uri?,
-    action: ContentResolver.(uri: Uri) -> Unit
-) {
-    val resolver = LocalContext.current.contentResolver
-    LaunchedEffect(key1 = uri) {
-        if (uri != null) {
-            resolver.apply { action(uri) }
+    val contentResolver = LocalContext.current.contentResolver
+    LaunchedEffect(result) {
+        result?.let { uri ->
+            writeSettingsToFile {
+                contentResolver.openFileDescriptor(uri, "w")
+            }
+            result = null
         }
     }
 }

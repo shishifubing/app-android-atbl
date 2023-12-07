@@ -19,17 +19,20 @@ class MainActivity : ComponentActivity() {
         app = (application as LauncherApplication).init(this)
 
         lifecycleScope.launch {
-            app.stateRepo.reloadState()
+            app.stateRepo.reloadState(
+                apps = app.manager.fetchAllApps(),
+                isHomeApp = app.manager.isHomeApp()
+            )
         }
         app.manager.addCallback(
-            onChanged = {
+            onChanged = { packageName ->
                 lifecycleScope.launch {
-                    app.stateRepo.reloadApp(it)
+                    app.stateRepo.reloadApp(app.manager.getApp(packageName))
                 }
             },
-            onRemoved = {
+            onRemoved = { packageName ->
                 lifecycleScope.launch {
-                    app.stateRepo.removeApp(it)
+                    app.stateRepo.removeApp(packageName)
                 }
             }
         )
@@ -42,7 +45,7 @@ class MainActivity : ComponentActivity() {
     override fun onResume() {
         super.onResume()
         lifecycleScope.launch {
-            app.stateRepo.updateIsHomeApp()
+            app.stateRepo.updateIsHomeApp(app.manager.isHomeApp())
         }
     }
 

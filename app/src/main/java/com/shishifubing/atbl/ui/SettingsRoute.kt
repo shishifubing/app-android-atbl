@@ -18,7 +18,7 @@ fun SettingsRoute(
     vm: SettingsViewModel = viewModel(factory = SettingsViewModel.Factory)
 ) {
     val uiState by vm.uiState.collectAsState()
-    ErrorToast(errorFlow = vm.error)
+    ErrorToast(errorFlow = vm.errorFlow)
     LauncherScaffold(
         modifier = modifier,
         nav = nav,
@@ -34,9 +34,9 @@ fun SettingsRoute(
                 val shortcuts = state.splitScreenShortcuts
                 Column(modifier = Modifier.verticalScroll(rememberScrollState())) {
                     SettingsGroupGeneral(
-                        writeSettings = vm::writeSettings,
+                        writeSettingsToFile = vm::writeSettingsToFile,
                         backupReset = vm::backupReset,
-                        updateSettingsFromBytes = vm::updateSettingsFromBytes
+                        updateSettingsFromStream = vm::updateSettingsFromStream
                     )
                     SettingsGroupHiddenApps(
                         apps = apps,
