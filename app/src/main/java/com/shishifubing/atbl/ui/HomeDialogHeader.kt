@@ -17,13 +17,11 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.google.protobuf.ByteString
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
 
@@ -36,7 +34,10 @@ fun HomeDialogHeader(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
-    val icon = rememberIcon(icon = app.icon)
+    val icon = remember {
+        val array = app.icon.toByteArray()
+        BitmapFactory.decodeByteArray(array, 0, array.size).asImageBitmap()
+    }
     Row(
         modifier = modifier.fillMaxWidth(),
         horizontalArrangement = Arrangement.SpaceBetween,
@@ -97,13 +98,5 @@ fun HomeDialogHeader(
                 )
             }
         }
-    }
-}
-
-@Composable
-private fun rememberIcon(icon: ByteString): ImageBitmap {
-    return remember {
-        val array = icon.toByteArray()
-        BitmapFactory.decodeByteArray(array, 0, array.size).asImageBitmap()
     }
 }

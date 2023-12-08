@@ -23,12 +23,19 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
 
     }
 
-    private suspend fun update(action: Model.State.Builder.() -> Unit) {
-        dataStore.updateData { it.toBuilder().apply(action).build() }
+    suspend fun stateOrThrow(): Model.State {
+        return observeState().first().getOrThrow()
     }
 
-    suspend fun updateSettings(action: Model.Settings.Builder.() -> Unit) {
-        update { settings = settings.toBuilder().apply(action).build() }
+    private suspend fun update(action: Model.State.Builder.() -> Unit): Model.State {
+        return dataStore.updateData { it.toBuilder().apply(action).build() }
+    }
+
+    suspend fun updateSettings(action: Model.Settings.Builder.() -> Unit): Model.Settings {
+        val newState = update {
+            settings = settings.toBuilder().apply(action).build()
+        }
+        return newState.settings
     }
 
     private suspend fun updateScreen(
@@ -142,17 +149,19 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
         }
     }
 
-    suspend fun resetSettings() {
-        updateSettings { mergeFrom(Defaults.Settings) }
+    suspend fun resetSettings(): Model.Settings {
+        return updateSettings { mergeFrom(Defaults.Settings) }
     }
 
-    suspend fun updateSettingsFromInputStream(stream: InputStream) {
-        updateSettings { mergeFrom(stream) }
+    suspend fun updateSettingsFromInputStream(stream: InputStream): Model.Settings {
+        return updateSettings { mergeFrom(stream) }
     }
 
 
-    suspend fun writeSettingsToOutputStream(stream: OutputStream) {
-        dataStore.data.first().settings.writeTo(stream)
+    suspend fun writeSettingsToOutputStream(stream: OutputStream): Model.Settings {
+        val state = dataStore.data.first()
+        state.settings.writeTo(stream)
+        return state.settings
     }
 
     suspend fun reloadState(apps: Model.Apps, isHomeApp: Boolean) {
@@ -241,5 +250,6 @@ object Defaults {
         .toBuilder()
         .setSettings(Settings)
         .setIsHomeApp(false)
+        .setShowHiddenApps(false)
         .build()
 }

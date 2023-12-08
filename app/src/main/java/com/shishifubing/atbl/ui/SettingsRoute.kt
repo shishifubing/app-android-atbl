@@ -9,6 +9,8 @@ import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavController
+import com.shishifubing.atbl.data.SettingsScreenUIState.Loading
+import com.shishifubing.atbl.data.SettingsScreenUIState.Success
 
 @Composable
 fun SettingsRoute(
@@ -25,10 +27,12 @@ fun SettingsRoute(
         goBack = { navController.popBackStack() }
     ) {
         when (uiState) {
-            SettingsScreenUIState.Loading -> PageLoadingIndicator()
+            Loading -> {
+                PageLoadingIndicator()
+            }
 
-            is SettingsScreenUIState.Success -> {
-                val state = (uiState as SettingsScreenUIState.Success).state
+            is Success -> {
+                val state = (uiState as Success).state
                 val apps = state.apps
                 val settings = state.settings
                 val shortcuts = state.splitScreenShortcuts
