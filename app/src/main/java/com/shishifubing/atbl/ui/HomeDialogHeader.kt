@@ -24,13 +24,12 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.data.HomeDialogState.HeaderActions
 
 @Composable
 fun HomeDialogHeader(
     app: Model.App,
-    launchAppInfo: (Model.App) -> Unit,
-    launchAppUninstall: (Model.App) -> Unit,
-    setIsHidden: (Model.App, Boolean) -> Unit,
+    onHeaderAction: (Model.App, HeaderActions) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -76,7 +75,7 @@ fun HomeDialogHeader(
                 HomeDialogButton(
                     text = stringResource(R.string.drawer_app_info),
                     onClick = {
-                        launchAppInfo(app)
+                        onHeaderAction(app, HeaderActions.GoToInfo)
                         onDismissRequest()
                     }
                 )
@@ -85,14 +84,14 @@ fun HomeDialogHeader(
                         if (app.isHidden) R.string.drawer_app_show else R.string.drawer_app_hide
                     ),
                     onClick = {
-                        setIsHidden(app, !app.isHidden)
+                        onHeaderAction(app, HeaderActions.HideOrShow)
                         onDismissRequest()
                     }
                 )
                 HomeDialogButton(
                     text = stringResource(R.string.drawer_app_uninstall),
                     onClick = {
-                        launchAppUninstall(app)
+                        onHeaderAction(app, HeaderActions.Uninstall)
                         onDismissRequest()
                     }
                 )

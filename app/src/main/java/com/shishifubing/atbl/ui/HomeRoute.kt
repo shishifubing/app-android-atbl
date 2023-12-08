@@ -39,9 +39,8 @@ import androidx.navigation.NavController
 import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.HomeDialogButtonState
-import com.shishifubing.atbl.data.HomeDialogButtonsState
-import com.shishifubing.atbl.data.HomeDialogHeaders
+import com.shishifubing.atbl.data.HomeDialogState
+import com.shishifubing.atbl.data.HomeDialogState.HeaderActions
 import com.shishifubing.atbl.data.HomeState
 import com.shishifubing.atbl.data.HomeState.RowItem
 
@@ -67,17 +66,17 @@ fun HomeRoute(
                 HomeScreen(
                     modifier = modifier,
                     state = uiState as HomeState.Success,
-                    navigate = navController::navigate,
-                    launchApp = vm::launchApp,
-                    launchSplitScreenShortcut = vm::launchSplitScreenShortcut,
                     removeSplitScreenShortcut = vm::removeSplitScreenShortcut,
-                    setShowHiddenApps = vm::setShowHiddenApps,
-                    addScreenBefore = vm::addScreenBefore,
-                    addScreenAfter = vm::addScreenAfter,
-                    removeScreen = vm::removeScreen,
-                    launchAppInfo = vm::launchAppInfo,
-                    launchAppUninstall = vm::launchAppUninstall,
-                    setIsHidden = vm::setIsHidden,
+                    onHeaderAction = vm::onHeaderAction,
+                    launchAppShortcut = vm::launchShortcut,
+                    onRowItemClick = vm::onRowItemClick,
+                    onLauncherDialogAction = { state, action ->
+                        vm.onLauncherDialogAction(
+                            state,
+                            action,
+                            navController::navigate
+                        )
+                    }
                 )
             }
         }
@@ -88,17 +87,14 @@ fun HomeRoute(
 @Composable
 private fun BoxScope.HomeScreen(
     state: HomeState.Success,
-    navigate: (LauncherNav) -> Unit,
-    launchApp: (Model.App) -> Unit,
-    launchSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
+    launchAppShortcut: (Model.AppShortcut) -> Unit,
     removeSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
-    setShowHiddenApps: (Boolean) -> Unit,
-    addScreenBefore: (Int) -> Unit,
-    addScreenAfter: (Int) -> Unit,
-    removeScreen: (Int) -> Unit,
-    launchAppInfo: (Model.App) -> Unit,
-    launchAppUninstall: (Model.App) -> Unit,
-    setIsHidden: (Model.App, Boolean) -> Unit,
+    onLauncherDialogAction: (
+        HomeDialogState.LauncherDialogState,
+        HomeDialogState.LauncherDialogActions
+    ) -> Unit,
+    onRowItemClick: (RowItem) -> Unit,
+    onHeaderAction: (Model.App, HeaderActions) -> Unit,
     modifier: Modifier = Modifier
 ) {
     var showLauncherDialog by remember { mutableIntStateOf(-1) }
@@ -111,6 +107,7 @@ private fun BoxScope.HomeScreen(
         pageCount = { state.items.size }
     )
     val interactionSource = remember { MutableInteractionSource() }
+
     Column {
         if (!state.isHomeApp) {
             NotAHomeAppBanner()
@@ -128,22 +125,10 @@ private fun BoxScope.HomeScreen(
                 settings = state.settings,
                 items = state.items[page],
                 showHiddenApps = state.showHiddenApps,
-                onClick = {
-                    when (it) {
-                        is RowItem.App -> {
-                            launchApp(it.app)
-                        }
-
-                        is RowItem.SplitScreenShortcut -> {
-                            launchSplitScreenShortcut(it.shortcut)
-                        }
-                    }
-                },
+                onClick = onRowItemClick,
                 onLongClick = {
                     when (it) {
-                        is RowItem.App -> {
-                            showAppDialog = it.app
-                        }
+                        is RowItem.App -> showAppDialog = it.app
 
                         is RowItem.SplitScreenShortcut -> {
                             showShortcutDialog = it.shortcut
@@ -153,76 +138,39 @@ private fun BoxScope.HomeScreen(
             )
         }
     }
+
     HomePageIndicatorFloating(
         currentPage = pagerState.currentPage,
         pageCount = pagerState.pageCount
     )
+
     if (showLauncherDialog != -1) {
         HomeDialogLauncherActions(
-            navigate = navigate,
-            showHiddenApps = state.showHiddenApps,
-            setShowHiddenApps = setShowHiddenApps,
-            addScreenAfter = addScreenAfter,
-            removeScreen = removeScreen,
-            addScreenBefore = addScreenBefore,
-            currentPage = showLauncherDialog,
-            pageCount = pagerState.pageCount,
+            state = HomeDialogState.LauncherDialogState(
+                pageCount = pagerState.pageCount,
+                currentPage = pagerState.currentPage,
+                showHiddenApps = state.showHiddenApps
+            ),
+            onLauncherDialogAction = onLauncherDialogAction,
             onDismissRequest = { showLauncherDialog = -1 }
         )
     }
-    if (showAppDialog != null) {
-        val app = showAppDialog!!
-        HomeDialog(
-            onDismissRequest = { showAppDialog = null },
-            actionButtons = state.appShortcutButtons.getOrDefault(
-                app.packageName, HomeDialogButtonsState(listOf())
-            ),
-            headers = HomeDialogHeaders {
-                HomeDialogHeader(
-                    app = app,
-                    onDismissRequest = { showAppDialog = null },
-                    launchAppInfo = launchAppInfo,
-                    launchAppUninstall = launchAppUninstall,
-                    setIsHidden = setIsHidden
-                )
-            }
+    showAppDialog?.let {
+        HomeDialogApp(
+            app = it,
+            allShortcuts = state.appShortcutButtons,
+            showShortcuts = state.isHomeApp,
+            launchAppShortcut = launchAppShortcut,
+            onHeaderAction = onHeaderAction,
+            onDismissRequest = { showAppDialog = null }
         )
     }
-    if (showShortcutDialog != null) {
-        val shortcut = showShortcutDialog!!
-        HomeDialog(
-            onDismissRequest = { showShortcutDialog = null },
-            modifier = modifier,
-            actionButtons = HomeDialogButtonsState(
-                HomeDialogButtonState(
-                    label = R.string.drawer_app_delete_split_screen_shortcut,
-                    onClick = { removeSplitScreenShortcut(shortcut) }
-                )
-            ),
-            headers = HomeDialogHeaders(listOf(
-                {
-                    HomeDialogHeader(
-                        app = shortcut.appSecond,
-                        launchAppInfo = launchAppInfo,
-                        launchAppUninstall = launchAppUninstall,
-                        setIsHidden = setIsHidden,
-                        onDismissRequest = {
-                            showShortcutDialog = null
-                        }
-                    )
-                },
-                {
-                    HomeDialogHeader(
-                        app = shortcut.appFirst,
-                        launchAppInfo = launchAppInfo,
-                        launchAppUninstall = launchAppUninstall,
-                        setIsHidden = setIsHidden,
-                        onDismissRequest = {
-                            showShortcutDialog = null
-                        }
-                    )
-                }
-            ))
+    showShortcutDialog?.let {
+        HomeDialogSplitScreenShortcut(
+            shortcut = it,
+            removeSplitScreenShortcut = removeSplitScreenShortcut,
+            onHeaderAction = onHeaderAction,
+            onDismissRequest = { showShortcutDialog = null }
         )
     }
 }
@@ -285,7 +233,7 @@ private fun HomePagePreview() {
         showHiddenApps = false,
         settings = Defaults.Settings,
         isHomeApp = true,
-        appShortcutButtons = mapOf(),
+        appShortcutButtons = HomeDialogState.AppShortcutButtons(mapOf()),
         items = listOf()
     )
     LauncherTheme(darkTheme = true) {
@@ -293,17 +241,11 @@ private fun HomePagePreview() {
             HomeScreen(
                 modifier = Modifier,
                 state = state,
-                navigate = {},
-                launchApp = { },
-                launchSplitScreenShortcut = { },
                 removeSplitScreenShortcut = {},
-                setShowHiddenApps = {},
-                addScreenBefore = {},
-                addScreenAfter = {},
-                removeScreen = {},
-                launchAppInfo = {},
-                launchAppUninstall = {},
-                setIsHidden = { _, _ -> },
+                onLauncherDialogAction = { _, _ -> },
+                launchAppShortcut = {},
+                onHeaderAction = { _, _ -> },
+                onRowItemClick = {}
             )
         }
     }
