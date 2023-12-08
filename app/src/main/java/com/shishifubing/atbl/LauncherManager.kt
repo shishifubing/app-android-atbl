@@ -31,14 +31,14 @@ private val tag = LauncherManager::class.simpleName
 
 class LauncherManager(
     private val context: Context,
-    private val lifecycle: Lifecycle
+    private val lifecycle: Lifecycle,
+    private val packageManager: PackageManager,
+    private val launcherAppsService: LauncherApps
 ) {
-    private val packageManager = context.packageManager
-    private val launcherAppsService = context.getSystemService(
-        LauncherApps::class.java
-    )
-    private val callbacks: MutableList<LauncherApps.Callback> = mutableListOf()
 
+    companion object {
+        private val callbacks = mutableListOf<LauncherApps.Callback>()
+    }
 
     fun isHomeApp(): Boolean {
         return when {
@@ -62,6 +62,7 @@ class LauncherManager(
     }
 
     fun launchApp(packageName: String, flags: Int? = null) {
+
         context.startActivity(
             packageManager
                 .getLaunchIntentForPackage(packageName)
@@ -95,19 +96,17 @@ class LauncherManager(
         for (callback in callbacks) {
             launcherAppsService.unregisterCallback(callback)
         }
+        callbacks.clear()
     }
 
     private fun queryPackageManager(intent: Intent): List<ResolveInfo> {
         return when {
-            Build.VERSION.SDK_INT >= 33 -> context.packageManager
-                .queryIntentActivities(
-                    intent,
-                    PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_ALL.toLong())
-                )
-
-            else -> context.packageManager.queryIntentActivities(
-                intent, 0
+            Build.VERSION.SDK_INT >= 33 -> packageManager.queryIntentActivities(
+                intent,
+                PackageManager.ResolveInfoFlags.of(PackageManager.MATCH_ALL.toLong())
             )
+
+            else -> packageManager.queryIntentActivities(intent, 0)
         }
     }
 

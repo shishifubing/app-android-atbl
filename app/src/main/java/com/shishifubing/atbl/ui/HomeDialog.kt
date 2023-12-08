@@ -1,6 +1,5 @@
 package com.shishifubing.atbl.ui
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
@@ -16,7 +15,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -28,64 +26,17 @@ import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.data.HomeDialogButtonState.Label
+import com.shishifubing.atbl.data.HomeDialogButtonsState
+import com.shishifubing.atbl.data.HomeDialogHeaders
 
-@Immutable
-data class HomeDialogButtons(
-    val buttons: List<HomeDialogButton>
-) {
-    constructor(button: HomeDialogButton) : this(listOf(button))
-}
-
-@Immutable
-data class HomeDialogButton(
-    val label: Label,
-    val show: Boolean = true,
-    val onClick: () -> Unit
-) {
-    constructor(
-        label: String,
-        show: Boolean = true,
-        onClick: () -> Unit
-    ) : this(Label.Str(label), show, onClick)
-
-    constructor(
-        @StringRes label: Int,
-        show: Boolean = true,
-        onClick: () -> Unit
-    ) : this(Label.Res(label), show, onClick)
-
-    constructor(
-        label: @Composable () -> String,
-        show: Boolean = true,
-        onClick: () -> Unit
-    ) : this(Label.Comp(getLabel = label), show, onClick)
-
-    @Immutable
-    sealed interface Label {
-        @Immutable
-        data class Str(val string: String) : Label
-
-        @Immutable
-        data class Res(@StringRes val res: Int) : Label
-
-        @Immutable
-        data class Comp(val getLabel: @Composable () -> String) : Label
-    }
-}
-
-@Immutable
-data class HomeDialogHeaders(
-    val headers: List<@Composable () -> Unit>
-) {
-    constructor(header: @Composable () -> Unit) : this(listOf(header))
-}
 
 @Composable
 fun HomeDialog(
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier,
     showButtons: Boolean = true,
-    actionButtons: HomeDialogButtons = HomeDialogButtons(listOf()),
+    actionButtons: HomeDialogButtonsState = HomeDialogButtonsState(listOf()),
     headers: HomeDialogHeaders = HomeDialogHeaders(listOf()),
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
@@ -120,14 +71,11 @@ fun HomeDialog(
                             if (item.show) {
                                 HomeDialogButton(
                                     text = when (item.label) {
-                                        is HomeDialogButton.Label.Comp ->
-                                            item.label.getLabel()
+                                        is Label.Comp -> item.label.getLabel()
 
-                                        is HomeDialogButton.Label.Res ->
-                                            stringResource(item.label.res)
+                                        is Label.Res -> stringResource(item.label.res)
 
-                                        is HomeDialogButton.Label.Str ->
-                                            item.label.string
+                                        is Label.Str -> item.label.string
                                     },
                                     textAlign = TextAlign.Start,
                                     onClick = {

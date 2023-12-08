@@ -12,6 +12,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.Model.Settings.HorizontalArrangement
+import com.shishifubing.atbl.data.HomeState
 
 
 @OptIn(ExperimentalLayoutApi::class)

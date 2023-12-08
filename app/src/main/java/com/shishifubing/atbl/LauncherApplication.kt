@@ -3,6 +3,7 @@ package com.shishifubing.atbl
 import android.app.Application
 import android.appwidget.AppWidgetHost
 import android.content.Context
+import android.content.pm.LauncherApps
 import androidx.activity.ComponentActivity
 import androidx.datastore.dataStore
 import androidx.lifecycle.ViewModel
@@ -22,8 +23,13 @@ class LauncherApplication : Application() {
     lateinit var appWidgetHost: AppWidgetHost
 
     fun init(activity: ComponentActivity): LauncherApplication {
-        manager = LauncherManager(activity, activity.lifecycle)
-        stateRepo = LauncherStateRepository(dataStore)
+        manager = LauncherManager(
+            context = activity,
+            packageManager = activity.packageManager,
+            launcherAppsService = getSystemService(LauncherApps::class.java),
+            lifecycle = activity.lifecycle
+        )
+        stateRepo = LauncherStateRepository(dataStore = dataStore)
         appWidgetHost = AppWidgetHost(activity, 0)
         return this
     }

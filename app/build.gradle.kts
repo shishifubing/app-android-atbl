@@ -38,22 +38,27 @@ android {
     kotlinOptions {
         jvmTarget = "1.8"
     }
+
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_1_8
         targetCompatibility = JavaVersion.VERSION_1_8
     }
+
     buildFeatures {
         compose = true
     }
+
     composeOptions {
         kotlinCompilerExtensionVersion =
             libs.versions.compose.kotlinCompilerExtension.get()
     }
+
     packaging {
         resources {
             excludes += "/META-INF/{AL2.0,LGPL2.1}"
         }
     }
+
     protobuf {
         protoc {
             artifact = libs.protobuf.protoc.get().toString()
@@ -89,6 +94,13 @@ dependencies {
     implementation(libs.navigation.compose)
 
     testImplementation(libs.junit)
+    testImplementation("junit:junit:4.13.2")
+
+    testImplementation(platform("org.junit:junit-bom:5.10.1"))
+    testImplementation("org.junit.jupiter:junit-jupiter:5.10.1")
+    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
+
+    testRuntimeOnly("org.junit.vintage:junit-vintage-engine")
 
     androidTestImplementation(platform(libs.compose.bom))
     androidTestImplementation(libs.junit.ktx)

@@ -2,7 +2,6 @@ package com.shishifubing.atbl.ui
 
 
 import android.util.Log
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.Defaults
@@ -14,6 +13,9 @@ import com.shishifubing.atbl.Model.Settings
 import com.shishifubing.atbl.Model.Settings.AppCard
 import com.shishifubing.atbl.Model.SplitScreenShortcut
 import com.shishifubing.atbl.Model.SplitScreenShortcuts
+import com.shishifubing.atbl.data.HomeDialogButtonState
+import com.shishifubing.atbl.data.HomeDialogButtonsState
+import com.shishifubing.atbl.data.HomeState
 import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -27,40 +29,6 @@ import kotlinx.coroutines.launch
 
 private val tag = HomeState::class.java.name
 
-@Immutable
-sealed interface HomeState {
-    @Immutable
-    data class Success(
-        val items: List<RowItems>,
-        val settings: Settings,
-        val showHiddenApps: Boolean,
-        val isHomeApp: Boolean,
-        val appShortcutButtons: Map<String, HomeDialogButtons>
-    ) : HomeState
-
-    @Immutable
-    data object Loading : HomeState
-
-    @Immutable
-    data class RowItems(val items: List<RowItem>)
-
-    @Immutable
-    sealed interface RowItem {
-        val label: String
-
-        @Immutable
-        data class App(
-            val app: Model.App,
-            override val label: String
-        ) : RowItem
-
-        @Immutable
-        data class SplitScreenShortcut(
-            val shortcut: Model.SplitScreenShortcut,
-            override val label: String
-        ) : RowItem
-    }
-}
 
 class HomeViewModel(
     private val stateRepo: LauncherStateRepository,
@@ -106,16 +74,16 @@ class HomeViewModel(
         )
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.Lazily,
         initialValue = HomeState.Loading
     )
 
-    private fun appShortcutsToDialogButtons(apps: Model.Apps): Map<String, HomeDialogButtons> {
+    private fun appShortcutsToDialogButtons(apps: Model.Apps): Map<String, HomeDialogButtonsState> {
         return apps.appsMap
             .map { (packageName, app) ->
-                packageName to HomeDialogButtons(
+                packageName to HomeDialogButtonsState(
                     buttons = app.shortcutsList.map { shortcut ->
-                        HomeDialogButton(
+                        HomeDialogButtonState(
                             label = shortcut.label,
                             onClick = { launchShortcut(shortcut) }
                         )

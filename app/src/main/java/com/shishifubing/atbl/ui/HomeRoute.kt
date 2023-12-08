@@ -39,6 +39,11 @@ import androidx.navigation.NavController
 import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
+import com.shishifubing.atbl.data.HomeDialogButtonState
+import com.shishifubing.atbl.data.HomeDialogButtonsState
+import com.shishifubing.atbl.data.HomeDialogHeaders
+import com.shishifubing.atbl.data.HomeState
+import com.shishifubing.atbl.data.HomeState.RowItem
 
 @Composable
 fun HomeRoute(
@@ -125,22 +130,22 @@ private fun BoxScope.HomeScreen(
                 showHiddenApps = state.showHiddenApps,
                 onClick = {
                     when (it) {
-                        is HomeState.RowItem.App -> {
+                        is RowItem.App -> {
                             launchApp(it.app)
                         }
 
-                        is HomeState.RowItem.SplitScreenShortcut -> {
+                        is RowItem.SplitScreenShortcut -> {
                             launchSplitScreenShortcut(it.shortcut)
                         }
                     }
                 },
                 onLongClick = {
                     when (it) {
-                        is HomeState.RowItem.App -> {
+                        is RowItem.App -> {
                             showAppDialog = it.app
                         }
 
-                        is HomeState.RowItem.SplitScreenShortcut -> {
+                        is RowItem.SplitScreenShortcut -> {
                             showShortcutDialog = it.shortcut
                         }
                     }
@@ -186,8 +191,8 @@ private fun BoxScope.HomeScreen(
         HomeDialog(
             onDismissRequest = { showShortcutDialog = null },
             modifier = modifier,
-            actionButtons = HomeDialogButtons(
-                HomeDialogButton(
+            actionButtons = HomeDialogButtonsState(
+                HomeDialogButtonState(
                     label = R.string.drawer_app_delete_split_screen_shortcut,
                     onClick = { removeSplitScreenShortcut(shortcut) }
                 )

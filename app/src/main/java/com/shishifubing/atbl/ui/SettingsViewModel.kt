@@ -2,12 +2,12 @@ package com.shishifubing.atbl.ui
 
 
 import android.os.ParcelFileDescriptor
-import androidx.compose.runtime.Immutable
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
+import com.shishifubing.atbl.data.SettingsScreenUIState
 import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.CoroutineExceptionHandler
 import kotlinx.coroutines.CoroutineScope
@@ -21,15 +21,6 @@ import kotlinx.coroutines.launch
 import java.io.FileOutputStream
 import java.io.InputStream
 
-
-@Immutable
-sealed interface SettingsScreenUIState {
-    @Immutable
-    data class Success(val state: Model.State) : SettingsScreenUIState
-
-    @Immutable
-    data object Loading : SettingsScreenUIState
-}
 
 class SettingsViewModel(
     private val stateRepo: LauncherStateRepository
@@ -64,7 +55,7 @@ class SettingsViewModel(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly,
+            started = SharingStarted.Lazily,
             initialValue = SettingsScreenUIState.Loading
         )
 
