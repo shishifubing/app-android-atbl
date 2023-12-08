@@ -21,7 +21,7 @@ private class DataStoreMock(state: Model.State) : DataStore<Model.State> {
     }
 }
 
-class LauncherStateRepositoryTest {
+class LauncherDialogStateRepositoryTest {
 
     private lateinit var repoDefault: LauncherStateRepository
     private lateinit var repoEmpty: LauncherStateRepository

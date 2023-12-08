@@ -2,6 +2,7 @@ package com.shishifubing.atbl.ui
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -15,7 +16,6 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -25,69 +25,60 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
+import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import com.shishifubing.atbl.data.HomeDialogButtonState.Label
-import com.shishifubing.atbl.data.HomeDialogButtonsState
-import com.shishifubing.atbl.data.HomeDialogHeaders
-
+import com.shishifubing.atbl.data.HomeDialogState
+import com.shishifubing.atbl.data.HomeDialogState.Button.Label
+import com.shishifubing.atbl.data.HomeDialogState.Header
 
 @Composable
-fun HomeDialog(
+fun <T> HomeDialog(
     onDismissRequest: () -> Unit,
+    onButtonClick: (T) -> Unit,
+    actionButtons: HomeDialogState.Buttons<T>,
     modifier: Modifier = Modifier,
-    showButtons: Boolean = true,
-    actionButtons: HomeDialogButtonsState = HomeDialogButtonsState(listOf()),
-    headers: HomeDialogHeaders = HomeDialogHeaders(listOf()),
+    showButton: (T) -> Boolean = { true },
 ) {
-    Dialog(onDismissRequest = onDismissRequest) {
-        Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            headers.headers.forEach { header ->
-                key(header.hashCode()) {
-                    header()
-                }
-                Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-            }
-            if (actionButtons.buttons.isNotEmpty() && showButtons) {
-                ElevatedCard {
-                    LazyColumn(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .heightIn(
-                                0.dp,
-                                (LocalConfiguration.current.screenHeightDp * 0.6).dp
-                            )
-                    ) {
-                        items(
-                            count = actionButtons.buttons.size,
-                            key = { actionButtons.buttons[it].hashCode() },
-                        ) {
-                            val item = actionButtons.buttons[it]
-                            if (item.show) {
-                                HomeDialogButton(
-                                    text = when (item.label) {
-                                        is Label.Comp -> item.label.getLabel()
+    HomeDialogBase(
+        modifier = modifier,
+        onDismissRequest = onDismissRequest
+    ) {
+        HomeDialogButtons(
+            onDismissRequest = onDismissRequest,
+            onButtonClick = onButtonClick,
+            showButton = showButton,
+            actionButtons = actionButtons,
+        )
+    }
+}
 
-                                        is Label.Res -> stringResource(item.label.res)
-
-                                        is Label.Str -> item.label.string
-                                    },
-                                    textAlign = TextAlign.Start,
-                                    onClick = {
-                                        item.onClick()
-                                        onDismissRequest()
-                                    }
-                                )
-                            }
-                        }
-                    }
-                }
-            }
+@Composable
+fun <T> HomeDialog(
+    onDismissRequest: () -> Unit,
+    onButtonClick: (T) -> Unit,
+    actionButtons: HomeDialogState.Buttons<T>,
+    header: Header,
+    onHeaderAction: (Model.App, HomeDialogState.HeaderActions) -> Unit,
+    modifier: Modifier = Modifier,
+    showButton: (T) -> Boolean = { true },
+    showButtons: Boolean = true,
+) {
+    HomeDialogBase(
+        modifier = modifier,
+        onDismissRequest = onDismissRequest
+    ) {
+        HomeDialogHeaders(
+            header = header,
+            onHeaderAction = onHeaderAction,
+            onDismissRequest = onDismissRequest
+        )
+        if (actionButtons.buttons.isNotEmpty() && showButtons) {
+            HomeDialogButtons(
+                onDismissRequest = onDismissRequest,
+                onButtonClick = onButtonClick,
+                showButton = showButton,
+                actionButtons = actionButtons,
+            )
         }
     }
 }
@@ -108,6 +99,100 @@ fun HomeDialogButton(
             modifier = Modifier.padding(dimensionResource(R.dimen.padding_medium)),
             style = MaterialTheme.typography.bodyLarge,
             textAlign = textAlign
+        )
+    }
+}
+
+@Composable
+private fun <T> HomeDialogButtons(
+    onDismissRequest: () -> Unit,
+    onButtonClick: (T) -> Unit,
+    showButton: (T) -> Boolean,
+    actionButtons: HomeDialogState.Buttons<T>,
+) {
+    ElevatedCard {
+        LazyColumn(
+            modifier = Modifier
+                .fillMaxWidth()
+                .heightIn(
+                    0.dp,
+                    (LocalConfiguration.current.screenHeightDp * 0.6).dp
+                )
+        ) {
+            items(
+                count = actionButtons.buttons.size,
+                key = { actionButtons.buttons[it].hashCode() },
+            ) {
+                val item = actionButtons.buttons[it]
+                if (showButton(item.id)) {
+                    HomeDialogButton(
+                        text = when (item.label) {
+
+                            is Label.Res -> stringResource(item.label.res)
+
+                            is Label.Str -> item.label.string
+                        },
+                        textAlign = TextAlign.Start,
+                        onClick = {
+                            onButtonClick(item.id)
+                            onDismissRequest()
+                        }
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun HomeDialogHeaders(
+    header: Header,
+    onDismissRequest: () -> Unit,
+    onHeaderAction: (Model.App, HomeDialogState.HeaderActions) -> Unit,
+) {
+    when (header) {
+        is Header.None -> Unit
+
+        is Header.App -> {
+            HomeDialogHeader(
+                app = header.app,
+                onHeaderAction = onHeaderAction,
+                onDismissRequest = onDismissRequest
+            )
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+        }
+
+        is Header.Shortcut -> {
+            HomeDialogHeader(
+                app = header.shortcut.appSecond,
+                onHeaderAction = onHeaderAction,
+                onDismissRequest = onDismissRequest
+            )
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+            HomeDialogHeader(
+                app = header.shortcut.appFirst,
+                onHeaderAction = onHeaderAction,
+                onDismissRequest = onDismissRequest
+            )
+            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
+        }
+    }
+}
+
+@Composable
+private fun HomeDialogBase(
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier,
+    content: @Composable ColumnScope.() -> Unit
+) {
+    Dialog(onDismissRequest = onDismissRequest) {
+        Column(
+            modifier = modifier
+                .fillMaxWidth()
+                .verticalScroll(rememberScrollState()),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.Center,
+            content = content
         )
     }
 }
