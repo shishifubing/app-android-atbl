@@ -22,6 +22,7 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
@@ -52,8 +53,8 @@ class HomeViewModel(
 
     private var prevState = Defaults.State
 
-    val uiState = stateRepo.observeState().map { stateResult ->
-        val state = stateResult.fold(
+    private val stateFlow = stateRepo.observeState().map { stateResult ->
+        stateResult.fold(
             onSuccess = {
                 prevState = it
                 it
@@ -63,18 +64,47 @@ class HomeViewModel(
                 prevState
             }
         )
-        HomeState.Success(
-            settings = state.settings,
-            showHiddenApps = state.showHiddenApps,
-            isHomeApp = state.isHomeApp,
-            items = state.screensList.map { screen ->
-                screenToHomeRowItems(screen, state)
-            },
-            appShortcutButtons = appShortcutsToDialogButtons(apps = state.apps)
+    }
+
+    private val itemsFlow = stateFlow
+        .map {
+            it.screensList.map { screen ->
+                screenToHomeRowItems(screen, it)
+            }
+        }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = listOf()
         )
+
+    private val buttonsFlow = stateFlow
+        .map { appShortcutsToDialogButtons(apps = it.apps) }
+        .stateIn(
+            scope = viewModelScope,
+            started = SharingStarted.Eagerly,
+            initialValue = mapOf()
+        )
+
+    val uiState = combine(
+        stateFlow,
+        itemsFlow,
+        buttonsFlow
+    ) { state, items, buttons ->
+        if (items.isEmpty()) {
+            HomeState.Loading
+        } else {
+            HomeState.Success(
+                settings = state.settings,
+                showHiddenApps = state.showHiddenApps,
+                isHomeApp = state.isHomeApp,
+                items = items,
+                appShortcutButtons = buttons
+            )
+        }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Lazily,
+        started = SharingStarted.Eagerly,
         initialValue = HomeState.Loading
     )
 

@@ -55,7 +55,7 @@ class SettingsViewModel(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Lazily,
+            started = SharingStarted.Eagerly,
             initialValue = SettingsScreenUIState.Loading
         )
 

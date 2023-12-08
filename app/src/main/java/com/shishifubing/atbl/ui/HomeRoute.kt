@@ -174,7 +174,9 @@ private fun BoxScope.HomeScreen(
         val app = showAppDialog!!
         HomeDialog(
             onDismissRequest = { showAppDialog = null },
-            actionButtons = state.appShortcutButtons[app.packageName]!!,
+            actionButtons = state.appShortcutButtons.getOrDefault(
+                app.packageName, HomeDialogButtonsState(listOf())
+            ),
             headers = HomeDialogHeaders {
                 HomeDialogHeader(
                     app = app,
