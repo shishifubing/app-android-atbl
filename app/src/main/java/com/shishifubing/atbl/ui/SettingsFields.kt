@@ -1,6 +1,5 @@
 package com.shishifubing.atbl.ui
 
-import android.widget.Toast
 import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -12,17 +11,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyItemScope
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ElevatedCard
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
@@ -30,12 +20,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
-import androidx.compose.material3.TextField
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.key
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -44,15 +30,12 @@ import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
-import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
-import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
-import kotlinx.coroutines.flow.StateFlow
 
 private fun <T : Enum<*>> Class<T>.names() = enumConstants!!.mapNotNull {
     if (it.name == "UNRECOGNIZED") null else it.name
@@ -60,17 +43,6 @@ private fun <T : Enum<*>> Class<T>.names() = enumConstants!!.mapNotNull {
 
 private fun <T : Enum<*>> Class<T>.find(name: String) = enumConstants!!.first {
     it.name == name
-}
-
-@Composable
-fun ErrorToast(errorFlow: StateFlow<Throwable?>) {
-    val context = LocalContext.current
-    val error by errorFlow.collectAsState()
-    LaunchedEffect(context, error) {
-        error?.let {
-            Toast.makeText(context, it.message, Toast.LENGTH_LONG).show()
-        }
-    }
 }
 
 @Composable
@@ -179,125 +151,6 @@ fun SettingsFieldTextInput(
     }
 }
 
-@Composable
-fun SettingsFieldCustomItemWithAdd(
-    @StringRes name: Int,
-    itemsCount: Int,
-    itemsKey: (Int) -> Any,
-    modifier: Modifier = Modifier,
-    addItemContent: @Composable RowScope.() -> Unit,
-    onAddItemConfirm: () -> Unit,
-    onAddItemDismiss: () -> Unit,
-    itemContent: @Composable RowScope.(Int) -> Unit
-) {
-    var showDialog by remember { mutableStateOf(false) }
-    SettingsField(
-        name = name,
-        modifier = modifier,
-        label = itemsCount.toString(),
-        onClick = { showDialog = true }
-    )
-    if (!showDialog) {
-        return
-    }
-    var showAddItem by remember { mutableStateOf(false) }
-    SettingsDialog(
-        modifier = modifier,
-        name = name,
-        onConfirm = { showDialog = false },
-        onDismissRequest = { showDialog = false; onAddItemDismiss() },
-        showCancel = false,
-        itemsCount = itemsCount + 1,
-        itemsKey = { i -> if (i == itemsCount) "" else itemsKey(i) },
-    ) { i ->
-        Row(
-            modifier = Modifier
-                .padding(
-                    dimensionResource(R.dimen.padding_medium),
-                    dimensionResource(R.dimen.padding_small)
-                )
-                .fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center,
-            verticalAlignment = Alignment.CenterVertically
-        ) {
-            when {
-                i == itemsCount && showAddItem -> {
-                    addItemContent()
-                    TextButton(onClick = {
-                        onAddItemDismiss()
-                        showAddItem = false
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Clear,
-                            contentDescription = "Cancel addition",
-                        )
-                    }
-                    TextButton(onClick = {
-                        onAddItemConfirm()
-                        showAddItem = false
-                    }) {
-                        Icon(
-                            imageVector = Icons.Filled.Check,
-                            contentDescription = "Confirm addition",
-                        )
-                    }
-                }
-
-                i == itemsCount && !showAddItem ->
-                    TextButton(onClick = { showAddItem = true }) {
-                        Icon(
-                            imageVector = Icons.Filled.Add,
-                            contentDescription = "Add entry",
-                        )
-                    }
-
-                else -> itemContent(i)
-            }
-        }
-    }
-}
-
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-fun SettingsDropDownSelectApp(
-    apps: Model.Apps,
-    onValueChange: (Model.App) -> Unit
-) {
-    val appsSorted = apps.appsMap.values.sortedBy { it.label }
-    var expanded by remember { mutableStateOf(false) }
-    var selected by remember { mutableStateOf<Model.App?>(null) }
-    ExposedDropdownMenuBox(
-        expanded = expanded,
-        onExpandedChange = { expanded = !expanded }
-    ) {
-        TextField(
-            value = selected?.label ?: "",
-            onValueChange = {},
-            readOnly = true,
-            trailingIcon = {
-                ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded)
-            },
-            modifier = Modifier.menuAnchor()
-        )
-        ExposedDropdownMenu(
-            expanded = expanded,
-            onDismissRequest = { expanded = false }
-        ) {
-            appsSorted.forEach { app ->
-                key(app.hashCode()) {
-                    DropdownMenuItem(
-                        text = { Text(text = app.label) },
-                        onClick = {
-                            selected = app
-                            expanded = false
-                            onValueChange(app)
-                        }
-                    )
-                }
-            }
-        }
-    }
-}
 
 @Composable
 fun SettingsFieldSingleChoice(

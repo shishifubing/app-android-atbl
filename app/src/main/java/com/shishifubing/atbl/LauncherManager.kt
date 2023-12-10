@@ -16,6 +16,7 @@ import android.graphics.Bitmap
 import android.graphics.drawable.Drawable
 import android.net.Uri
 import android.os.Build
+import android.os.Process
 import android.os.UserHandle
 import android.provider.Settings
 import android.util.Log
@@ -62,33 +63,35 @@ class LauncherManager(
     }
 
     fun launchApp(packageName: String, flags: Int? = null) {
-
-        context.startActivity(
-            packageManager
-                .getLaunchIntentForPackage(packageName)
-                .let { if (flags == null) it else it?.setFlags(flags) }
-        )
+        val intent = packageManager
+            .getLaunchIntentForPackage(packageName)
+            .let { if (flags == null) it else it?.setFlags(flags) }
+        context.startActivity(intent)
     }
 
     fun launchAppInfo(packageName: String) {
-        context.startActivity(
-            Intent(
-                Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
-                Uri.parse("package:${packageName}")
-            )
+        val intent = Intent(
+            Settings.ACTION_APPLICATION_DETAILS_SETTINGS,
+            Uri.parse("package:${packageName}")
         )
+        context.startActivity(intent)
     }
 
     fun launchAppUninstall(packageName: String) {
-        context.startActivity(
-            Intent(Intent.ACTION_DELETE, Uri.parse("package:${packageName}"))
+        val intent = Intent(
+            Intent.ACTION_DELETE,
+            Uri.parse("package:${packageName}")
         )
+        context.startActivity(intent)
     }
 
     fun launchAppShortcut(shortcut: Model.AppShortcut) {
         launcherAppsService.startShortcut(
-            shortcut.packageName, shortcut.shortcutId, null, null,
-            android.os.Process.myUserHandle()
+            shortcut.packageName,
+            shortcut.shortcutId,
+            null,
+            null,
+            Process.myUserHandle()
         )
     }
 
@@ -111,7 +114,7 @@ class LauncherManager(
     }
 
     private fun getAppShortcuts(packageName: String): List<Model.AppShortcut> {
-        val userHandle = android.os.Process.myUserHandle()
+        val userHandle = Process.myUserHandle()
         val query = LauncherApps.ShortcutQuery()
             .setPackage(packageName)
             .setQueryFlags(

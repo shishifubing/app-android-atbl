@@ -2,15 +2,14 @@ package com.shishifubing.atbl.ui
 
 
 import android.util.Log
-import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.LauncherManager
+import com.shishifubing.atbl.LauncherNavigator
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.Model.Screen
-import com.shishifubing.atbl.Model.Settings
 import com.shishifubing.atbl.Model.Settings.AppCard
+import com.shishifubing.atbl.Model.Settings.SortBy
 import com.shishifubing.atbl.Model.SplitScreenShortcut
 import com.shishifubing.atbl.Model.SplitScreenShortcuts
 import com.shishifubing.atbl.data.HomeDialogState
@@ -18,96 +17,82 @@ import com.shishifubing.atbl.data.HomeDialogState.HeaderActions
 import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions
 import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogState
 import com.shishifubing.atbl.data.HomeState
+import com.shishifubing.atbl.data.RepoState
+import com.shishifubing.atbl.data.UiState
 import com.shishifubing.atbl.launcherViewModelFactory
-import kotlinx.coroutines.CoroutineExceptionHandler
-import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
-import kotlinx.coroutines.flow.update
-import kotlinx.coroutines.launch
 
 private val tag = HomeState::class.java.name
 
 
 class HomeViewModel(
     private val stateRepo: LauncherStateRepository,
-    private val manager: LauncherManager
-) : ViewModel() {
+    private val manager: LauncherManager,
+    private val navigator: LauncherNavigator
+) : BaseViewModel<HomeState>(stateRepo) {
     companion object {
         val Factory = launcherViewModelFactory {
             HomeViewModel(
                 manager = manager,
-                stateRepo = stateRepo
+                stateRepo = stateRepo,
+                navigator = navigator
             )
         }
     }
 
-    private val _errorFlow = MutableStateFlow<Throwable?>(null)
-    val errorFlow = _errorFlow.asStateFlow()
-
-    private val exceptionHandler = CoroutineExceptionHandler { _, e ->
-        _errorFlow.update { e }
-    }
-
-    private var prevState = Defaults.State
-
-    private val stateFlow = stateRepo.observeState().map { stateResult ->
-        stateResult.fold(
-            onSuccess = {
-                prevState = it
-                it
-            },
-            onFailure = {
-                _errorFlow.update { it }
-                prevState
-            }
-        )
-    }
-
-    private val itemsFlow = stateFlow
-        .map {
-            it.screensList.map { screen ->
-                screenToHomeRowItems(screen, it)
-            }
-        }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = listOf()
-        )
-
-    private val buttonsFlow = stateFlow
-        .map { appShortcutsToDialogButtons(apps = it.apps) }
-        .stateIn(
-            scope = viewModelScope,
-            started = SharingStarted.Eagerly,
-            initialValue = HomeDialogState.AppShortcutButtons(mapOf())
-        )
-
-    val uiState = combine(
-        stateFlow,
-        itemsFlow,
-        buttonsFlow
-    ) { state, items, buttons ->
-        if (items.isEmpty()) {
-            HomeState.Loading
-        } else {
-            HomeState.Success(
-                settings = state.settings,
-                showHiddenApps = state.showHiddenApps,
-                isHomeApp = state.isHomeApp,
-                items = items,
-                appShortcutButtons = buttons
+    private val pagesFlow = stateFlow.map {
+        when (it) {
+            RepoState.Loading -> HomeState.Pages.Loading
+            is RepoState.Success -> HomeState.Pages.Success(
+                it.state.screensList.map { screen ->
+                    screenToHomeRowItems(screen, it.state)
+                }
             )
         }
     }.stateIn(
         scope = viewModelScope,
         started = SharingStarted.Eagerly,
-        initialValue = HomeState.Loading
+        initialValue = HomeState.Pages.Loading
+    )
+
+    private val buttonsFlow = stateFlow.map {
+        when (it) {
+            RepoState.Loading -> HomeDialogState.AppShortcutButtons(mapOf())
+            is RepoState.Success -> appShortcutsToDialogButtons(apps = it.state.apps)
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = HomeDialogState.AppShortcutButtons(mapOf())
+    )
+
+    override val uiStateFlow = combine(
+        stateFlow,
+        pagesFlow,
+        buttonsFlow
+    ) { state, pages, buttons ->
+        if (state == RepoState.Loading || pages == HomeState.Pages.Loading) {
+            object : UiState.Loading<HomeState> {}
+        } else {
+            val stateSuccess = state as RepoState.Success
+            val pagesSuccess = pages as HomeState.Pages.Success
+            UiState.Success(
+                HomeState(
+                    settings = stateSuccess.state.settings,
+                    showHiddenApps = stateSuccess.state.showHiddenApps,
+                    isHomeApp = stateSuccess.state.isHomeApp,
+                    pages = pagesSuccess,
+                    appShortcutButtons = buttons
+                )
+            )
+        }
+    }.stateIn(
+        scope = viewModelScope,
+        started = SharingStarted.Eagerly,
+        initialValue = object : UiState.Loading<HomeState> {}
     )
 
     private fun appShortcutsToDialogButtons(apps: Model.Apps): HomeDialogState.AppShortcutButtons {
@@ -129,29 +114,24 @@ class HomeViewModel(
         screen: Screen,
         state: Model.State
     ): HomeState.RowItems {
-        val items = screen.itemsList
-            .flatMap { itemModel ->
-                itemToHomeRowItems(
-                    apps = state.apps,
-                    splitScreenShortcuts = state.splitScreenShortcuts,
-                    item = itemModel,
-                    settings = state.settings.appCard
-                )
+        val items = screen.itemsList.flatMap { itemModel ->
+            itemToHomeRowItems(
+                apps = state.apps,
+                splitScreenShortcuts = state.splitScreenShortcuts,
+                item = itemModel,
+                settings = state.settings.appCard
+            )
+        }.let { items ->
+            when (state.settings.layout.sortBy) {
+                SortBy.SortByLabel, SortBy.UNRECOGNIZED, null -> items.sortedBy { it.label }
             }
-            .let { items ->
-                when (val sort = state.settings.layout.sortBy) {
-                    Settings.SortBy.SortByLabel -> items.sortedBy { it.label }
-
-                    else -> throw NotImplementedError("not implemented sort - $sort")
-                }
+        }.let { items ->
+            if (state.settings.layout.reverseOrder) {
+                items.reversed()
+            } else {
+                items
             }
-            .let { items ->
-                if (state.settings.layout.reverseOrder) {
-                    items.reversed()
-                } else {
-                    items
-                }
-            }
+        }
         return HomeState.RowItems(items = items)
     }
 
@@ -182,8 +162,8 @@ class HomeViewModel(
             }
 
             Model.ScreenItem.ItemCase.SHORTCUT -> {
-                val model =
-                    splitScreenShortcuts.getShortcutsOrThrow(item.shortcut.key)
+                val key = item.shortcut.key
+                val model = splitScreenShortcuts.getShortcutsOrThrow(key)
                 listOf(
                     HomeState.RowItem.SplitScreenShortcut(
                         shortcut = model,
@@ -206,9 +186,7 @@ class HomeViewModel(
                 listOf()
             }
 
-            else -> {
-                throw NotImplementedError("not implemented item: $item")
-            }
+            else -> throw IllegalArgumentException("invalid item: $item")
         }
     }
 
@@ -244,7 +222,7 @@ class HomeViewModel(
     fun onHeaderAction(app: Model.App, action: HeaderActions) {
         when (action) {
             HeaderActions.GoToInfo -> managerAction {
-                this.launchAppInfo(app.packageName)
+                launchAppInfo(app.packageName)
             }
 
             HeaderActions.HideOrShow -> stateAction {
@@ -252,7 +230,7 @@ class HomeViewModel(
             }
 
             HeaderActions.Uninstall -> managerAction {
-                this.launchAppUninstall(app.packageName)
+                launchAppUninstall(app.packageName)
             }
         }
     }
@@ -260,37 +238,46 @@ class HomeViewModel(
     fun onLauncherDialogAction(
         state: LauncherDialogState,
         action: LauncherDialogActions,
-        navigate: (LauncherNav) -> Unit,
     ) {
         when (action) {
-            LauncherDialogActions.AddScreenAfter -> {
-                stateAction { this.addScreenAfter(state.currentPage) }
+            LauncherDialogActions.AddScreenAfter -> stateAction {
+                addScreenAfter(state.currentPage)
             }
 
-            LauncherDialogActions.AddScreenBefore -> {
-                stateAction { this.addScreenBefore(state.currentPage) }
+            LauncherDialogActions.AddScreenBefore -> stateAction {
+                addScreenBefore(state.currentPage)
             }
 
-            LauncherDialogActions.GoToAddWidget -> navigate(LauncherNav.AddWidget)
-            LauncherDialogActions.GoToSettings -> navigate(LauncherNav.Settings)
+            LauncherDialogActions.GoToAddWidget -> navigator.goToRoute(
+                Routes.addWidget
+            )
+
+            LauncherDialogActions.GoToSettings -> navigator.goToRoute(
+                Routes.settings
+            )
+
             LauncherDialogActions.RemoveScreen -> stateAction {
-                this.removeScreen(state.currentPage)
+                removeScreen(state.currentPage)
             }
 
-            LauncherDialogActions.ShowHiddenApps -> {
-                stateAction { this.setShowHiddenApps(true) }
+            LauncherDialogActions.ShowHiddenApps -> stateAction {
+                setShowHiddenApps(true)
             }
 
-            LauncherDialogActions.HideHiddenApps -> {
-                stateAction { this.setShowHiddenApps(false) }
+            LauncherDialogActions.HideHiddenApps -> stateAction {
+                setShowHiddenApps(false)
             }
+
+            LauncherDialogActions.GoToEditSplitScreenShortcuts -> navigator.goToRoute(
+                Routes.shortcuts
+            )
         }
     }
 
     fun onRowItemClick(item: HomeState.RowItem) {
         when (item) {
-            is HomeState.RowItem.App -> {
-                managerAction { this.launchApp(item.app.packageName) }
+            is HomeState.RowItem.App -> managerAction {
+                launchApp(item.app.packageName)
             }
 
             is HomeState.RowItem.SplitScreenShortcut -> managerAction {
@@ -312,14 +299,6 @@ class HomeViewModel(
 
     private fun managerAction(action: suspend LauncherManager.() -> Unit) {
         launch { action.invoke(manager) }
-    }
-
-    private fun stateAction(action: suspend LauncherStateRepository.() -> Unit) {
-        launch { action.invoke(stateRepo) }
-    }
-
-    private fun launch(action: suspend CoroutineScope.() -> Unit) {
-        viewModelScope.launch(exceptionHandler) { action() }
     }
 }
 

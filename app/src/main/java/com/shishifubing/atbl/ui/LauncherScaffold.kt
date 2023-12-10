@@ -19,7 +19,7 @@ import androidx.compose.ui.res.stringResource
 
 @Composable
 fun LauncherScaffold(
-    nav: LauncherNav,
+    route: LauncherRoute<*, *>,
     goBack: () -> Unit,
     modifier: Modifier = Modifier,
     content: @Composable BoxScope.() -> Unit
@@ -27,9 +27,9 @@ fun LauncherScaffold(
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (nav != LauncherNav.Home) {
+            if (route.showScaffold) {
                 LauncherTopBar(
-                    label = stringResource(id = nav.label),
+                    label = stringResource(id = route.label),
                     goBack = goBack
                 )
             }
@@ -37,7 +37,7 @@ fun LauncherScaffold(
     ) { paddingValues ->
         Box(
             modifier = Modifier.let {
-                if (nav != LauncherNav.Home) {
+                if (route.showScaffold) {
                     it.padding(paddingValues)
                 } else {
                     it
