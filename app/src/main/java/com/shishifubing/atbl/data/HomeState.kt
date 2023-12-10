@@ -3,17 +3,18 @@ package com.shishifubing.atbl.data
 import androidx.compose.runtime.Immutable
 import com.shishifubing.atbl.Model
 
-@Immutable
-sealed interface HomeState {
-    data class Success(
-        val items: List<RowItems>,
-        val settings: Model.Settings,
-        val showHiddenApps: Boolean,
-        val isHomeApp: Boolean,
-        val appShortcutButtons: HomeDialogState.AppShortcutButtons
-    ) : HomeState
-
-    data object Loading : HomeState
+data class HomeState(
+    val pages: Pages.Success,
+    val settings: Model.Settings,
+    val showHiddenApps: Boolean,
+    val isHomeApp: Boolean,
+    val appShortcutButtons: HomeDialogState.AppShortcutButtons
+) {
+    @Immutable
+    sealed interface Pages {
+        data object Loading : Pages
+        data class Success(val items: List<RowItems>) : Pages
+    }
 
     data class RowItems(val items: List<RowItem>)
 

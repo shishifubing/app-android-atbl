@@ -23,7 +23,6 @@ import androidx.compose.material3.Card
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -35,7 +34,6 @@ import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
-import androidx.navigation.NavController
 import com.shishifubing.atbl.Defaults
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
@@ -43,50 +41,41 @@ import com.shishifubing.atbl.data.HomeDialogState
 import com.shishifubing.atbl.data.HomeDialogState.HeaderActions
 import com.shishifubing.atbl.data.HomeState
 import com.shishifubing.atbl.data.HomeState.RowItem
+import com.shishifubing.atbl.data.UiState
 
-@Composable
-fun HomeRoute(
-    navController: NavController,
-    modifier: Modifier = Modifier,
-    vm: HomeViewModel = viewModel(factory = HomeViewModel.Factory)
-) {
-    val uiState by vm.uiState.collectAsState()
+object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
+    override val url = "home_screen"
+    override val label = R.string.navigation_home
+    override val showScaffold = false
 
-    ErrorToast(errorFlow = vm.errorFlow)
+    @Composable
+    override fun getViewModel(): HomeViewModel {
+        return viewModel(factory = HomeViewModel.Factory)
+    }
 
-    when (uiState) {
-        HomeState.Loading -> {
-            PageLoadingIndicator(
-                modifier = modifier
+    @Composable
+    override fun Content(
+        vm: HomeViewModel,
+        uiState: UiState.Success<HomeState>
+    ) {
+        Box {
+            HomeScreen(
+                state = uiState.state,
+                removeSplitScreenShortcut = vm::removeSplitScreenShortcut,
+                onHeaderAction = vm::onHeaderAction,
+                launchAppShortcut = vm::launchShortcut,
+                onRowItemClick = vm::onRowItemClick,
+                onLauncherDialogAction = vm::onLauncherDialogAction
             )
-        }
-
-        is HomeState.Success -> {
-            Box {
-                HomeScreen(
-                    modifier = modifier,
-                    state = uiState as HomeState.Success,
-                    removeSplitScreenShortcut = vm::removeSplitScreenShortcut,
-                    onHeaderAction = vm::onHeaderAction,
-                    launchAppShortcut = vm::launchShortcut,
-                    onRowItemClick = vm::onRowItemClick,
-                    onLauncherDialogAction = { state, action ->
-                        vm.onLauncherDialogAction(
-                            state,
-                            action,
-                            navController::navigate
-                        )
-                    }
-                )
-            }
         }
     }
 }
 
+
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun BoxScope.HomeScreen(
-    state: HomeState.Success,
+    state: HomeState,
     launchAppShortcut: (Model.AppShortcut) -> Unit,
     removeSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
     onLauncherDialogAction: (
@@ -103,8 +92,8 @@ private fun BoxScope.HomeScreen(
         mutableStateOf<Model.SplitScreenShortcut?>(null)
     }
     val pagerState = rememberPagerState(
-        initialPage = state.items.size / 2,
-        pageCount = { state.items.size }
+        initialPage = state.pages.items.size / 2,
+        pageCount = { state.pages.items.size }
     )
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -123,7 +112,7 @@ private fun BoxScope.HomeScreen(
                         onClick = { }
                     ),
                 settings = state.settings,
-                items = state.items[page],
+                items = state.pages.items[page],
                 showHiddenApps = state.showHiddenApps,
                 onClick = onRowItemClick,
                 onLongClick = {
@@ -229,12 +218,12 @@ private fun HomePagePreview() {
             .setAppSecond(apps[1])
             .build()
     )
-    val state = HomeState.Success(
+    val state = HomeState(
         showHiddenApps = false,
         settings = Defaults.Settings,
         isHomeApp = true,
         appShortcutButtons = HomeDialogState.AppShortcutButtons(mapOf()),
-        items = listOf()
+        pages = HomeState.Pages.Success(listOf())
     )
     LauncherTheme(darkTheme = true) {
         Box {

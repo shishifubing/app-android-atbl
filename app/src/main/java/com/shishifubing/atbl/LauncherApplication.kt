@@ -21,6 +21,7 @@ class LauncherApplication : Application() {
     lateinit var manager: LauncherManager
     lateinit var stateRepo: LauncherStateRepository
     lateinit var appWidgetHost: AppWidgetHost
+    val navigator: LauncherNavigator = LauncherNavigatorImpl()
 
     fun init(activity: ComponentActivity): LauncherApplication {
         manager = LauncherManager(
