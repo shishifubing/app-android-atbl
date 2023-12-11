@@ -4,7 +4,7 @@ option java_package = "com.shishifubing.atbl";
 option java_outer_classname = "Model";
 
 message State {
-  repeated Screen screens = 1;
+  repeated Page pages = 1;
   Apps apps = 2;
   SplitScreenShortcuts splitScreenShortcuts = 3;
   Settings settings = 5;
@@ -12,7 +12,7 @@ message State {
   bool showHiddenApps = 6;
 }
 
-message Screen {
+message Page {
   repeated ScreenItem items = 1;
 }
 

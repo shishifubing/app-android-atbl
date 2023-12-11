@@ -23,8 +23,10 @@ import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.shishifubing.atbl.Defaults
-import com.shishifubing.atbl.Model
+import com.shishifubing.atbl.Model.Settings
+import com.shishifubing.atbl.Model.Settings.FontFamily.*
 import com.shishifubing.atbl.Model.Settings.TextColor
+import com.shishifubing.atbl.Model.Settings.TextStyle.*
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
@@ -32,7 +34,7 @@ fun HomeRowItemCard(
     label: String,
     onClick: () -> Unit,
     onLongClick: () -> Unit,
-    settings: Model.Settings.AppCard,
+    settings: Settings.AppCard,
     modifier: Modifier = Modifier,
 ) {
     Box(
@@ -69,26 +71,26 @@ fun HomeRowItemCard(
 }
 
 private fun getTextStyle(
-    textStyle: Model.Settings.TextStyle,
+    textStyle: Settings.TextStyle,
     typography: androidx.compose.material3.Typography
 ): TextStyle {
     return typography.let {
         when (textStyle) {
-            Model.Settings.TextStyle.DisplayLarge -> it.displayLarge
-            Model.Settings.TextStyle.DisplayMedium -> it.displayMedium
-            Model.Settings.TextStyle.DisplaySmall -> it.displaySmall
-            Model.Settings.TextStyle.HeadlineLarge -> it.headlineLarge
-            Model.Settings.TextStyle.HeadlineMedium -> it.headlineMedium
-            Model.Settings.TextStyle.HeadlineSmall -> it.headlineSmall
-            Model.Settings.TextStyle.TitleLarge -> it.titleLarge
-            Model.Settings.TextStyle.TitleMedium -> it.titleMedium
-            Model.Settings.TextStyle.TitleSmall -> it.titleSmall
-            Model.Settings.TextStyle.BodyLarge -> it.bodyLarge
-            Model.Settings.TextStyle.BodyMedium -> it.bodyMedium
-            Model.Settings.TextStyle.BodySmall -> it.bodySmall
-            Model.Settings.TextStyle.LabelLarge -> it.labelLarge
-            Model.Settings.TextStyle.LabelMedium -> it.labelMedium
-            Model.Settings.TextStyle.LabelSmall -> it.labelSmall
+            DisplayLarge -> it.displayLarge
+            DisplayMedium -> it.displayMedium
+            DisplaySmall -> it.displaySmall
+            HeadlineLarge -> it.headlineLarge
+            HeadlineMedium -> it.headlineMedium
+            HeadlineSmall -> it.headlineSmall
+            TitleLarge -> it.titleLarge
+            TitleMedium -> it.titleMedium
+            TitleSmall -> it.titleSmall
+            BodyLarge -> it.bodyLarge
+            BodyMedium -> it.bodyMedium
+            BodySmall -> it.bodySmall
+            LabelLarge -> it.labelLarge
+            LabelMedium -> it.labelMedium
+            LabelSmall -> it.labelSmall
             else -> it.bodyMedium
         }
     }
@@ -113,13 +115,13 @@ private fun getTextColor(textColor: TextColor): Color {
     }
 }
 
-private fun getFontFamily(fontFamily: Model.Settings.FontFamily): FontFamily {
+private fun getFontFamily(fontFamily: Settings.FontFamily): FontFamily {
     return when (fontFamily) {
-        Model.Settings.FontFamily.Default -> FontFamily.Default
-        Model.Settings.FontFamily.Cursive -> FontFamily.Cursive
-        Model.Settings.FontFamily.Monospace -> FontFamily.Monospace
-        Model.Settings.FontFamily.SansSerif -> FontFamily.SansSerif
-        Model.Settings.FontFamily.Serif -> FontFamily.Serif
+        Default -> FontFamily.Default
+        Cursive -> FontFamily.Cursive
+        Monospace -> FontFamily.Monospace
+        SansSerif -> FontFamily.SansSerif
+        Serif -> FontFamily.Serif
         else -> FontFamily.Default
     }
 }

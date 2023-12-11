@@ -1,5 +1,6 @@
 package com.shishifubing.atbl.ui
 
+import androidx.annotation.StringRes
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.padding
@@ -19,32 +20,23 @@ import androidx.compose.ui.res.stringResource
 
 @Composable
 fun LauncherScaffold(
-    route: LauncherRoute<*, *>,
+    @StringRes label: Int,
     goBack: () -> Unit,
     modifier: Modifier = Modifier,
-    content: @Composable BoxScope.() -> Unit
+    content: @Composable () -> Unit
 ) {
     Scaffold(
         modifier = modifier,
         topBar = {
-            if (route.showScaffold) {
-                LauncherTopBar(
-                    label = stringResource(id = route.label),
-                    goBack = goBack
-                )
-            }
+            LauncherTopBar(
+                label = stringResource(id = label),
+                goBack = goBack
+            )
         }
     ) { paddingValues ->
-        Box(
-            modifier = Modifier.let {
-                if (route.showScaffold) {
-                    it.padding(paddingValues)
-                } else {
-                    it
-                }
-            },
-            content = content
-        )
+        Box(modifier = Modifier.padding(paddingValues)) {
+            content()
+        }
     }
 }
 

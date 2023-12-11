@@ -38,42 +38,42 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
         return newState.settings
     }
 
-    private suspend fun updateScreen(
-        screen: Int,
+    private suspend fun updatePage(
+        page: Int,
         action: Model.State.Builder.(state: Model.StateOrBuilder) -> Unit
     ) {
         update {
             val builder = this
-            setScreens(
-                screen,
-                getScreens(screen).toBuilder().apply { action(builder) }
+            setPages(
+                page,
+                getPages(page).toBuilder().apply { action(builder) }
             )
         }
     }
 
-    suspend fun addScreenAfter(screen: Int) {
+    suspend fun addPageAfter(screen: Int) {
         update {
-            val before = screensList.filterIndexed { i, _ -> i <= screen }
-            val new = Model.Screen.newBuilder().build()
-            val after = screensList.filterIndexed { i, _ -> i > screen }
-            clearScreens()
-            addAllScreens(before + new + after)
+            val before = pagesList.filterIndexed { i, _ -> i <= screen }
+            val new = Model.Page.newBuilder().build()
+            val after = pagesList.filterIndexed { i, _ -> i > screen }
+            clearPages()
+            addAllPages(before + new + after)
         }
     }
 
 
-    suspend fun addScreenBefore(screen: Int) {
+    suspend fun addPageBefore(screen: Int) {
         update {
-            val before = screensList.filterIndexed { i, _ -> i < screen }
-            val new = Model.Screen.newBuilder().build()
-            val after = screensList.filterIndexed { i, _ -> i >= screen }
-            clearScreens()
-            addAllScreens(before + new + after)
+            val before = pagesList.filterIndexed { i, _ -> i < screen }
+            val new = Model.Page.newBuilder().build()
+            val after = pagesList.filterIndexed { i, _ -> i >= screen }
+            clearPages()
+            addAllPages(before + new + after)
         }
     }
 
-    suspend fun removeScreen(screen: Int) {
-        update { removeScreens(screen) }
+    suspend fun removePage(screen: Int) {
+        update { removePages(screen) }
     }
 
     private suspend fun updateApp(
@@ -172,8 +172,8 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
             }.toMap()
             clearApps()
             setApps(Model.Apps.newBuilder().putAllApps(newApps))
-            if (screensCount == 0) {
-                addScreens(Defaults.Screen)
+            if (pagesCount == 0) {
+                addPages(Defaults.Page)
             }
             this.isHomeApp = isHomeApp
         }
@@ -229,7 +229,7 @@ object Defaults {
         .setLayout(LayoutSettings)
         .build()
 
-    val Screen: Model.Screen = Model.Screen
+    val Page: Model.Page = Model.Page
         .newBuilder()
         .addItems(
             Model.ScreenItem

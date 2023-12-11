@@ -1,6 +1,7 @@
 package com.shishifubing.atbl.ui
 
 import androidx.lifecycle.viewModelScope
+import com.shishifubing.atbl.LauncherNavigator
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.data.RepoState
@@ -11,12 +12,13 @@ import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
 open class StateViewModel(
-    private val stateRepo: LauncherStateRepository
-) : BaseViewModel<Model.State>(stateRepo) {
+    private val stateRepo: LauncherStateRepository,
+    private val navigator: LauncherNavigator
+) : BaseViewModel<Model.State>(stateRepo, navigator) {
 
     companion object {
         val Factory = launcherViewModelFactory {
-            StateViewModel(stateRepo = stateRepo)
+            StateViewModel(stateRepo = stateRepo, navigator = navigator)
         }
     }
 

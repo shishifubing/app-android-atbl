@@ -3,6 +3,7 @@ package com.shishifubing.atbl.ui
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.Defaults
+import com.shishifubing.atbl.LauncherNavigator
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.data.HomeState
 import com.shishifubing.atbl.data.RepoState
@@ -22,8 +23,9 @@ private val tag = HomeState::class.java.name
 
 
 abstract class BaseViewModel<T>(
-    private val stateRepo: LauncherStateRepository
-) : ViewModel() {
+    private val stateRepo: LauncherStateRepository,
+    private val navigator: LauncherNavigator
+) : ViewModel(), LauncherNavigator by navigator {
 
     private val _errorFlow = MutableStateFlow<Throwable?>(null)
     val errorFlow = _errorFlow.asStateFlow()
