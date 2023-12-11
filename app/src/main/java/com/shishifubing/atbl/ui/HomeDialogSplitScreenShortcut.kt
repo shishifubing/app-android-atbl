@@ -16,7 +16,7 @@ private val buttons = HomeDialogState.Buttons(
 @Composable
 fun HomeDialogSplitScreenShortcut(
     shortcut: Model.SplitScreenShortcut,
-    removeSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
+    onSplitScreenShortcutsDialogClick: (Model.SplitScreenShortcut) -> Unit,
     onHeaderAction: (Model.App, HomeDialogState.HeaderActions) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
@@ -25,7 +25,7 @@ fun HomeDialogSplitScreenShortcut(
         onDismissRequest = onDismissRequest,
         modifier = modifier,
         actionButtons = buttons,
-        onButtonClick = { removeSplitScreenShortcut(shortcut) },
+        onButtonClick = { onSplitScreenShortcutsDialogClick(shortcut) },
         header = HomeDialogState.Header.Shortcut(shortcut),
         onHeaderAction = onHeaderAction
     )

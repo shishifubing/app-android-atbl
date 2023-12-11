@@ -12,6 +12,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.pager.HorizontalPager
@@ -58,12 +59,12 @@ object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
         vm: HomeViewModel,
         uiState: UiState.Success<HomeState>
     ) {
-        Box {
+        Box(modifier = Modifier.safeDrawingPadding()) {
             HomeScreen(
                 state = uiState.state,
-                removeSplitScreenShortcut = vm::removeSplitScreenShortcut,
+                onSplitScreenShortcutsDialogClick = vm::onSplitScreenShortcutsDialogClick,
                 onHeaderAction = vm::onHeaderAction,
-                launchAppShortcut = vm::launchShortcut,
+                onAppDialogClick = vm::onAppDialogClick,
                 onRowItemClick = vm::onRowItemClick,
                 onLauncherDialogAction = vm::onLauncherDialogAction
             )
@@ -76,8 +77,8 @@ object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
 @Composable
 private fun BoxScope.HomeScreen(
     state: HomeState,
-    launchAppShortcut: (Model.AppShortcut) -> Unit,
-    removeSplitScreenShortcut: (Model.SplitScreenShortcut) -> Unit,
+    onAppDialogClick: (Model.AppShortcut) -> Unit,
+    onSplitScreenShortcutsDialogClick: (Model.SplitScreenShortcut) -> Unit,
     onLauncherDialogAction: (
         HomeDialogState.LauncherDialogState,
         HomeDialogState.LauncherDialogActions
@@ -92,8 +93,8 @@ private fun BoxScope.HomeScreen(
         mutableStateOf<Model.SplitScreenShortcut?>(null)
     }
     val pagerState = rememberPagerState(
-        initialPage = state.pages.items.size / 2,
-        pageCount = { state.pages.items.size }
+        initialPage = state.pages.size / 2,
+        pageCount = { state.pages.size }
     )
     val interactionSource = remember { MutableInteractionSource() }
 
@@ -112,7 +113,7 @@ private fun BoxScope.HomeScreen(
                         onClick = { }
                     ),
                 settings = state.settings,
-                items = state.pages.items[page],
+                items = state.pages[page],
                 showHiddenApps = state.showHiddenApps,
                 onClick = onRowItemClick,
                 onLongClick = {
@@ -149,7 +150,7 @@ private fun BoxScope.HomeScreen(
             app = it,
             allShortcuts = state.appShortcutButtons,
             showShortcuts = state.isHomeApp,
-            launchAppShortcut = launchAppShortcut,
+            onAppShortcutClick = onAppDialogClick,
             onHeaderAction = onHeaderAction,
             onDismissRequest = { showAppDialog = null }
         )
@@ -157,7 +158,7 @@ private fun BoxScope.HomeScreen(
     showShortcutDialog?.let {
         HomeDialogSplitScreenShortcut(
             shortcut = it,
-            removeSplitScreenShortcut = removeSplitScreenShortcut,
+            onSplitScreenShortcutsDialogClick = onSplitScreenShortcutsDialogClick,
             onHeaderAction = onHeaderAction,
             onDismissRequest = { showShortcutDialog = null }
         )
@@ -223,16 +224,16 @@ private fun HomePagePreview() {
         settings = Defaults.Settings,
         isHomeApp = true,
         appShortcutButtons = HomeDialogState.AppShortcutButtons(mapOf()),
-        pages = HomeState.Pages.Success(listOf())
+        pages = listOf()
     )
     LauncherTheme(darkTheme = true) {
         Box {
             HomeScreen(
                 modifier = Modifier,
                 state = state,
-                removeSplitScreenShortcut = {},
+                onSplitScreenShortcutsDialogClick = {},
                 onLauncherDialogAction = { _, _ -> },
-                launchAppShortcut = {},
+                onAppDialogClick = {},
                 onHeaderAction = { _, _ -> },
                 onRowItemClick = {}
             )

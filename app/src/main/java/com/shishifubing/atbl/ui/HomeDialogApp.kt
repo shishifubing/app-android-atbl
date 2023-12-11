@@ -10,7 +10,7 @@ fun HomeDialogApp(
     app: Model.App,
     allShortcuts: HomeDialogState.AppShortcutButtons,
     showShortcuts: Boolean,
-    launchAppShortcut: (Model.AppShortcut) -> Unit,
+    onAppShortcutClick: (Model.AppShortcut) -> Unit,
     onHeaderAction: (Model.App, HomeDialogState.HeaderActions) -> Unit,
     onDismissRequest: () -> Unit
 ) {
@@ -25,6 +25,6 @@ fun HomeDialogApp(
         header = HomeDialogState.Header.App(app),
         onHeaderAction = onHeaderAction,
         showButtons = showShortcuts,
-        onButtonClick = { launchAppShortcut(it) }
+        onButtonClick = { onAppShortcutClick(it) }
     )
 }

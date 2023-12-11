@@ -2,6 +2,7 @@ package com.shishifubing.atbl.ui
 
 
 import android.os.ParcelFileDescriptor
+import com.shishifubing.atbl.LauncherNavigator
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.launcherViewModelFactory
@@ -10,11 +11,12 @@ import java.io.InputStream
 
 
 class SettingsViewModel(
-    private val stateRepo: LauncherStateRepository
-) : StateViewModel(stateRepo) {
+    private val stateRepo: LauncherStateRepository,
+    private val navigator: LauncherNavigator,
+) : StateViewModel(stateRepo, navigator) {
     companion object {
         val Factory = launcherViewModelFactory {
-            SettingsViewModel(stateRepo = stateRepo)
+            SettingsViewModel(stateRepo = stateRepo, navigator = navigator)
         }
     }
 

@@ -7,48 +7,92 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavGraphBuilder
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
+import com.shishifubing.atbl.LauncherNavigationState
 import com.shishifubing.atbl.data.UiState
 
-interface LauncherRoute<S, T : BaseViewModel<S>> {
+interface LauncherRoute<State, VM : BaseViewModel<State>> {
     val url: String
 
     @get:StringRes
     val label: Int
+    
     val showScaffold: Boolean
 
     @Composable
-    fun Content(vm: T, uiState: UiState.Success<S>)
+    fun Content(vm: VM, uiState: UiState.Success<State>)
 
     @Composable
-    fun getViewModel(): T
+    fun getViewModel(): VM
 }
 
-fun <S, T : BaseViewModel<S>> NavGraphBuilder.launcherComposable(
-    route: LauncherRoute<S, T>,
-    onChangedRoute: (LauncherRoute<*, *>) -> Unit
+fun <State, VM : BaseViewModel<State>> NavGraphBuilder.launcherComposable(
+    route: LauncherRoute<State, VM>,
+    navController: NavHostController
 ) {
     composable(route = route.url) {
-        LaunchedEffect(route) {
-            onChangedRoute(route)
-        }
         val vm = route.getViewModel()
         val error by vm.errorFlow.collectAsState()
         val uiState by vm.uiStateFlow.collectAsState()
+        val navigationState by vm.navigationStateFlow.collectAsState()
+
+        OnChangedNavState(
+            navState = navigationState,
+            navController = navController,
+            onNavigation = vm::onNavigation
+        )
         ErrorToast(error = error)
-        when (uiState) {
-            is UiState.Loading -> PageLoadingIndicator()
-            is UiState.Success<S> -> route.Content(
-                vm = vm,
-                uiState = uiState as UiState.Success<S>
+
+        val content: @Composable () -> Unit = {
+            when (uiState) {
+                is UiState.Loading -> PageLoadingIndicator()
+
+                is UiState.Success<State> -> route.Content(
+                    vm = vm,
+                    uiState = uiState as UiState.Success<State>
+                )
+            }
+        }
+        if (route.showScaffold) {
+            LauncherScaffold(
+                label = route.label,
+                goBack = { vm.popBackStack() },
+                content = content
             )
+        } else {
+            content()
         }
     }
 }
 
 @Composable
-fun ErrorToast(error: Throwable?) {
+private fun OnChangedNavState(
+    navState: LauncherNavigationState,
+    onNavigation: (LauncherNavigationState) -> Unit,
+    navController: NavHostController
+) {
+    LaunchedEffect(key1 = navState) {
+        when (navState) {
+            is LauncherNavigationState.GoToRoute -> {
+                val route = navState.route
+                navController.navigate(route = route.url) {
+                    popUpTo(id = navController.graph.findStartDestination().id)
+                    launchSingleTop = true
+                }
+            }
+
+            LauncherNavigationState.Idle -> {}
+            LauncherNavigationState.PopBackStack -> navController.popBackStack()
+        }
+        onNavigation(navState)
+    }
+}
+
+@Composable
+private fun ErrorToast(error: Throwable?) {
     val context = LocalContext.current
     LaunchedEffect(error) {
         error?.let {

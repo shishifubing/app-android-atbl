@@ -6,9 +6,7 @@ import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ElevatedCard
@@ -16,14 +14,13 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.key
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
-import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
@@ -111,33 +108,22 @@ private fun <T> HomeDialogButtons(
     actionButtons: HomeDialogState.Buttons<T>,
 ) {
     ElevatedCard {
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxWidth()
-                .heightIn(
-                    0.dp,
-                    (LocalConfiguration.current.screenHeightDp * 0.6).dp
-                )
-        ) {
-            items(
-                count = actionButtons.buttons.size,
-                key = { actionButtons.buttons[it].hashCode() },
-            ) {
-                val item = actionButtons.buttons[it]
-                if (showButton(item.id)) {
-                    HomeDialogButton(
-                        text = when (item.label) {
-
-                            is Label.Res -> stringResource(item.label.res)
-
-                            is Label.Str -> item.label.string
-                        },
-                        textAlign = TextAlign.Start,
-                        onClick = {
-                            onButtonClick(item.id)
-                            onDismissRequest()
-                        }
-                    )
+        Column {
+            actionButtons.buttons.forEach { button ->
+                key(button.hashCode()) {
+                    if (showButton(button.id)) {
+                        HomeDialogButton(
+                            text = when (button.label) {
+                                is Label.Res -> stringResource(button.label.res)
+                                is Label.Str -> button.label.string
+                            },
+                            textAlign = TextAlign.Start,
+                            onClick = {
+                                onButtonClick(button.id)
+                                onDismissRequest()
+                            }
+                        )
+                    }
                 }
             }
         }
@@ -187,9 +173,7 @@ private fun HomeDialogBase(
 ) {
     Dialog(onDismissRequest = onDismissRequest) {
         Column(
-            modifier = modifier
-                .fillMaxWidth()
-                .verticalScroll(rememberScrollState()),
+            modifier = modifier.verticalScroll(rememberScrollState()),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
             content = content

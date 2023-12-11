@@ -1,9 +1,6 @@
 package com.shishifubing.atbl
 
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.Immutable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
 import com.shishifubing.atbl.ui.LauncherRoute
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
@@ -15,8 +12,9 @@ sealed interface LauncherNavigationState {
 
     data object Idle : LauncherNavigationState
 
-    data class GoToRoute(val route: LauncherRoute<*, *>) :
-        LauncherNavigationState
+    data class GoToRoute(
+        val route: LauncherRoute<*, *>
+    ) : LauncherNavigationState
 
     data object PopBackStack : LauncherNavigationState
 }
@@ -53,10 +51,4 @@ class LauncherNavigatorImpl : LauncherNavigator {
     private fun navigate(state: LauncherNavigationState) {
         navigationState.update { state }
     }
-}
-
-@Composable
-fun rememberNavigator(): LauncherNavigator {
-    val context = LocalContext.current.applicationContext
-    return remember(context) { (context as LauncherApplication).navigator }
 }

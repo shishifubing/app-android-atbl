@@ -1,5 +1,6 @@
 package com.shishifubing.atbl.ui
 
+import android.os.ParcelFileDescriptor
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -9,6 +10,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
 import com.shishifubing.atbl.data.UiState
+import java.io.InputStream
 
 object SettingsRoute : LauncherRoute<Model.State, SettingsViewModel> {
     override val url = "settings_screen"
@@ -25,49 +27,82 @@ object SettingsRoute : LauncherRoute<Model.State, SettingsViewModel> {
         vm: SettingsViewModel,
         uiState: UiState.Success<Model.State>
     ) {
-        SettingsScreen(vm = vm, state = uiState.state)
+        SettingsScreen(
+            state = uiState.state,
+            writeSettingsToFile = vm::writeSettingsToFile,
+            updateSettingsFromStream = vm::updateSettingsFromStream,
+            setPadding = vm::setAppCardPadding,
+            setTextColor = vm::setAppCardTextColor,
+            setTextStyle = vm::setAppCardTextStyle,
+            setFontFamily = vm::setAppCardFontFamily,
+            setSortBy = vm::setAppLayoutSortBy,
+            setLabelLowercase = vm::setAppCardLabelLowercase,
+            setVerticalArrangement = vm::setAppLayoutVerticalArrangement,
+            setHorizontalArrangement = vm::setAppLayoutHorizontalArrangement,
+            setVerticalPadding = vm::setAppLayoutVerticalPadding,
+            setHorizontalPadding = vm::setAppLayoutHorizontalPadding,
+            setSeparator = vm::setAppCardSplitScreenShortcutSeparator,
+            setHiddenApps = vm::setHiddenApps,
+            backupReset = vm::backupReset,
+            setLabelRemoveSpaces = vm::setAppCardLabelRemoveSpaces,
+            setReverseOrder = vm::setAppLayoutReverseOrder
+        )
     }
 }
 
 @Composable
 private fun SettingsScreen(
     modifier: Modifier = Modifier,
-    vm: SettingsViewModel,
-    state: Model.State
+    state: Model.State,
+    writeSettingsToFile: (() -> ParcelFileDescriptor?) -> Unit,
+    backupReset: () -> Unit,
+    updateSettingsFromStream: (() -> InputStream?) -> Unit,
+    setHiddenApps: (List<String>) -> Unit,
+    setSeparator: (String) -> Unit,
+    setReverseOrder: (Boolean) -> Unit,
+    setHorizontalPadding: (Int) -> Unit,
+    setVerticalPadding: (Int) -> Unit,
+    setHorizontalArrangement: (Model.Settings.HorizontalArrangement) -> Unit,
+    setVerticalArrangement: (Model.Settings.VerticalArrangement) -> Unit,
+    setSortBy: (Model.Settings.SortBy) -> Unit,
+    setLabelLowercase: (Boolean) -> Unit,
+    setLabelRemoveSpaces: (Boolean) -> Unit,
+    setFontFamily: (Model.Settings.FontFamily) -> Unit,
+    setTextStyle: (Model.Settings.TextStyle) -> Unit,
+    setTextColor: (Model.Settings.TextColor) -> Unit,
+    setPadding: (Int) -> Unit
 ) {
-    val apps = state.apps
-    val settings = state.settings
     Column(modifier = modifier.verticalScroll(rememberScrollState())) {
         SettingsGroupGeneral(
-            writeSettingsToFile = vm::writeSettingsToFile,
-            backupReset = vm::backupReset,
-            updateSettingsFromStream = vm::updateSettingsFromStream
+            writeSettingsToFile = writeSettingsToFile,
+            backupReset = backupReset,
+            updateSettingsFromStream = updateSettingsFromStream
         )
         SettingsGroupHiddenApps(
-            apps = apps,
-            setHiddenApps = vm::setHiddenApps
+            apps = state.apps,
+            setHiddenApps = setHiddenApps
         )
         SettingsGroupSplitScreen(
-            shortcutSeparator = settings.appCard.splitScreenSeparator,
-            setSeparator = vm::setAppCardSplitScreenShortcutSeparator
+            shortcutSeparator = state.settings.appCard.splitScreenSeparator,
+            setSeparator = setSeparator
         )
         SettingsGroupLayout(
-            settings = settings.layout,
-            setReverseOrder = vm::setAppLayoutReverseOrder,
-            setHorizontalPadding = vm::setAppLayoutHorizontalPadding,
-            setVerticalPadding = vm::setAppLayoutVerticalPadding,
-            setHorizontalArrangement = vm::setAppLayoutHorizontalArrangement,
-            setVerticalArrangement = vm::setAppLayoutVerticalArrangement,
-            setSortBy = vm::setAppLayoutSortBy
+            settings = state.settings.layout,
+            setReverseOrder = setReverseOrder,
+            setHorizontalPadding = setHorizontalPadding,
+            setVerticalPadding = setVerticalPadding,
+            setHorizontalArrangement = setHorizontalArrangement,
+            setVerticalArrangement = setVerticalArrangement,
+            setSortBy = setSortBy
         )
         SettingsGroupAppCard(
-            settings = settings.appCard,
-            setLabelLowercase = vm::setAppCardLabelLowercase,
-            setLabelRemoveSpaces = vm::setAppCardLabelRemoveSpaces,
-            setFontFamily = vm::setAppCardFontFamily,
-            setTextStyle = vm::setAppCardTextStyle,
-            setTextColor = vm::setAppCardTextColor,
-            setPadding = vm::setAppCardPadding
+            settings = state.settings.appCard,
+            setLabelLowercase = setLabelLowercase,
+            setLabelRemoveSpaces = setLabelRemoveSpaces,
+            setFontFamily = setFontFamily,
+            setTextStyle = setTextStyle,
+            setTextColor = setTextColor,
+            setPadding = setPadding
         )
     }
 }
