@@ -53,7 +53,7 @@ abstract class BaseViewModel<T>(
         }
         .stateIn(
             scope = viewModelScope,
-            started = SharingStarted.Eagerly,
+            started = SharingStarted.Lazily,
             initialValue = RepoState.Loading
         )
 

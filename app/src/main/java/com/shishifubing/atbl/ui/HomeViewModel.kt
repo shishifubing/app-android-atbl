@@ -11,8 +11,7 @@ import com.shishifubing.atbl.Model.Settings.AppCard
 import com.shishifubing.atbl.Model.SplitScreenShortcut
 import com.shishifubing.atbl.data.HomeDialogState
 import com.shishifubing.atbl.data.HomeDialogState.HeaderActions
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogState
+import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction
 import com.shishifubing.atbl.data.HomeState
 import com.shishifubing.atbl.data.RepoState
 import com.shishifubing.atbl.data.UiState
@@ -40,21 +39,17 @@ class HomeViewModel(
         }
     }
 
-    private val pagesFlow = stateFlow.map {
+    private val itemsFlow = stateFlow.map {
         when (it) {
             RepoState.Loading -> object :
-                UiState.Loading<List<HomeState.RowItems>> {}
+                UiState.Loading<HomeState.RowItems> {}
 
-            is RepoState.Success -> UiState.Success(
-                it.state.pagesList.map { screen ->
-                    screenToHomeRowItems(screen, it.state)
-                }
-            )
+            is RepoState.Success -> UiState.Success(stateToHomeRowItems(it.state))
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
-        initialValue = object : UiState.Loading<List<HomeState.RowItems>> {}
+        started = SharingStarted.Lazily,
+        initialValue = object : UiState.Loading<HomeState.RowItems> {}
     )
 
     private val buttonsFlow = stateFlow.map {
@@ -64,14 +59,14 @@ class HomeViewModel(
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.Lazily,
         initialValue = HomeDialogState.AppShortcutButtons(mapOf())
     )
 
     override val uiStateFlow = combine(
-        stateFlow, pagesFlow, buttonsFlow
-    ) { state, pages, buttons ->
-        if (state == RepoState.Loading || pages is UiState.Loading) {
+        stateFlow, itemsFlow, buttonsFlow
+    ) { state, items, buttons ->
+        if (state == RepoState.Loading || items is UiState.Loading) {
             object : UiState.Loading<HomeState> {}
         } else {
             val stateSuccess = state as RepoState.Success
@@ -80,14 +75,14 @@ class HomeViewModel(
                     settings = stateSuccess.state.settings,
                     showHiddenApps = stateSuccess.state.showHiddenApps,
                     isHomeApp = stateSuccess.state.isHomeApp,
-                    pages = (pages as UiState.Success).state,
+                    items = (items as UiState.Success).state,
                     appShortcutButtons = buttons
                 )
             )
         }
     }.stateIn(
         scope = viewModelScope,
-        started = SharingStarted.Eagerly,
+        started = SharingStarted.Lazily,
         initialValue = object : UiState.Loading<HomeState> {}
     )
 
@@ -107,40 +102,25 @@ class HomeViewModel(
         }
     }
 
-    fun onLauncherDialogAction(
-        state: LauncherDialogState,
-        action: LauncherDialogActions,
-    ) {
+    fun onLauncherDialogAction(action: LauncherDialogAction) {
         when (action) {
-            LauncherDialogActions.AddScreenAfter -> stateAction {
-                addPageAfter(state.currentPage)
-            }
-
-            LauncherDialogActions.AddScreenBefore -> stateAction {
-                addPageBefore(state.currentPage)
-            }
-
-            LauncherDialogActions.GoToAddWidget -> navigator.goToRoute(
+            LauncherDialogAction.GoToAddWidget -> navigator.goToRoute(
                 Routes.addWidget
             )
 
-            LauncherDialogActions.GoToSettings -> navigator.goToRoute(
+            LauncherDialogAction.GoToSettings -> navigator.goToRoute(
                 Routes.settings
             )
 
-            LauncherDialogActions.RemoveScreen -> stateAction {
-                removePage(state.currentPage)
-            }
-
-            LauncherDialogActions.ShowHiddenApps -> stateAction {
+            LauncherDialogAction.ShowHiddenApps -> stateAction {
                 setShowHiddenApps(true)
             }
 
-            LauncherDialogActions.HideHiddenApps -> stateAction {
+            LauncherDialogAction.HideHiddenApps -> stateAction {
                 setShowHiddenApps(false)
             }
 
-            LauncherDialogActions.GoToEditSplitScreenShortcuts -> navigator.goToRoute(
+            LauncherDialogAction.GoToEditSplitScreenShortcuts -> navigator.goToRoute(
                 Routes.shortcuts
             )
         }
@@ -188,11 +168,8 @@ class HomeViewModel(
             .toMap())
     }
 
-    private fun screenToHomeRowItems(
-        page: Model.Page,
-        state: Model.State
-    ): HomeState.RowItems {
-        val items = page.itemsList
+    private fun stateToHomeRowItems(state: Model.State): HomeState.RowItems {
+        val items = state.items.itemsList
             .flatMap { itemModel ->
                 itemToHomeRowItems(
                     apps = state.apps,

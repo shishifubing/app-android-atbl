@@ -4,7 +4,7 @@ import androidx.compose.runtime.Immutable
 import com.shishifubing.atbl.Model
 
 data class HomeState(
-    val pages: List<RowItems>,
+    val items: RowItems,
     val settings: Model.Settings,
     val showHiddenApps: Boolean,
     val isHomeApp: Boolean,

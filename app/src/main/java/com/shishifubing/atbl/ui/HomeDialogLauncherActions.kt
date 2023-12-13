@@ -6,13 +6,10 @@ import com.shishifubing.atbl.R
 import com.shishifubing.atbl.data.HomeDialogState
 import com.shishifubing.atbl.data.HomeDialogState.Button
 import com.shishifubing.atbl.data.HomeDialogState.Buttons
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions.AddScreenAfter
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions.AddScreenBefore
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions.GoToAddWidget
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions.GoToSettings
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions.HideHiddenApps
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions.RemoveScreen
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogActions.ShowHiddenApps
+import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.GoToAddWidget
+import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.GoToSettings
+import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.HideHiddenApps
+import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.ShowHiddenApps
 
 
 private val buttons = Buttons(
@@ -26,7 +23,7 @@ private val buttons = Buttons(
     ),
     Button(
         label = R.string.launcher_dialog_edit_split_screen_shortcuts,
-        id = HomeDialogState.LauncherDialogActions.GoToEditSplitScreenShortcuts
+        id = HomeDialogState.LauncherDialogAction.GoToEditSplitScreenShortcuts
     ),
     Button(
         label = R.string.launcher_dialog_hide_hidden_apps,
@@ -35,28 +32,13 @@ private val buttons = Buttons(
     Button(
         label = R.string.launcher_dialog_show_hidden_apps,
         id = ShowHiddenApps
-    ),
-    Button(
-        label = R.string.launcher_dialog_add_screen_before,
-        id = AddScreenBefore
-    ),
-    Button(
-        label = R.string.launcher_dialog_add_screen_after,
-        id = AddScreenAfter
-    ),
-    Button(
-        label = R.string.launcher_dialog_remove_screen,
-        id = RemoveScreen
     )
 )
 
 @Composable
 fun HomeDialogLauncherActions(
-    state: HomeDialogState.LauncherDialogState,
-    onLauncherDialogAction: (
-        HomeDialogState.LauncherDialogState,
-        HomeDialogState.LauncherDialogActions
-    ) -> Unit,
+    showHiddenApps: Boolean,
+    onLauncherDialogAction: (HomeDialogState.LauncherDialogAction) -> Unit,
     onDismissRequest: () -> Unit,
     modifier: Modifier = Modifier
 ) {
@@ -66,12 +48,11 @@ fun HomeDialogLauncherActions(
         actionButtons = buttons,
         showButton = { button ->
             when (button) {
-                HideHiddenApps -> state.showHiddenApps
-                ShowHiddenApps -> !state.showHiddenApps
-                RemoveScreen -> state.pageCount > 1
+                HideHiddenApps -> showHiddenApps
+                ShowHiddenApps -> !showHiddenApps
                 else -> true
             }
         },
-        onButtonClick = { onLauncherDialogAction(state, it) }
+        onButtonClick = onLauncherDialogAction
     )
 }
