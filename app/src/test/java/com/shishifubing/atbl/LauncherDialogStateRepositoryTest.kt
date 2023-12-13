@@ -69,19 +69,6 @@ class LauncherDialogStateRepositoryTest {
         }
     }
 
-
-    @Test
-    fun addScreenAfter() {
-    }
-
-    @Test
-    fun addScreenBefore() {
-    }
-
-    @Test
-    fun removeScreen() {
-    }
-
     @Test
     fun updateIsHomeApp() = runBlocking {
         assert(!repoEmpty.stateOrThrow().isHomeApp)

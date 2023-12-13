@@ -5,7 +5,6 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -15,8 +14,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.ButtonDefaults
@@ -25,7 +22,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -59,90 +55,70 @@ object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
         vm: HomeViewModel,
         uiState: UiState.Success<HomeState>
     ) {
-        Box(modifier = Modifier.safeDrawingPadding()) {
-            HomeScreen(
-                state = uiState.state,
-                onSplitScreenShortcutsDialogClick = vm::onSplitScreenShortcutsDialogClick,
-                onHeaderAction = vm::onHeaderAction,
-                onAppDialogClick = vm::onAppDialogClick,
-                onRowItemClick = vm::onRowItemClick,
-                onLauncherDialogAction = vm::onLauncherDialogAction
-            )
-        }
+        HomeScreen(
+            state = uiState.state,
+            onSplitScreenShortcutsDialogClick = vm::onSplitScreenShortcutsDialogClick,
+            onHeaderAction = vm::onHeaderAction,
+            onAppDialogClick = vm::onAppDialogClick,
+            onRowItemClick = vm::onRowItemClick,
+            onLauncherDialogAction = vm::onLauncherDialogAction
+        )
     }
 }
 
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun BoxScope.HomeScreen(
+private fun HomeScreen(
     state: HomeState,
     onAppDialogClick: (Model.AppShortcut) -> Unit,
     onSplitScreenShortcutsDialogClick: (Model.SplitScreenShortcut) -> Unit,
-    onLauncherDialogAction: (
-        HomeDialogState.LauncherDialogState,
-        HomeDialogState.LauncherDialogActions
-    ) -> Unit,
+    onLauncherDialogAction: (HomeDialogState.LauncherDialogAction) -> Unit,
     onRowItemClick: (RowItem) -> Unit,
     onHeaderAction: (Model.App, HeaderActions) -> Unit,
     modifier: Modifier = Modifier
 ) {
-    var showLauncherDialog by remember { mutableIntStateOf(-1) }
+    var showLauncherDialog by remember { mutableStateOf(false) }
     var showAppDialog by remember { mutableStateOf<Model.App?>(null) }
     var showShortcutDialog by remember {
         mutableStateOf<Model.SplitScreenShortcut?>(null)
     }
-    val pagerState = rememberPagerState(
-        initialPage = state.pages.size / 2,
-        pageCount = { state.pages.size }
-    )
     val interactionSource = remember { MutableInteractionSource() }
 
-    Column {
+    Column(modifier = modifier.safeDrawingPadding()) {
         if (!state.isHomeApp) {
             NotAHomeAppBanner()
         }
-        HorizontalPager(state = pagerState, modifier = modifier) { page ->
-            HomeRow(
-                modifier = Modifier
-                    .fillMaxSize()
-                    .combinedClickable(
-                        interactionSource = interactionSource,
-                        indication = null,
-                        onLongClick = { showLauncherDialog = page },
-                        onClick = { }
-                    ),
-                settings = state.settings,
-                items = state.pages[page],
-                showHiddenApps = state.showHiddenApps,
-                onClick = onRowItemClick,
-                onLongClick = {
-                    when (it) {
-                        is RowItem.App -> showAppDialog = it.app
+        HomeRow(
+            modifier = Modifier
+                .fillMaxSize()
+                .combinedClickable(
+                    interactionSource = interactionSource,
+                    indication = null,
+                    onLongClick = { showLauncherDialog = true },
+                    onClick = { }
+                ),
+            settings = state.settings,
+            items = state.items,
+            showHiddenApps = state.showHiddenApps,
+            onClick = onRowItemClick,
+            onLongClick = {
+                when (it) {
+                    is RowItem.App -> showAppDialog = it.app
 
-                        is RowItem.SplitScreenShortcut -> {
-                            showShortcutDialog = it.shortcut
-                        }
+                    is RowItem.SplitScreenShortcut -> {
+                        showShortcutDialog = it.shortcut
                     }
-                },
-            )
-        }
+                }
+            },
+        )
     }
 
-    HomePageIndicatorFloating(
-        currentPage = pagerState.currentPage,
-        pageCount = pagerState.pageCount
-    )
-
-    if (showLauncherDialog != -1) {
+    if (showLauncherDialog) {
         HomeDialogLauncherActions(
-            state = HomeDialogState.LauncherDialogState(
-                pageCount = pagerState.pageCount,
-                currentPage = pagerState.currentPage,
-                showHiddenApps = state.showHiddenApps
-            ),
+            showHiddenApps = state.showHiddenApps,
             onLauncherDialogAction = onLauncherDialogAction,
-            onDismissRequest = { showLauncherDialog = -1 }
+            onDismissRequest = { showLauncherDialog = false }
         )
     }
     showAppDialog?.let {
@@ -224,7 +200,7 @@ private fun HomePagePreview() {
         settings = Defaults.Settings,
         isHomeApp = true,
         appShortcutButtons = HomeDialogState.AppShortcutButtons(mapOf()),
-        pages = listOf()
+        items = HomeState.RowItems(listOf())
     )
     LauncherTheme(darkTheme = true) {
         Box {
@@ -232,7 +208,7 @@ private fun HomePagePreview() {
                 modifier = Modifier,
                 state = state,
                 onSplitScreenShortcutsDialogClick = {},
-                onLauncherDialogAction = { _, _ -> },
+                onLauncherDialogAction = { },
                 onAppDialogClick = {},
                 onHeaderAction = { _, _ -> },
                 onRowItemClick = {}

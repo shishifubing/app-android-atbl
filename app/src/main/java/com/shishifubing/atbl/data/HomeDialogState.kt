@@ -11,17 +11,10 @@ sealed interface HomeDialogState {
         GoToInfo, HideOrShow, Uninstall
     }
 
-    enum class LauncherDialogActions {
+    enum class LauncherDialogAction {
         GoToSettings, GoToAddWidget, GoToEditSplitScreenShortcuts,
         HideHiddenApps, ShowHiddenApps,
-        AddScreenBefore, AddScreenAfter, RemoveScreen,
     }
-
-    data class LauncherDialogState(
-        val currentPage: Int,
-        val pageCount: Int,
-        val showHiddenApps: Boolean
-    )
 
     data class AppShortcutButtons(val buttons: Map<String, Buttons<Model.AppShortcut>>)
 
