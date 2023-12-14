@@ -5,10 +5,7 @@ import com.shishifubing.atbl.Model
 
 data class HomeState(
     val items: RowItems,
-    val settings: Model.Settings,
-    val showHiddenApps: Boolean,
-    val isHomeApp: Boolean,
-    val appShortcutButtons: HomeDialogState.AppShortcutButtons
+    val state: Model.State
 ) {
 
     data class RowItems(val items: List<RowItem>)

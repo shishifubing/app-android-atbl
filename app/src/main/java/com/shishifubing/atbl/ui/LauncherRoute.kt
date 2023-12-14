@@ -19,7 +19,7 @@ interface LauncherRoute<State, VM : BaseViewModel<State>> {
 
     @get:StringRes
     val label: Int
-    
+
     val showScaffold: Boolean
 
     @Composable
@@ -48,7 +48,7 @@ fun <State, VM : BaseViewModel<State>> NavGraphBuilder.launcherComposable(
 
         val content: @Composable () -> Unit = {
             when (uiState) {
-                is UiState.Loading -> PageLoadingIndicator()
+                is UiState.Loading -> Unit
 
                 is UiState.Success<State> -> route.Content(
                     vm = vm,

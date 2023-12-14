@@ -56,7 +56,7 @@ object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
         uiState: UiState.Success<HomeState>
     ) {
         HomeScreen(
-            state = uiState.state,
+            uiState = uiState.state,
             onSplitScreenShortcutsDialogClick = vm::onSplitScreenShortcutsDialogClick,
             onHeaderAction = vm::onHeaderAction,
             onAppDialogClick = vm::onAppDialogClick,
@@ -70,7 +70,7 @@ object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HomeScreen(
-    state: HomeState,
+    uiState: HomeState,
     onAppDialogClick: (Model.AppShortcut) -> Unit,
     onSplitScreenShortcutsDialogClick: (Model.SplitScreenShortcut) -> Unit,
     onLauncherDialogAction: (HomeDialogState.LauncherDialogAction) -> Unit,
@@ -86,7 +86,7 @@ private fun HomeScreen(
     val interactionSource = remember { MutableInteractionSource() }
 
     Column(modifier = modifier.safeDrawingPadding()) {
-        if (!state.isHomeApp) {
+        if (!uiState.state.isHomeApp) {
             NotAHomeAppBanner()
         }
         HomeRow(
@@ -98,9 +98,9 @@ private fun HomeScreen(
                     onLongClick = { showLauncherDialog = true },
                     onClick = { }
                 ),
-            settings = state.settings,
-            items = state.items,
-            showHiddenApps = state.showHiddenApps,
+            settings = uiState.state.settings,
+            items = uiState.items,
+            showHiddenApps = uiState.state.showHiddenApps,
             onClick = onRowItemClick,
             onLongClick = {
                 when (it) {
@@ -116,7 +116,7 @@ private fun HomeScreen(
 
     if (showLauncherDialog) {
         HomeDialogLauncherActions(
-            showHiddenApps = state.showHiddenApps,
+            showHiddenApps = uiState.state.showHiddenApps,
             onLauncherDialogAction = onLauncherDialogAction,
             onDismissRequest = { showLauncherDialog = false }
         )
@@ -124,8 +124,7 @@ private fun HomeScreen(
     showAppDialog?.let {
         HomeDialogApp(
             app = it,
-            allShortcuts = state.appShortcutButtons,
-            showShortcuts = state.isHomeApp,
+            showShortcuts = uiState.state.isHomeApp,
             onAppShortcutClick = onAppDialogClick,
             onHeaderAction = onHeaderAction,
             onDismissRequest = { showAppDialog = null }
@@ -196,17 +195,14 @@ private fun HomePagePreview() {
             .build()
     )
     val state = HomeState(
-        showHiddenApps = false,
-        settings = Defaults.Settings,
-        isHomeApp = true,
-        appShortcutButtons = HomeDialogState.AppShortcutButtons(mapOf()),
+        state = Defaults.State,
         items = HomeState.RowItems(listOf())
     )
     LauncherTheme(darkTheme = true) {
         Box {
             HomeScreen(
                 modifier = Modifier,
-                state = state,
+                uiState = state,
                 onSplitScreenShortcutsDialogClick = {},
                 onLauncherDialogAction = { },
                 onAppDialogClick = {},

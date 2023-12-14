@@ -14,7 +14,7 @@ object Routes {
     val addWidget = AddWidgetRoute
     val settings = SettingsRoute
     val shortcuts = EditSplitScreenShortcutsRoute
-    val list = listOf(home, addWidget, settings, shortcuts)
+    val allRoutes = listOf(home, addWidget, settings, shortcuts)
 }
 
 @Composable
@@ -27,7 +27,7 @@ fun LauncherUi(modifier: Modifier = Modifier) {
                 navController = navController,
                 startDestination = startDestination.url
             ) {
-                Routes.list.forEach { route ->
+                Routes.allRoutes.forEach { route ->
                     launcherComposable(
                         route = route,
                         navController = navController

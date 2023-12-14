@@ -9,7 +9,6 @@ import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.Model.Settings.AppCard
 import com.shishifubing.atbl.Model.SplitScreenShortcut
-import com.shishifubing.atbl.data.HomeDialogState
 import com.shishifubing.atbl.data.HomeDialogState.HeaderActions
 import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction
 import com.shishifubing.atbl.data.HomeState
@@ -17,7 +16,6 @@ import com.shishifubing.atbl.data.RepoState
 import com.shishifubing.atbl.data.UiState
 import com.shishifubing.atbl.launcherViewModelFactory
 import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 
@@ -39,44 +37,15 @@ class HomeViewModel(
         }
     }
 
-    private val itemsFlow = stateFlow.map {
-        when (it) {
-            RepoState.Loading -> object :
-                UiState.Loading<HomeState.RowItems> {}
-
-            is RepoState.Success -> UiState.Success(stateToHomeRowItems(it.state))
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Lazily,
-        initialValue = object : UiState.Loading<HomeState.RowItems> {}
-    )
-
-    private val buttonsFlow = stateFlow.map {
-        when (it) {
-            RepoState.Loading -> HomeDialogState.AppShortcutButtons(mapOf())
-            is RepoState.Success -> appShortcutsToDialogButtons(apps = it.state.apps)
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Lazily,
-        initialValue = HomeDialogState.AppShortcutButtons(mapOf())
-    )
-
-    override val uiStateFlow = combine(
-        stateFlow, itemsFlow, buttonsFlow
-    ) { state, items, buttons ->
-        if (state == RepoState.Loading || items is UiState.Loading) {
+    override val uiStateFlow = stateFlow.map { state ->
+        if (state == RepoState.Loading) {
             object : UiState.Loading<HomeState> {}
         } else {
             val stateSuccess = state as RepoState.Success
             UiState.Success(
                 HomeState(
-                    settings = stateSuccess.state.settings,
-                    showHiddenApps = stateSuccess.state.showHiddenApps,
-                    isHomeApp = stateSuccess.state.isHomeApp,
-                    items = (items as UiState.Success).state,
-                    appShortcutButtons = buttons
+                    state = stateSuccess.state,
+                    items = stateToHomeRowItems(stateSuccess.state)
                 )
             )
         }
@@ -151,21 +120,6 @@ class HomeViewModel(
 
     private fun managerAction(action: suspend LauncherManager.() -> Unit) {
         launch { action.invoke(manager) }
-    }
-
-    private fun appShortcutsToDialogButtons(apps: Model.Apps): HomeDialogState.AppShortcutButtons {
-        return HomeDialogState.AppShortcutButtons(apps.appsMap
-            .map { (packageName, app) ->
-                packageName to HomeDialogState.Buttons(
-                    buttons = app.shortcutsList.map { shortcut ->
-                        HomeDialogState.Button(
-                            label = shortcut.label,
-                            id = shortcut
-                        )
-                    }
-                )
-            }
-            .toMap())
     }
 
     private fun stateToHomeRowItems(state: Model.State): HomeState.RowItems {

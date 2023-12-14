@@ -8,21 +8,21 @@ import com.shishifubing.atbl.data.HomeDialogState
 @Composable
 fun HomeDialogApp(
     app: Model.App,
-    allShortcuts: HomeDialogState.AppShortcutButtons,
     showShortcuts: Boolean,
     onAppShortcutClick: (Model.AppShortcut) -> Unit,
     onHeaderAction: (Model.App, HomeDialogState.HeaderActions) -> Unit,
     onDismissRequest: () -> Unit
 ) {
-    val buttons = remember(app, allShortcuts) {
-        allShortcuts.buttons.getOrDefault(
-            app.packageName, HomeDialogState.Buttons()
-        )
+    val header = remember(app) { HomeDialogState.Header.App(app) }
+    val buttons = remember(app) {
+        HomeDialogState.Buttons(app.shortcutsList.map { shortcut ->
+            HomeDialogState.Button(shortcut.label, shortcut)
+        })
     }
     HomeDialog(
         onDismissRequest = onDismissRequest,
         actionButtons = buttons,
-        header = HomeDialogState.Header.App(app),
+        header = header,
         onHeaderAction = onHeaderAction,
         showButtons = showShortcuts,
         onButtonClick = { onAppShortcutClick(it) }
