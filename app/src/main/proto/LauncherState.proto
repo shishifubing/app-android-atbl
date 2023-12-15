@@ -4,33 +4,11 @@ option java_package = "com.shishifubing.atbl";
 option java_outer_classname = "Model";
 
 message State {
-  ScreenItems items = 1;
-  Apps apps = 2;
-  SplitScreenShortcuts splitScreenShortcuts = 3;
-  Settings settings = 5;
+  Apps apps = 1;
+  SplitScreenShortcuts splitScreenShortcuts = 2;
+  Settings settings = 3;
   bool isHomeApp = 4;
-  bool showHiddenApps = 6;
-}
-
-message ScreenItems {
-  repeated ScreenItem items = 1;
-}
-
-message ScreenItem {
-  message App {
-    string packageName = 1;
-  };
-  message Apps {};
-  message SplitScreenShortcut {
-    string key = 1;
-  }
-  message SplitScreenShortcuts {};
-  oneof item {
-    App app = 1;
-    Apps apps = 2;
-    SplitScreenShortcut shortcut = 3;
-    SplitScreenShortcuts shortcuts = 4;
-  }
+  bool showHiddenApps = 5;
 }
 
 message App {
