@@ -7,7 +7,6 @@ data class HomeState(
     val items: RowItems,
     val state: Model.State
 ) {
-
     data class RowItems(val items: List<RowItem>)
 
     @Immutable

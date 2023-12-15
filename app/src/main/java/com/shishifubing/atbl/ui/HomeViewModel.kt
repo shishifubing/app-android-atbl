@@ -1,7 +1,6 @@
 package com.shishifubing.atbl.ui
 
 
-import android.util.Log
 import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherManager
 import com.shishifubing.atbl.LauncherNavigator
@@ -123,15 +122,22 @@ class HomeViewModel(
     }
 
     private fun stateToHomeRowItems(state: Model.State): HomeState.RowItems {
-        val items = state.items.itemsList
-            .flatMap { itemModel ->
-                itemToHomeRowItems(
-                    apps = state.apps,
-                    splitScreenShortcuts = state.splitScreenShortcuts,
-                    item = itemModel,
-                    settings = state.settings.appCard
-                )
-            }.toMutableList()
+        val items = mutableListOf<HomeState.RowItem>()
+        val shortcuts = state.splitScreenShortcuts.shortcutsMap.map {
+            HomeState.RowItem.SplitScreenShortcut(
+                shortcut = it.value,
+                label = transformLabel(it.value, state.settings.appCard)
+            )
+        }
+        val apps = state.apps.appsMap.map {
+            HomeState.RowItem.App(
+                app = it.value,
+                label = transformLabel(it.value, state.settings.appCard)
+            )
+        }
+        items.addAll(shortcuts)
+        items.addAll(apps)
+
         when (state.settings.layout.sortBy) {
             Model.Settings.SortBy.SortByLabel, Model.Settings.SortBy.UNRECOGNIZED, null -> {
                 items.sortBy { it.label }
@@ -141,59 +147,6 @@ class HomeViewModel(
             items.reverse()
         }
         return HomeState.RowItems(items = items)
-    }
-
-    private fun itemToHomeRowItems(
-        apps: Model.Apps,
-        splitScreenShortcuts: Model.SplitScreenShortcuts,
-        item: Model.ScreenItem,
-        settings: AppCard
-    ): List<HomeState.RowItem> {
-        return when (item.itemCase) {
-            Model.ScreenItem.ItemCase.APP -> {
-                val model = apps.getAppsOrThrow(item.app.packageName)
-                listOf(
-                    HomeState.RowItem.App(
-                        app = model,
-                        label = transformLabel(model, settings)
-                    )
-                )
-            }
-
-            Model.ScreenItem.ItemCase.APPS -> {
-                apps.appsMap.values.map { app ->
-                    HomeState.RowItem.App(
-                        app = app,
-                        label = transformLabel(app, settings)
-                    )
-                }
-            }
-
-            Model.ScreenItem.ItemCase.SHORTCUT -> {
-                val key = item.shortcut.key
-                val model = splitScreenShortcuts.getShortcutsOrThrow(key)
-                listOf(
-                    HomeState.RowItem.SplitScreenShortcut(
-                        shortcut = model,
-                        label = transformLabel(model, settings)
-                    )
-                )
-            }
-
-            Model.ScreenItem.ItemCase.SHORTCUTS -> {
-                splitScreenShortcuts.shortcutsMap.map {
-                    HomeState.RowItem.SplitScreenShortcut(
-                        shortcut = it.value,
-                        label = transformLabel(it.value, settings)
-                    )
-                }
-            }
-
-            Model.ScreenItem.ItemCase.ITEM_NOT_SET, null -> {
-                Log.d(tag, "item is not set for some reason?")
-                listOf()
-            }
-        }
     }
 
     private fun transformLabel(
