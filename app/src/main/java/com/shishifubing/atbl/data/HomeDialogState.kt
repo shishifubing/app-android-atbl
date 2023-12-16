@@ -12,7 +12,7 @@ sealed interface HomeDialogState {
     }
 
     enum class LauncherDialogAction {
-        GoToSettings, GoToAddWidget, GoToEditSplitScreenShortcuts,
+        GoToSettings, GoToEditSplitScreenShortcuts,
         HideHiddenApps, ShowHiddenApps,
     }
 

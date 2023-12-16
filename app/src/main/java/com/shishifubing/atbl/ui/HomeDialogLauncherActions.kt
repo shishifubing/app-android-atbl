@@ -6,7 +6,6 @@ import com.shishifubing.atbl.R
 import com.shishifubing.atbl.data.HomeDialogState
 import com.shishifubing.atbl.data.HomeDialogState.Button
 import com.shishifubing.atbl.data.HomeDialogState.Buttons
-import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.GoToAddWidget
 import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.GoToSettings
 import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.HideHiddenApps
 import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.ShowHiddenApps
@@ -16,10 +15,6 @@ private val buttons = Buttons(
     Button(
         label = R.string.launcher_dialog_settings,
         id = GoToSettings
-    ),
-    Button(
-        label = R.string.launcher_dialog_add_widget,
-        id = GoToAddWidget
     ),
     Button(
         label = R.string.launcher_dialog_edit_split_screen_shortcuts,

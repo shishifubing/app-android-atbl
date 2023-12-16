@@ -72,10 +72,6 @@ class HomeViewModel(
 
     fun onLauncherDialogAction(action: LauncherDialogAction) {
         when (action) {
-            LauncherDialogAction.GoToAddWidget -> navigator.goToRoute(
-                Routes.addWidget
-            )
-
             LauncherDialogAction.GoToSettings -> navigator.goToRoute(
                 Routes.settings
             )

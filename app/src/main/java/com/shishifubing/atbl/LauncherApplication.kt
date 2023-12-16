@@ -1,7 +1,6 @@
 package com.shishifubing.atbl
 
 import android.app.Application
-import android.appwidget.AppWidgetHost
 import android.content.Context
 import android.content.pm.LauncherApps
 import androidx.activity.ComponentActivity
@@ -20,7 +19,6 @@ private val Context.dataStore by dataStore(
 class LauncherApplication : Application() {
     lateinit var manager: LauncherManager
     lateinit var stateRepo: LauncherStateRepository
-    lateinit var appWidgetHost: AppWidgetHost
     val navigator: LauncherNavigator = LauncherNavigatorImpl()
 
     fun init(activity: ComponentActivity): LauncherApplication {
@@ -31,7 +29,6 @@ class LauncherApplication : Application() {
             lifecycle = activity.lifecycle
         )
         stateRepo = LauncherStateRepository(dataStore = dataStore)
-        appWidgetHost = AppWidgetHost(activity, 0)
         return this
     }
 }

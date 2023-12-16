@@ -11,10 +11,9 @@ private val startDestination: LauncherRoute<*, *> = HomeRoute
 
 object Routes {
     private val home = HomeRoute
-    val addWidget = AddWidgetRoute
     val settings = SettingsRoute
     val shortcuts = EditSplitScreenShortcutsRoute
-    val allRoutes = listOf(home, addWidget, settings, shortcuts)
+    val allRoutes = listOf(home, settings, shortcuts)
 }
 
 @Composable
