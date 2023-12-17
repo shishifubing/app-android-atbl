@@ -206,29 +206,6 @@ fun <T : Enum<*>> SettingsFieldSingleChoiceEnum(
 }
 
 @Composable
-fun <T : Enum<*>> SettingsMultiChoiceFieldEnum(
-    @StringRes name: Int,
-    enum: Class<T>,
-    selectedOptions: List<T>,
-    onConfirm: (List<T>) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    val options by remember {
-        mutableStateOf(enum.names())
-    }
-    val selectedOptions by remember(selectedOptions) {
-        mutableStateOf(selectedOptions.map { options.indexOf(it.name) })
-    }
-    SettingsFieldMultiChoice(
-        modifier = modifier,
-        name = name,
-        options = options,
-        selectedOptions = selectedOptions,
-        onConfirm = { onConfirm(it.map { i -> enum.find(options[i]) }) }
-    )
-}
-
-@Composable
 fun SettingsFieldMultiChoice(
     @StringRes name: Int,
     options: List<String>,
