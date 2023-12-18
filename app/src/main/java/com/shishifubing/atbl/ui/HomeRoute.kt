@@ -36,11 +36,9 @@ import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
 import com.shishifubing.atbl.data.HomeDialogState
 import com.shishifubing.atbl.data.HomeDialogState.HeaderActions
-import com.shishifubing.atbl.data.HomeState
-import com.shishifubing.atbl.data.HomeState.RowItem
 import com.shishifubing.atbl.data.UiState
 
-object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
+object HomeRoute : LauncherRoute<HomeViewModel> {
     override val url = "home_screen"
     override val label = R.string.navigation_home
     override val showScaffold = false
@@ -53,15 +51,16 @@ object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
     @Composable
     override fun Content(
         vm: HomeViewModel,
-        uiState: UiState.Success<HomeState>
+        uiState: UiState.Success<Model.State>
     ) {
         HomeScreen(
-            uiState = uiState.state,
-            onSplitScreenShortcutsDialogClick = vm::onSplitScreenShortcutsDialogClick,
+            state = uiState.state,
             onHeaderAction = vm::onHeaderAction,
             onAppDialogClick = vm::onAppDialogClick,
             onRowItemClick = vm::onRowItemClick,
-            onLauncherDialogAction = vm::onLauncherDialogAction
+            onLauncherDialogAction = vm::onLauncherDialogAction,
+            getRowItemLabel = vm::getRowItemLabel,
+            sortRowItems = vm::sortRowItems
         )
     }
 }
@@ -70,23 +69,21 @@ object HomeRoute : LauncherRoute<HomeState, HomeViewModel> {
 @OptIn(ExperimentalFoundationApi::class)
 @Composable
 private fun HomeScreen(
-    uiState: HomeState,
+    state: Model.State,
     onAppDialogClick: (Model.AppShortcut) -> Unit,
-    onSplitScreenShortcutsDialogClick: (Model.SplitScreenShortcut) -> Unit,
     onLauncherDialogAction: (HomeDialogState.LauncherDialogAction) -> Unit,
-    onRowItemClick: (RowItem) -> Unit,
     onHeaderAction: (Model.App, HeaderActions) -> Unit,
+    onRowItemClick: (Model.App) -> Unit,
+    sortRowItems: (Model.Apps, Model.Settings.Layout) -> List<Model.App>,
+    getRowItemLabel: (Model.App, Model.Settings.AppCard) -> String,
     modifier: Modifier = Modifier
 ) {
     var showLauncherDialog by remember { mutableStateOf(false) }
     var showAppDialog by remember { mutableStateOf<Model.App?>(null) }
-    var showShortcutDialog by remember {
-        mutableStateOf<Model.SplitScreenShortcut?>(null)
-    }
     val interactionSource = remember { MutableInteractionSource() }
 
     Column(modifier = modifier.safeDrawingPadding()) {
-        if (!uiState.state.isHomeApp) {
+        if (!state.isHomeApp) {
             NotAHomeAppBanner()
         }
         HomeRow(
@@ -98,25 +95,19 @@ private fun HomeScreen(
                     onLongClick = { showLauncherDialog = true },
                     onClick = { }
                 ),
-            settings = uiState.state.settings,
-            items = uiState.items,
-            showHiddenApps = uiState.state.showHiddenApps,
+            settings = state.settings,
+            apps = state.apps,
+            showHiddenApps = state.showHiddenApps,
             onClick = onRowItemClick,
-            onLongClick = {
-                when (it) {
-                    is RowItem.App -> showAppDialog = it.app
-
-                    is RowItem.SplitScreenShortcut -> {
-                        showShortcutDialog = it.shortcut
-                    }
-                }
-            },
+            onLongClick = { showAppDialog = it },
+            getItemLabel = getRowItemLabel,
+            sortItems = sortRowItems
         )
     }
 
     if (showLauncherDialog) {
         HomeDialogLauncherActions(
-            showHiddenApps = uiState.state.showHiddenApps,
+            showHiddenApps = state.showHiddenApps,
             onLauncherDialogAction = onLauncherDialogAction,
             onDismissRequest = { showLauncherDialog = false }
         )
@@ -124,18 +115,10 @@ private fun HomeScreen(
     showAppDialog?.let {
         HomeDialogApp(
             app = it,
-            showShortcuts = uiState.state.isHomeApp,
+            showShortcuts = state.isHomeApp,
             onAppShortcutClick = onAppDialogClick,
             onHeaderAction = onHeaderAction,
             onDismissRequest = { showAppDialog = null }
-        )
-    }
-    showShortcutDialog?.let {
-        HomeDialogSplitScreenShortcut(
-            shortcut = it,
-            onSplitScreenShortcutsDialogClick = onSplitScreenShortcutsDialogClick,
-            onHeaderAction = onHeaderAction,
-            onDismissRequest = { showShortcutDialog = null }
         )
     }
 }
@@ -181,33 +164,18 @@ private fun NotAHomeAppBanner() {
 )
 @Composable
 private fun HomePagePreview() {
-    val apps = (0..40).map {
-        Model.App.getDefaultInstance()
-            .toBuilder()
-            .setLabel("app-$it")
-            .build()
-    }
-    val shortcuts = listOf(
-        Model.SplitScreenShortcut.getDefaultInstance()
-            .toBuilder()
-            .setAppFirst(apps[0])
-            .setAppSecond(apps[1])
-            .build()
-    )
-    val state = HomeState(
-        state = Defaults.State,
-        items = HomeState.RowItems(listOf())
-    )
+    val state = Defaults.State
     LauncherTheme(darkTheme = true) {
         Box {
             HomeScreen(
                 modifier = Modifier,
-                uiState = state,
-                onSplitScreenShortcutsDialogClick = {},
+                state = state,
                 onLauncherDialogAction = { },
                 onAppDialogClick = {},
                 onHeaderAction = { _, _ -> },
-                onRowItemClick = {}
+                onRowItemClick = { _ -> },
+                sortRowItems = { _, _ -> listOf() },
+                getRowItemLabel = { app, _ -> app.label }
             )
         }
     }

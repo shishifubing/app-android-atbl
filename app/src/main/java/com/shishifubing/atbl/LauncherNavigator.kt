@@ -12,9 +12,7 @@ sealed interface LauncherNavigationState {
 
     data object Idle : LauncherNavigationState
 
-    data class GoToRoute(
-        val route: LauncherRoute<*, *>
-    ) : LauncherNavigationState
+    data class GoToRoute(val route: LauncherRoute<*>) : LauncherNavigationState
 
     data object PopBackStack : LauncherNavigationState
 }
@@ -26,7 +24,7 @@ interface LauncherNavigator {
 
     fun popBackStack()
 
-    fun goToRoute(route: LauncherRoute<*, *>)
+    fun goToRoute(route: LauncherRoute<*>)
 }
 
 class LauncherNavigatorImpl : LauncherNavigator {
@@ -44,7 +42,7 @@ class LauncherNavigatorImpl : LauncherNavigator {
         navigate(LauncherNavigationState.PopBackStack)
     }
 
-    override fun goToRoute(route: LauncherRoute<*, *>) {
+    override fun goToRoute(route: LauncherRoute<*>) {
         navigate(LauncherNavigationState.GoToRoute(route))
     }
 

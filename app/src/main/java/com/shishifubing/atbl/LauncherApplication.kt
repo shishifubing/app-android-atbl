@@ -28,7 +28,7 @@ class LauncherApplication : Application() {
             launcherAppsService = getSystemService(LauncherApps::class.java),
             lifecycle = activity.lifecycle
         )
-        stateRepo = LauncherStateRepository(dataStore = dataStore)
+        stateRepo = LauncherStateRepository(dataStore)
         return this
     }
 }

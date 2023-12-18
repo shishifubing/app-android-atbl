@@ -2,7 +2,6 @@ package com.shishifubing.atbl.data
 
 import androidx.annotation.StringRes
 import androidx.compose.runtime.Immutable
-import com.shishifubing.atbl.Model
 
 @Immutable
 sealed interface HomeDialogState {
@@ -12,30 +11,20 @@ sealed interface HomeDialogState {
     }
 
     enum class LauncherDialogAction {
-        GoToSettings, GoToEditSplitScreenShortcuts,
-        HideHiddenApps, ShowHiddenApps,
-    }
-
-    data class AppShortcutButtons(val buttons: Map<String, Buttons<Model.AppShortcut>>)
-
-    @Immutable
-    sealed interface Header {
-
-        data object None : Header
-
-        data class App(val app: Model.App) : Header
-
-        data class Shortcut(val shortcut: Model.SplitScreenShortcut) : Header
+        GoToSettings, HideHiddenApps, ShowHiddenApps,
     }
 
     data class Buttons<T>(val buttons: List<Button<T>>) {
         constructor(vararg buttons: Button<T>) : this(buttons.toList())
     }
 
-    data class Button<T>(val label: Label, val id: T) {
-        constructor(label: String, id: T) : this(Label.Str(label), id)
+    data class Button<T>(val label: Label, val data: T) {
+        constructor(label: String, data: T) : this(Label.Str(label), data)
 
-        constructor(@StringRes label: Int, id: T) : this(Label.Res(label), id)
+        constructor(@StringRes label: Int, data: T) : this(
+            Label.Res(label),
+            data
+        )
 
         @Immutable
         sealed interface Label {

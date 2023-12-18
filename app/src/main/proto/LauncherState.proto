@@ -5,7 +5,6 @@ option java_outer_classname = "Model";
 
 message State {
   Apps apps = 1;
-  SplitScreenShortcuts splitScreenShortcuts = 2;
   Settings settings = 3;
   bool isHomeApp = 4;
   bool showHiddenApps = 5;
@@ -23,24 +22,10 @@ message Apps {
   map<string, App> apps = 2;
 }
 
-message Widget {
-
-}
-
 message AppShortcut {
   string shortcutId = 1;
   string packageName = 2;
   string label = 3;
-}
-
-message SplitScreenShortcut {
-  App appFirst = 1;
-  App appSecond = 2;
-  string key = 3;
-}
-
-message SplitScreenShortcuts {
-  map<string, SplitScreenShortcut> shortcuts = 1;
 }
 
 message Settings {
@@ -113,7 +98,6 @@ message Settings {
     TextStyle text_style = 4;
     TextColor text_color = 5;
     FontFamily font_family = 6;
-    string split_screen_separator = 7;
   }
   message Layout {
     HorizontalArrangement horizontal_arrangement = 1;

@@ -12,9 +12,10 @@ import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.composable
 import com.shishifubing.atbl.LauncherNavigationState
+import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.data.UiState
 
-interface LauncherRoute<State, VM : BaseViewModel<State>> {
+interface LauncherRoute<T : BaseViewModel> {
     val url: String
 
     @get:StringRes
@@ -23,14 +24,14 @@ interface LauncherRoute<State, VM : BaseViewModel<State>> {
     val showScaffold: Boolean
 
     @Composable
-    fun Content(vm: VM, uiState: UiState.Success<State>)
+    fun Content(vm: T, uiState: UiState.Success<Model.State>)
 
     @Composable
-    fun getViewModel(): VM
+    fun getViewModel(): T
 }
 
-fun <State, VM : BaseViewModel<State>> NavGraphBuilder.launcherComposable(
-    route: LauncherRoute<State, VM>,
+fun <T : BaseViewModel> NavGraphBuilder.launcherComposable(
+    route: LauncherRoute<T>,
     navController: NavHostController
 ) {
     composable(route = route.url) {
@@ -50,9 +51,9 @@ fun <State, VM : BaseViewModel<State>> NavGraphBuilder.launcherComposable(
             when (uiState) {
                 is UiState.Loading -> Unit
 
-                is UiState.Success<State> -> route.Content(
+                is UiState.Success<Model.State> -> route.Content(
                     vm = vm,
-                    uiState = uiState as UiState.Success<State>
+                    uiState = uiState as UiState.Success<Model.State>
                 )
             }
         }
