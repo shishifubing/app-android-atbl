@@ -14,19 +14,15 @@ import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction.ShowHidde
 private val buttons = Buttons(
     Button(
         label = R.string.launcher_dialog_settings,
-        id = GoToSettings
-    ),
-    Button(
-        label = R.string.launcher_dialog_edit_split_screen_shortcuts,
-        id = HomeDialogState.LauncherDialogAction.GoToEditSplitScreenShortcuts
+        data = GoToSettings
     ),
     Button(
         label = R.string.launcher_dialog_hide_hidden_apps,
-        id = HideHiddenApps
+        data = HideHiddenApps
     ),
     Button(
         label = R.string.launcher_dialog_show_hidden_apps,
-        id = ShowHiddenApps
+        data = ShowHiddenApps
     )
 )
 

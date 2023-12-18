@@ -67,33 +67,9 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
         }
     }
 
-    suspend fun addSplitScreenShortcut(firstApp: String, secondApp: String) {
-        update {
-            val newShortcut = Model.SplitScreenShortcut.getDefaultInstance()
-                .toBuilder()
-                .setAppSecond(apps.getAppsOrThrow(secondApp))
-                .setAppFirst(apps.getAppsOrThrow(firstApp))
-                .setKey("$firstApp/$secondApp")
-                .build()
-            val newShortcuts = splitScreenShortcuts
-                .toBuilder()
-                .putShortcuts(newShortcut.key, newShortcut)
-                .build()
-            splitScreenShortcuts = newShortcuts
-        }
-    }
 
     suspend fun setShowHiddenApps(showHiddenApps: Boolean) {
         update { this.showHiddenApps = showHiddenApps }
-    }
-
-    suspend fun removeSplitScreenShortcut(shortcut: String) {
-        update {
-            val newShortcuts = splitScreenShortcuts.toBuilder()
-                .removeShortcuts(shortcut)
-                .build()
-            splitScreenShortcuts = newShortcuts
-        }
     }
 
     suspend fun reloadApp(app: Model.App) {
@@ -169,7 +145,6 @@ object Defaults {
         .setLabelLowercase(true)
         .setTextColor(Model.Settings.TextColor.Unspecified)
         .setFontFamily(Model.Settings.FontFamily.Monospace)
-        .setSplitScreenSeparator("/")
         .build()
 
     val LayoutSettings: Model.Settings.Layout = Model.Settings.Layout

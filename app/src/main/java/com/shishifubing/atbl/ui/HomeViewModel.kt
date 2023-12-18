@@ -1,31 +1,20 @@
 package com.shishifubing.atbl.ui
 
 
-import androidx.lifecycle.viewModelScope
 import com.shishifubing.atbl.LauncherManager
 import com.shishifubing.atbl.LauncherNavigator
 import com.shishifubing.atbl.LauncherStateRepository
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.Model.Settings.AppCard
-import com.shishifubing.atbl.Model.SplitScreenShortcut
 import com.shishifubing.atbl.data.HomeDialogState.HeaderActions
 import com.shishifubing.atbl.data.HomeDialogState.LauncherDialogAction
-import com.shishifubing.atbl.data.HomeState
-import com.shishifubing.atbl.data.RepoState
-import com.shishifubing.atbl.data.UiState
 import com.shishifubing.atbl.launcherViewModelFactory
-import kotlinx.coroutines.flow.SharingStarted
-import kotlinx.coroutines.flow.map
-import kotlinx.coroutines.flow.stateIn
-
-private val tag = HomeState::class.java.name
-
 
 class HomeViewModel(
     private val stateRepo: LauncherStateRepository,
     private val manager: LauncherManager,
     private val navigator: LauncherNavigator
-) : BaseViewModel<HomeState>(stateRepo, navigator) {
+) : BaseViewModel(stateRepo, navigator) {
     companion object {
         val Factory = launcherViewModelFactory {
             HomeViewModel(
@@ -35,24 +24,6 @@ class HomeViewModel(
             )
         }
     }
-
-    override val uiStateFlow = stateFlow.map { state ->
-        if (state == RepoState.Loading) {
-            object : UiState.Loading<HomeState> {}
-        } else {
-            val stateSuccess = state as RepoState.Success
-            UiState.Success(
-                HomeState(
-                    state = stateSuccess.state,
-                    items = stateToHomeRowItems(stateSuccess.state)
-                )
-            )
-        }
-    }.stateIn(
-        scope = viewModelScope,
-        started = SharingStarted.Lazily,
-        initialValue = object : UiState.Loading<HomeState> {}
-    )
 
     fun onHeaderAction(app: Model.App, action: HeaderActions) {
         when (action) {
@@ -83,30 +54,11 @@ class HomeViewModel(
             LauncherDialogAction.HideHiddenApps -> stateAction {
                 setShowHiddenApps(false)
             }
-
-            LauncherDialogAction.GoToEditSplitScreenShortcuts -> navigator.goToRoute(
-                Routes.shortcuts
-            )
         }
     }
 
-    fun onRowItemClick(item: HomeState.RowItem) {
-        when (item) {
-            is HomeState.RowItem.App -> managerAction {
-                launchApp(item.app.packageName)
-            }
-
-            is HomeState.RowItem.SplitScreenShortcut -> managerAction {
-                launchSplitScreen(
-                    item.shortcut.appFirst.packageName,
-                    item.shortcut.appSecond.packageName
-                )
-            }
-        }
-    }
-
-    fun onSplitScreenShortcutsDialogClick(shortcut: SplitScreenShortcut) {
-        stateAction { removeSplitScreenShortcut(shortcut.key) }
+    fun onRowItemClick(item: Model.App) {
+        managerAction { launchApp(item.packageName) }
     }
 
     fun onAppDialogClick(shortcut: Model.AppShortcut) {
@@ -117,39 +69,27 @@ class HomeViewModel(
         launch { action.invoke(manager) }
     }
 
-    private fun stateToHomeRowItems(state: Model.State): HomeState.RowItems {
-        val items = mutableListOf<HomeState.RowItem>()
-        val shortcuts = state.splitScreenShortcuts.shortcutsMap.map {
-            HomeState.RowItem.SplitScreenShortcut(
-                shortcut = it.value,
-                label = transformLabel(it.value, state.settings.appCard)
-            )
-        }
-        val apps = state.apps.appsMap.map {
-            HomeState.RowItem.App(
-                app = it.value,
-                label = transformLabel(it.value, state.settings.appCard)
-            )
-        }
-        items.addAll(shortcuts)
-        items.addAll(apps)
-
-        when (state.settings.layout.sortBy) {
+    fun sortRowItems(
+        items: Model.Apps,
+        settings: Model.Settings.Layout
+    ): List<Model.App> {
+        val res = items.appsMap.values.toMutableList()
+        when (settings.sortBy) {
             Model.Settings.SortBy.SortByLabel, Model.Settings.SortBy.UNRECOGNIZED, null -> {
-                items.sortBy { it.label }
+                res.sortBy { it.label }
             }
         }
-        if (state.settings.layout.reverseOrder) {
-            items.reverse()
+        if (settings.reverseOrder) {
+            res.reverse()
         }
-        return HomeState.RowItems(items = items)
+        return res
     }
 
-    private fun transformLabel(
-        label: String,
+    fun getRowItemLabel(
+        app: Model.App,
         settings: AppCard
     ): String {
-        return label
+        return app.label
             .let {
                 if (settings.labelRemoveSpaces) {
                     it.replace(" ", "")
@@ -158,20 +98,6 @@ class HomeViewModel(
                 }
             }
             .let { if (settings.labelLowercase) it.lowercase() else it }
-    }
-
-    private fun transformLabel(app: Model.App, settings: AppCard): String {
-        return transformLabel(app.label, settings)
-    }
-
-    private fun transformLabel(
-        shortcut: SplitScreenShortcut,
-        settings: AppCard
-    ): String {
-        return transformLabel(
-            shortcut.appSecond.label + settings.splitScreenSeparator + shortcut.appFirst.label,
-            settings
-        )
     }
 }
 

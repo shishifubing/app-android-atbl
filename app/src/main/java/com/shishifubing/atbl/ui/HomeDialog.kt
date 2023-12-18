@@ -1,12 +1,16 @@
 package com.shishifubing.atbl.ui
 
+import android.graphics.BitmapFactory
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.ElevatedCard
@@ -15,18 +19,20 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.key
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.res.dimensionResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
 import com.shishifubing.atbl.Model
 import com.shishifubing.atbl.R
 import com.shishifubing.atbl.data.HomeDialogState
 import com.shishifubing.atbl.data.HomeDialogState.Button.Label
-import com.shishifubing.atbl.data.HomeDialogState.Header
 
 @Composable
 fun <T> HomeDialog(
@@ -54,7 +60,7 @@ fun <T> HomeDialog(
     onDismissRequest: () -> Unit,
     onButtonClick: (T) -> Unit,
     actionButtons: HomeDialogState.Buttons<T>,
-    header: Header,
+    app: Model.App,
     onHeaderAction: (Model.App, HomeDialogState.HeaderActions) -> Unit,
     modifier: Modifier = Modifier,
     showButton: (T) -> Boolean = { true },
@@ -64,8 +70,8 @@ fun <T> HomeDialog(
         modifier = modifier,
         onDismissRequest = onDismissRequest
     ) {
-        HomeDialogHeaders(
-            header = header,
+        HomeDialogHeader(
+            app = app,
             onHeaderAction = onHeaderAction,
             onDismissRequest = onDismissRequest
         )
@@ -111,7 +117,7 @@ private fun <T> HomeDialogButtons(
         Column {
             actionButtons.buttons.forEach { button ->
                 key(button.hashCode()) {
-                    if (showButton(button.id)) {
+                    if (showButton(button.data)) {
                         HomeDialogButton(
                             text = when (button.label) {
                                 is Label.Res -> stringResource(button.label.res)
@@ -119,48 +125,13 @@ private fun <T> HomeDialogButtons(
                             },
                             textAlign = TextAlign.Start,
                             onClick = {
-                                onButtonClick(button.id)
+                                onButtonClick(button.data)
                                 onDismissRequest()
                             }
                         )
                     }
                 }
             }
-        }
-    }
-}
-
-@Composable
-private fun HomeDialogHeaders(
-    header: Header,
-    onDismissRequest: () -> Unit,
-    onHeaderAction: (Model.App, HomeDialogState.HeaderActions) -> Unit,
-) {
-    when (header) {
-        is Header.None -> Unit
-
-        is Header.App -> {
-            HomeDialogHeader(
-                app = header.app,
-                onHeaderAction = onHeaderAction,
-                onDismissRequest = onDismissRequest
-            )
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-        }
-
-        is Header.Shortcut -> {
-            HomeDialogHeader(
-                app = header.shortcut.appSecond,
-                onHeaderAction = onHeaderAction,
-                onDismissRequest = onDismissRequest
-            )
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
-            HomeDialogHeader(
-                app = header.shortcut.appFirst,
-                onHeaderAction = onHeaderAction,
-                onDismissRequest = onDismissRequest
-            )
-            Spacer(modifier = Modifier.height(dimensionResource(R.dimen.padding_medium)))
         }
     }
 }
@@ -178,6 +149,89 @@ private fun HomeDialogBase(
             verticalArrangement = Arrangement.Center,
             content = content
         )
+    }
+}
+
+@Composable
+private fun HomeDialogHeader(
+    app: Model.App,
+    onHeaderAction: (Model.App, HomeDialogState.HeaderActions) -> Unit,
+    onDismissRequest: () -> Unit,
+    modifier: Modifier = Modifier
+) {
+    val icon = remember {
+        val array = app.icon.toByteArray()
+        BitmapFactory.decodeByteArray(array, 0, array.size).asImageBitmap()
+    }
+    Row(
+        modifier = modifier.fillMaxWidth(),
+        horizontalArrangement = Arrangement.SpaceBetween,
+        verticalAlignment = Alignment.CenterVertically
+    ) {
+        ElevatedCard(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(0.dp, dimensionResource(R.dimen.padding_medium)),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                Image(
+                    modifier = Modifier
+                        .padding(dimensionResource(R.dimen.padding_small))
+                        .size(dimensionResource(R.dimen.image_size)),
+                    bitmap = icon,
+                    contentDescription = "App icon",
+                )
+                Text(
+                    text = app.label,
+                    modifier = Modifier.padding(dimensionResource(R.dimen.padding_small)),
+                    style = MaterialTheme.typography.bodyLarge,
+                    textAlign = TextAlign.Center
+                )
+            }
+        }
+        Spacer(modifier = Modifier.width(dimensionResource(R.dimen.padding_medium)))
+        ElevatedCard(modifier = Modifier.weight(1f)) {
+            Column(
+                modifier = Modifier.fillMaxWidth(),
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.Center
+            ) {
+                HomeDialogButton(
+                    text = stringResource(R.string.drawer_app_info),
+                    onClick = {
+                        onHeaderAction(
+                            app,
+                            HomeDialogState.HeaderActions.GoToInfo
+                        )
+                        onDismissRequest()
+                    }
+                )
+                HomeDialogButton(
+                    text = stringResource(
+                        if (app.isHidden) R.string.drawer_app_show else R.string.drawer_app_hide
+                    ),
+                    onClick = {
+                        onHeaderAction(
+                            app,
+                            HomeDialogState.HeaderActions.HideOrShow
+                        )
+                        onDismissRequest()
+                    }
+                )
+                HomeDialogButton(
+                    text = stringResource(R.string.drawer_app_uninstall),
+                    onClick = {
+                        onHeaderAction(
+                            app,
+                            HomeDialogState.HeaderActions.Uninstall
+                        )
+                        onDismissRequest()
+                    }
+                )
+            }
+        }
     }
 }
 

@@ -13,7 +13,7 @@ import java.io.InputStream
 class SettingsViewModel(
     private val stateRepo: LauncherStateRepository,
     private val navigator: LauncherNavigator,
-) : StateViewModel(stateRepo, navigator) {
+) : BaseViewModel(stateRepo, navigator) {
     companion object {
         val Factory = launcherViewModelFactory {
             SettingsViewModel(stateRepo = stateRepo, navigator = navigator)
@@ -74,10 +74,6 @@ class SettingsViewModel(
 
     fun setAppCardPadding(value: Int) {
         updateAppCard { padding = value }
-    }
-
-    fun setAppCardSplitScreenShortcutSeparator(value: String) {
-        updateAppCard { splitScreenSeparator = value }
     }
 
     fun updateSettingsFromStream(getStream: () -> InputStream?) {

@@ -7,13 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.rememberNavController
 
-private val startDestination: LauncherRoute<*, *> = HomeRoute
+private val startDestination: LauncherRoute<*> = HomeRoute
 
 object Routes {
     private val home = HomeRoute
     val settings = SettingsRoute
-    val shortcuts = EditSplitScreenShortcutsRoute
-    val allRoutes = listOf(home, settings, shortcuts)
+    val allRoutes = listOf(home, settings)
 }
 
 @Composable
