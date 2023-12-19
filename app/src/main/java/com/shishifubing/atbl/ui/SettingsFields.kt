@@ -14,7 +14,6 @@ import androidx.compose.foundation.lazy.LazyItemScope
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.ElevatedCard
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
@@ -26,7 +25,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.toMutableStateList
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalConfiguration
@@ -112,45 +110,6 @@ fun SettingsFieldSwitch(
     }
 }
 
-@Composable
-fun SettingsFieldTextInput(
-    @StringRes name: Int,
-    initialValue: String,
-    onConfirm: (String) -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    var showDialog by remember { mutableStateOf(false) }
-    SettingsField(
-        name = name,
-        modifier = modifier,
-        label = initialValue,
-        onClick = { showDialog = true }
-    )
-    if (!showDialog) {
-        return
-    }
-    var input by remember { mutableStateOf(initialValue) }
-    SettingsDialog(
-        modifier = modifier,
-        name = name,
-        onConfirm = { onConfirm(input); showDialog = false },
-        onDismissRequest = { showDialog = false },
-        itemsCount = 1,
-        itemsKey = { 1 },
-    ) { _ ->
-        Row(
-            modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.Center
-        ) {
-            OutlinedTextField(
-                value = input,
-                singleLine = true,
-                onValueChange = { input = it }
-            )
-        }
-    }
-}
-
 
 @Composable
 fun SettingsFieldSingleChoice(
@@ -203,49 +162,6 @@ fun <T : Enum<*>> SettingsFieldSingleChoiceEnum(
         selectedOption = options.indexOf(selectedOption.name),
         onConfirm = { i -> onConfirm(selectedOption::class.java.find(options[i])) }
     )
-}
-
-@Composable
-fun SettingsFieldMultiChoice(
-    @StringRes name: Int,
-    options: List<String>,
-    selectedOptions: List<Int>,
-    onConfirm: (List<Int>) -> Unit,
-    modifier: Modifier = Modifier
-) {
-    var showDialog by remember { mutableStateOf(false) }
-    SettingsField(
-        name = name,
-        modifier = modifier,
-        label = selectedOptions.size.toString(),
-        onClick = { showDialog = true }
-    )
-    if (!showDialog) {
-        return
-    }
-    val curChoices = remember { selectedOptions.toMutableStateList() }
-    SettingsDialog(
-        modifier = modifier,
-        name = name,
-        onConfirm = { onConfirm(curChoices); showDialog = false },
-        onDismissRequest = { showDialog = false },
-        itemsCount = options.size,
-        itemsKey = { i -> options[i] }
-    ) { i ->
-        var isSelected = curChoices.contains(i)
-        SettingsButton(
-            text = options[i], isSelected = isSelected,
-            isRadio = false
-        ) {
-            isSelected = if (isSelected) {
-                curChoices.remove(i)
-                false
-            } else {
-                curChoices.add(i)
-                true
-            }
-        }
-    }
 }
 
 @Composable
