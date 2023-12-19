@@ -58,7 +58,6 @@ object SettingsRoute : LauncherRoute<SettingsViewModel> {
             setHorizontalArrangement = vm::setAppLayoutHorizontalArrangement,
             setVerticalPadding = vm::setAppLayoutVerticalPadding,
             setHorizontalPadding = vm::setAppLayoutHorizontalPadding,
-            setHiddenApps = vm::setHiddenApps,
             backupReset = vm::backupReset,
             setLabelRemoveSpaces = vm::setAppCardLabelRemoveSpaces,
             setReverseOrder = vm::setAppLayoutReverseOrder
@@ -73,7 +72,6 @@ private fun SettingsScreen(
     writeSettingsToFile: (() -> ParcelFileDescriptor?) -> Unit,
     backupReset: () -> Unit,
     updateSettingsFromStream: (() -> InputStream?) -> Unit,
-    setHiddenApps: (List<String>) -> Unit,
     setReverseOrder: (Boolean) -> Unit,
     setHorizontalPadding: (Int) -> Unit,
     setVerticalPadding: (Int) -> Unit,
@@ -92,12 +90,6 @@ private fun SettingsScreen(
             BackupExport(writeSettingsToFile = writeSettingsToFile)
             BackupImport(updateSettingsFromStream = updateSettingsFromStream)
             BackupReset(resetSettings = backupReset)
-        }
-        SettingsGroup(R.string.settings_group_hidden_apps) {
-            HiddenApps(
-                apps = state.apps,
-                setHiddenApps = setHiddenApps
-            )
         }
         SettingsGroup(R.string.settings_group_layout) {
             val settings = state.settings.layout
@@ -227,30 +219,6 @@ private fun BackupExport(
             result = null
         }
     }
-}
-
-@Composable
-private fun HiddenApps(
-    apps: Model.Apps,
-    setHiddenApps: (List<String>) -> Unit
-) {
-    val launcherPackageName = LocalContext.current.packageName
-    val options = apps.appsMap.values
-        .filter { it.packageName != launcherPackageName }
-        .sortedBy { it.label }
-    var hiddenApps = options.mapIndexedNotNull { i, app ->
-        if (app.isHidden) i else null
-    }
-
-    SettingsFieldMultiChoice(
-        name = R.string.settings_hidden_apps,
-        selectedOptions = hiddenApps,
-        options = options.map { it.label },
-        onConfirm = { choices ->
-            setHiddenApps(choices.map { options[it].packageName })
-            hiddenApps = choices
-        }
-    )
 }
 
 @Composable

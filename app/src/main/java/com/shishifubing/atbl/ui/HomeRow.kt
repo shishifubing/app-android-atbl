@@ -45,7 +45,7 @@ fun HomeRow(
     settings: Model.Settings,
     modifier: Modifier = Modifier,
 ) {
-    val items = remember { sortItems(apps, settings.layout) }
+    val items = remember(apps) { sortItems(apps, settings.layout) }
     FlowRow(
         modifier = modifier
             .verticalScroll(rememberScrollState())
@@ -58,7 +58,7 @@ fun HomeRow(
     ) {
         items.forEach {
             key(it.hashCode()) {
-                val label = remember(it) { getItemLabel(it, settings.appCard) }
+                val label = remember { getItemLabel(it, settings.appCard) }
                 if (!it.isHidden || showHiddenApps) {
                     HomeRowItemCard(
                         label = label,

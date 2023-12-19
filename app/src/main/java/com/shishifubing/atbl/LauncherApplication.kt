@@ -22,13 +22,13 @@ class LauncherApplication : Application() {
     val navigator: LauncherNavigator = LauncherNavigatorImpl()
 
     fun init(activity: ComponentActivity): LauncherApplication {
+        stateRepo = LauncherStateRepository(dataStore)
         manager = LauncherManager(
             context = activity,
             packageManager = activity.packageManager,
             launcherAppsService = getSystemService(LauncherApps::class.java),
             lifecycle = activity.lifecycle
         )
-        stateRepo = LauncherStateRepository(dataStore)
         return this
     }
 }
