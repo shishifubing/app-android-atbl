@@ -47,7 +47,11 @@ fun <T : BaseViewModel> NavGraphBuilder.launcherComposable(
         )
         ErrorToast(error = error)
 
-        val content: @Composable () -> Unit = {
+        LauncherScaffold(
+            label = route.label,
+            goBack = { vm.popBackStack() },
+            showTopAppBar = route.showScaffold
+        ) {
             when (uiState) {
                 is UiState.Loading -> Unit
 
@@ -56,15 +60,6 @@ fun <T : BaseViewModel> NavGraphBuilder.launcherComposable(
                     uiState = uiState as UiState.Success<Model.State>
                 )
             }
-        }
-        if (route.showScaffold) {
-            LauncherScaffold(
-                label = route.label,
-                goBack = { vm.popBackStack() },
-                content = content
-            )
-        } else {
-            content()
         }
     }
 }

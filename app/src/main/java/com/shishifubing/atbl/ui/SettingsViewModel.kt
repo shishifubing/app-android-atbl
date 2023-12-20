@@ -24,10 +24,6 @@ class SettingsViewModel(
         launch { stateRepo.resetSettings() }
     }
 
-    fun setHiddenApps(packageNames: List<String>) {
-        stateAction { setHiddenApps(packageNames) }
-    }
-
     fun setAppLayoutReverseOrder(value: Boolean) {
         updateLayout { reverseOrder = value }
     }
