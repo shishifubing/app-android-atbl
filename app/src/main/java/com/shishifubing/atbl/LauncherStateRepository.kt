@@ -3,6 +3,7 @@ package com.shishifubing.atbl
 import androidx.datastore.core.CorruptionException
 import androidx.datastore.core.DataStore
 import androidx.datastore.core.Serializer
+import com.shishifubing.atbl.Model.Settings
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.catch
 import kotlinx.coroutines.flow.first
@@ -31,7 +32,7 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
         return dataStore.updateData { it.toBuilder().apply(action).build() }
     }
 
-    suspend fun updateSettings(action: Model.Settings.Builder.() -> Unit): Model.Settings {
+    suspend fun updateSettings(action: Settings.Builder.() -> Unit): Settings {
         val newState = update {
             settings = settings.toBuilder().apply(action).build()
         }
@@ -87,16 +88,16 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
         }
     }
 
-    suspend fun resetSettings(): Model.Settings {
+    suspend fun resetSettings(): Settings {
         return updateSettings { mergeFrom(Defaults.Settings) }
     }
 
-    suspend fun updateSettingsFromInputStream(stream: InputStream): Model.Settings {
+    suspend fun updateSettingsFromInputStream(stream: InputStream): Settings {
         return updateSettings { mergeFrom(stream) }
     }
 
 
-    suspend fun writeSettingsToOutputStream(stream: OutputStream): Model.Settings {
+    suspend fun writeSettingsToOutputStream(stream: OutputStream): Settings {
         val state = dataStore.data.first()
         state.settings.writeTo(stream)
         return state.settings
@@ -137,7 +138,7 @@ object LauncherStateSerializer : Serializer<Model.State> {
 }
 
 object Defaults {
-    val AppCardSettings: Model.Settings.AppCard = Model.Settings.AppCard
+    val AppCardSettings: Settings.AppCard = Model.Settings.AppCard
         .newBuilder()
         .setPadding(0)
         .setLabelRemoveSpaces(true)
@@ -147,7 +148,7 @@ object Defaults {
         .setFontFamily(Model.Settings.FontFamily.Monospace)
         .build()
 
-    val LayoutSettings: Model.Settings.Layout = Model.Settings.Layout
+    val LayoutSettings: Settings.Layout = Model.Settings.Layout
         .newBuilder()
         .setHorizontalArrangement(Model.Settings.HorizontalArrangement.HorizontalStart)
         .setVerticalArrangement(Model.Settings.VerticalArrangement.VerticalSpaceBetween)
@@ -157,7 +158,7 @@ object Defaults {
         .setVerticalPadding(0)
         .build()
 
-    val Settings: Model.Settings = Model.Settings
+    val Settings: Settings = Model.Settings
         .newBuilder()
         .setAppCard(AppCardSettings)
         .setLayout(LayoutSettings)
