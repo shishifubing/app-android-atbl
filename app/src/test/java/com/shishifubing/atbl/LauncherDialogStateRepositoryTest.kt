@@ -10,7 +10,6 @@ import kotlinx.coroutines.runBlocking
 import org.junit.jupiter.api.BeforeEach
 import org.junit.jupiter.api.Test
 import java.io.ByteArrayInputStream
-import java.io.ByteArrayOutputStream
 
 private class DataStoreMock(state: Model.State) : DataStore<Model.State> {
 
@@ -26,7 +25,6 @@ class LauncherDialogStateRepositoryTest {
     private lateinit var repoDefault: LauncherStateRepository
     private lateinit var repoEmpty: LauncherStateRepository
     private lateinit var repoWithApps: LauncherStateRepository
-
 
     @BeforeEach
     fun setUp() {
@@ -128,17 +126,6 @@ class LauncherDialogStateRepositoryTest {
         val settings = repoEmpty.stateOrThrow().settings
         assert(settings == Defaults.Settings) {
             "updated settings are not equal to default settings: " +
-                    "$settings, ${Defaults.Settings}"
-        }
-    }
-
-    @Test
-    fun writeSettingsToOutputStream() = runBlocking {
-        val stream = ByteArrayOutputStream()
-        repoDefault.writeSettingsToOutputStream(stream)
-        val settings = Model.Settings.parseFrom(stream.toByteArray())
-        assert(settings == Defaults.Settings) {
-            "settings written to the output stream are not equal to default settings: " +
                     "$settings, ${Defaults.Settings}"
         }
     }

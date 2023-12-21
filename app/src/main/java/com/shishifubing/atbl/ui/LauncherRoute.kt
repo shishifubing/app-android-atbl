@@ -37,7 +37,6 @@ fun <T : BaseViewModel> NavGraphBuilder.launcherComposable(
     composable(route = route.url) {
         val vm = route.getViewModel()
         val error by vm.errorFlow.collectAsState()
-        val uiState by vm.uiStateFlow.collectAsState()
         val navigationState by vm.navigationStateFlow.collectAsState()
 
         OnChangedNavState(
@@ -46,12 +45,12 @@ fun <T : BaseViewModel> NavGraphBuilder.launcherComposable(
             onNavigation = vm::onNavigation
         )
         ErrorToast(error = error)
-
         LauncherScaffold(
             label = route.label,
             goBack = { vm.popBackStack() },
             showTopAppBar = route.showScaffold
         ) {
+            val uiState by vm.uiStateFlow.collectAsState()
             when (uiState) {
                 is UiState.Loading -> Unit
 

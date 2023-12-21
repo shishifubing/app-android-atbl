@@ -84,7 +84,7 @@ class SettingsViewModel(
         stateAction {
             getFile()?.use { file ->
                 FileOutputStream(file.fileDescriptor).use { stream ->
-                    this.writeSettingsToOutputStream(stream)
+                    prevState.writeTo(stream)
                 }
             }
         }
