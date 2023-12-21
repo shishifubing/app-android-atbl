@@ -20,7 +20,7 @@ class MainActivity : ComponentActivity() {
 
         lifecycleScope.launch {
             app.stateRepo.reloadState(
-                apps = app.manager.fetchAllApps(),
+                newApps = app.manager.fetchAllApps(),
                 isHomeApp = app.manager.isHomeApp()
             )
         }

@@ -68,24 +68,12 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
         }
     }
 
-
     suspend fun setShowHiddenApps(showHiddenApps: Boolean) {
         update { this.showHiddenApps = showHiddenApps }
     }
 
     suspend fun reloadApp(app: Model.App) {
         updateApp(app.packageName) { mergeFrom(app) }
-    }
-
-    suspend fun setHiddenApps(packageNames: List<String>) {
-        update {
-            val newApps = apps.appsMap.map { (packageName, app) ->
-                packageName to app.toBuilder()
-                    .setIsHidden(packageNames.contains(packageName))
-                    .build()
-            }.toMap()
-            setApps(apps.toBuilder().putAllApps(newApps))
-        }
     }
 
     suspend fun resetSettings(): Settings {
@@ -96,21 +84,14 @@ class LauncherStateRepository(private val dataStore: DataStore<Model.State>) {
         return updateSettings { mergeFrom(stream) }
     }
 
-
-    suspend fun writeSettingsToOutputStream(stream: OutputStream): Settings {
-        val state = dataStore.data.first()
-        state.settings.writeTo(stream)
-        return state.settings
-    }
-
-    suspend fun reloadState(apps: Model.Apps, isHomeApp: Boolean) {
+    suspend fun reloadState(newApps: Model.Apps, isHomeApp: Boolean) {
         update {
-            val newApps = apps.appsMap.map { (name, app) ->
-                val isHidden = this.apps.getAppsOrDefault(name, app).isHidden
+            val updatedApps = newApps.appsMap.map { (name, app) ->
+                val isHidden = apps.getAppsOrDefault(name, app).isHidden
                 name to app.toBuilder().setIsHidden(isHidden).build()
             }.toMap()
             clearApps()
-            setApps(Model.Apps.newBuilder().putAllApps(newApps))
+            setApps(Model.Apps.newBuilder().putAllApps(updatedApps))
             this.isHomeApp = isHomeApp
         }
     }

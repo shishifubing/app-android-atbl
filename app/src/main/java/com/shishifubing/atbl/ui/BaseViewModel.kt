@@ -29,7 +29,7 @@ abstract class BaseViewModel(
         _errorFlow.update { e }
     }
 
-    private var prevState = Defaults.State
+    protected var prevState = Defaults.State
 
     val uiStateFlow = stateRepo.observeState()
         .map { stateResult ->
