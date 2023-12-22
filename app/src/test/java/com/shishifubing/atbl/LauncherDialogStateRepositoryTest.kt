@@ -85,10 +85,6 @@ class LauncherDialogStateRepositoryTest {
     }
 
     @Test
-    fun addSplitScreenShortcut() {
-    }
-
-    @Test
     fun setShowHiddenApps() = runBlocking {
         assert(!repoEmpty.stateOrThrow().showHiddenApps)
         repoEmpty.setShowHiddenApps(true)
@@ -98,16 +94,8 @@ class LauncherDialogStateRepositoryTest {
     }
 
     @Test
-    fun removeSplitScreenShortcut() {
-    }
-
-    @Test
     fun reloadApp() {
 
-    }
-
-    @Test
-    fun setHiddenApps() {
     }
 
     @Test
